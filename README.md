@@ -2,9 +2,9 @@
 *A Student Marketplace & Social Hub for University Communities*  
 
 ## 📌 Project Overview
-CampusSwap is a web application designed to solve real problems faced by students every semester. Graduating students often leave behind useful items (furniture, books, appliances, vehicles), while incoming students struggle to find affordable essentials. At the same time, there’s no central place for students to share opinions, post announcements, or promote events.  
+LSUS_CONNECT is a web application designed to solve real problems faced by students every semester. Graduating students often leave behind useful items (furniture, books, appliances, vehicles), while incoming students struggle to find affordable essentials. At the same time, there’s no central place for students to share opinions, post announcements, or promote events.  
 
-**CampusSwap provides a trusted, campus-only platform to:**
+**LSUS_CONNECT provides a trusted, campus-only platform to:**
 - Buy, sell, swap, or give away items.
 - Share announcements and organize student-run events.
 - Connect students through a verified, safe, and user-friendly experience.
