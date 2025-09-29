@@ -1,0 +1,76 @@
+name: LSUS Connect CI/CD
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "dev" ]
+
+jobs:
+  # Step 1: Build & Test Frontend
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Frontend Dependencies
+        run: cd frontend && npm install
+
+      - name: Run Lint
+        run: cd frontend && npm run lint
+
+      - name: Run Tests
+        run: cd frontend && npm test -- --watchAll=false
+
+  # Step 2: Build & Test Backend
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Backend Dependencies
+        run: cd backend && npm install
+
+      - name: Run Tests
+        run: cd backend && npm test
+
+      - name: Run Security Scan
+        run: cd backend && npm audit --audit-level=moderate
+
+  # Step 3: Deploy to Staging
+  deploy-staging:
+    needs: [frontend, backend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev'
+    steps:
+      - name: Deploy to Heroku Staging
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: "lsus-connect-staging"
+          heroku_email: "your-email@example.com"
+
+  # Step 4: Deploy to Production
+  deploy-production:
+    needs: [frontend, backend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to Heroku Production
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: "lsus-connect-prod"
+          heroku_email: "your-email@example.com"
