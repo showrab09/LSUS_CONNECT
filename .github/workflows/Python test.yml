@@ -1,46 +1,42 @@
-# A clear name helps you identify the workflow in the GitHub Actions UI.
-name: Python Tests
+# .github/workflows/new-python-ci.yml
 
-# The 'on' block specifies what triggers the workflow.
+name: New Minimal Python CI
+
+# Trigger on pushes to the main branch
 on:
-  # Triggers the workflow on push or pull request events for the 'main' branch.
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
 
-  # Allows you to manually trigger the workflow from the 'Actions' tab.
-  workflow_dispatch:
-
-# Defines a single job named 'test'.
 jobs:
-  test:
-    # Specifies the runner environment. 'ubuntu-latest' is a common choice.
-    runs-on: ubuntu-latest # Linux
-    
-    # Use a matrix strategy to test against multiple Python versions.
+  build:
+    runs-on: ubuntu-latest
     strategy:
+      # Run the job once, using a single Python version (to keep it simple)
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.11"] 
 
-    # The 'steps' block contains the sequence of tasks.
     steps:
-      # Use the 'actions/checkout' action to get your repository's code.
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout Repository
+      uses: actions/checkout@v4
 
-      # Set up the specified Python version using 'actions/setup-python'.
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      
-      # Install project dependencies.
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      
-      # Run your tests. Use the command appropriate for your project.
-      - name: Run tests
-        run: pytest
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    # 1. Install dependencies (Crucial Step!)
+    - name: Install Dependencies
+      run: |
+        # If you use a requirements.txt file:
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        # OR: if you just need pytest
+        # pip install pytest
+
+    # 2. Run Tests (Replace 'pytest' with your specific command)
+    - name: Run Tests
+      run: |
+        pytest
+        # OR: python -m unittest discover
