@@ -6,9 +6,15 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
     runs-on: ubuntu-latest
 
     steps:
@@ -24,11 +30,12 @@ jobs:
         run: npm install
 
       - name: Build Next.js for production
-        run: |
-          npm run build
+        run: npm run build
 
-      - name: Deploy to GitHub Pages (root)
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./out
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifact_name: github-pages
+          build_dir: ./out
