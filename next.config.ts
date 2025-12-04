@@ -1,9 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "export",
-  basePath: "/LSUS_CONNECT",
-  assetPrefix: "/LSUS_CONNECT/",
-  images: { unoptimized: true },
+  basePath: process.env.BRANCH === "main" ? "" : `/${process.env.BRANCH}`,
+  assetPrefix: process.env.BRANCH === "main" ? "" : `/${process.env.BRANCH}/`,
 };
 
 module.exports = nextConfig;

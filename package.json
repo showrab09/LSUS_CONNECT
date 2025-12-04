@@ -2,11 +2,12 @@
   "name": "lsus-connect",
   "version": "0.1.0",
   "private": true,
- "scripts": {
-  "build": "next build && next export",
-  "dev": "next dev",
-  "start": "next start"
-},
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
   "dependencies": {
     "next": "16.0.7",
     "react": "19.2.0",
