@@ -4,6 +4,9 @@ on:
   push:
     branches: ["dev"]
 
+permissions:
+  contents: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -20,12 +23,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build with Next.js for dev
+      - name: Build Next.js for dev preview
         run: |
-          export BRANCH=dev
           npm run build
 
-      - name: Deploy to GitHub Pages (dev folder)
+      - name: Deploy to GitHub Pages (/dev)
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -4,6 +4,9 @@ on:
   push:
     branches: ["main"]
 
+permissions:
+  contents: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -20,9 +23,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Next.js for main
+      - name: Build Next.js for production
         run: |
-          export BRANCH=main
           npm run build
 
       - name: Deploy to GitHub Pages (root)
