@@ -1,8 +1,8 @@
-name: Deploy Main
+name: Deploy Dev
 
 on:
   push:
-    branches: ["main"]
+    branches: ["dev"]
 
 jobs:
   build-and-deploy:
@@ -20,13 +20,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Next.js for main
+      - name: Build with Next.js for dev
         run: |
-          export BRANCH=main
+          export BRANCH=dev
           npm run build
 
-      - name: Deploy to GitHub Pages (root)
+      - name: Deploy to GitHub Pages (dev folder)
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./out
+          destination_dir: dev
