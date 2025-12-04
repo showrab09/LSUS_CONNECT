@@ -16,6 +16,7 @@ export default function Home() {
       <section className="right">
         <div className="card">
           <h2 className="title">Welcome Back Pilots</h2>
+          <h3 className="title">Welcome Back Home</h3>
           <p className="subtitle">Sign in to continue to LSUS Connect</p>
 
           <input type="email" placeholder="Email Address" className="input" />
