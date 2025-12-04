@@ -32,4 +32,3 @@ export default function RootLayout({
     </html>
   );
 }
-console.log("This will break"
