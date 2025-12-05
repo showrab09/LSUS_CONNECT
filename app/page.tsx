@@ -15,7 +15,7 @@ export default function Home() {
       {/* RIGHT SIDE CARD */}
       <section className="right">
         <div className="card">
-          <h2 className="title">Welcome Back Pilots</h2>
+          <h2 className="title">Welcome Back Pilots Home</h2>
 
           <p className="subtitle">Sign in to continue to LSUS Connect</p>
 
@@ -34,4 +34,3 @@ export default function Home() {
     </main>
   );
 }
-console.log("This will break"
