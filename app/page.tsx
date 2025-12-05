@@ -16,7 +16,6 @@ export default function Home() {
       <section className="right">
         <div className="card">
           <h2 className="title">Welcome Back Pilots</h2>
-          <h2 className="title">Welcome Back Home</h2>
 
           <p className="subtitle">Sign in to continue to LSUS Connect</p>
 
