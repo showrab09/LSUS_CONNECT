@@ -1,8 +1,7 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  output: "export",
-  basePath: process.env.BRANCH === "main" ? "" : `/${process.env.BRANCH}`,
-  assetPrefix: process.env.BRANCH === "main" ? "" : `/${process.env.BRANCH}/`,
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
 };
 
-module.exports = nextConfig;
+export default nextConfig;
