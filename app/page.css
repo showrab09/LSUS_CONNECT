@@ -1,0 +1,126 @@
+/* WHOLE SCREEN */
+body,
+html {
+    margin: 0;
+    padding: 0;
+    background: #2C115A;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.container {
+    display: flex;
+    min-height: 100vh;
+    padding: 0 80px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* LEFT SIDE */
+.left {
+    flex: 1;
+}
+
+.logo {
+    font-size: 56px;
+    font-weight: 900;
+    margin-bottom: 40px;
+}
+
+.yellow {
+    color: #FFC72C;
+}
+
+.white {
+    color: white;
+}
+
+.tagline {
+    font-size: 28px;
+    font-weight: 600;
+    color: white;
+}
+
+/* RIGHT CARD */
+.right {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.card {
+    width: 420px;
+    background: #3B1766;
+    padding: 40px 50px;
+    border-radius: 30px;
+    text-align: center;
+    box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.3);
+}
+
+.title {
+    font-size: 32px;
+    color: white;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: #ddd;
+    margin-bottom: 30px;
+}
+
+/* INPUT */
+.input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    margin-bottom: 15px;
+    background: #2C115A;
+    color: white;
+    font-size: 16px;
+}
+
+.input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* FORGOT PASSWORD */
+.forgot {
+    display: block;
+    text-align: left;
+    color: #FFC72C;
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 25px;
+    text-decoration: none;
+    font-style: italic;
+}
+
+/* BUTTON */
+.btn {
+    width: 100%;
+    background: #FFC72C;
+    border: none;
+    padding: 14px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #2C115A;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.btn:hover {
+    background: #FFD84D;
+}
+
+/* SIGNUP LINK */
+.signup {
+    color: white;
+    font-size: 14px;
+}
+
+.signup a {
+    color: #FFC72C;
+    text-decoration: underline;
+    font-weight: bold;
+}
