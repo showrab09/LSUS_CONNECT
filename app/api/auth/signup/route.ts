@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
-
+export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const { email, password, fullName } = await request.json();
