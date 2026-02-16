@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
+
 export const dynamic = 'force-dynamic';
+
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
 );
@@ -61,8 +63,8 @@ export async function POST(request: NextRequest) {
       .setExpirationTime('7d')
       .sign(JWT_SECRET);
 
-    // Return user data and token
-    return NextResponse.json(
+    // Create response with token as cookie
+    const response = NextResponse.json(
       {
         message: 'Signin successful',
         token,
@@ -78,7 +80,18 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-  } catch (error) {
+    // Set token as HTTP-only cookie
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    });
+
+    return response;
+
+  } catch (error: any) {
     console.error('Signin error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
