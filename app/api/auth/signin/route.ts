@@ -1,0 +1,88 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import bcrypt from 'bcryptjs';
+import { SignJWT } from 'jose';
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
+);
+
+export async function POST(request: NextRequest) {
+  try {
+    const { email, password } = await request.json();
+
+    // Validate LSUS email
+    if (!email.endsWith('@lsus.edu')) {
+      return NextResponse.json(
+        { error: 'Only @lsus.edu email addresses are allowed' },
+        { status: 400 }
+      );
+    }
+
+    // Find user by email
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (error || !user) {
+      return NextResponse.json(
+        { error: 'Invalid email or password' },
+        { status: 401 }
+      );
+    }
+
+    // Check if email is verified
+    if (!user.is_verified) {
+      return NextResponse.json(
+        { error: 'Please verify your email before signing in' },
+        { status: 403 }
+      );
+    }
+
+    // Verify password
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+
+    if (!passwordMatch) {
+      return NextResponse.json(
+        { error: 'Invalid email or password' },
+        { status: 401 }
+      );
+    }
+
+    // Generate JWT token
+    const token = await new SignJWT({ 
+      userId: user.id,
+      email: user.email,
+      isAdmin: user.is_admin
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setExpirationTime('7d')
+      .sign(JWT_SECRET);
+
+    // Return user data and token
+    return NextResponse.json(
+      {
+        message: 'Signin successful',
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.full_name,
+          profilePicture: user.profile_picture,
+          bio: user.bio,
+          isAdmin: user.is_admin,
+        },
+      },
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error('Signin error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
