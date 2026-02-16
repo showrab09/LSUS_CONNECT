@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 /**
  * LSUS Connect - Sign In Page
@@ -14,6 +15,7 @@ function isValidEmail(email: string): boolean {
 }
 
 export default function SignInPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,7 +26,9 @@ export default function SignInPage() {
 
   const emailError = useMemo(() => {
     if (!email) return null;
-    return isValidEmail(email) ? null : "Please enter a valid email address.";
+    if (!isValidEmail(email)) return "Please enter a valid email address.";
+    if (!email.endsWith('@lsus.edu')) return "Please use your LSUS email (@lsus.edu)";
+    return null;
   }, [email]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -42,6 +46,14 @@ export default function SignInPage() {
       return;
     }
 
+    if (!trimmedEmail.endsWith('@lsus.edu')) {
+      setMessage({
+        type: "error",
+        text: "Please use your LSUS email address (@lsus.edu).",
+      });
+      return;
+    }
+
     if (!trimmedPassword) {
       setMessage({
         type: "error",
@@ -53,29 +65,42 @@ export default function SignInPage() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Replace with actual API call
-      // Example: await fetch('/api/auth/signin', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ email: trimmedEmail, password: trimmedPassword })
-      // })
+      // Call signin API
+      const response = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email: trimmedEmail, 
+          password: trimmedPassword 
+        }),
+      });
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const data = await response.json();
 
-      // Simulate successful login
+      if (!response.ok) {
+        throw new Error(data.error || 'Signin failed');
+      }
+
+      // Store token in localStorage
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      // Show success message
       setMessage({
         type: "success",
         text: "Sign in successful! Redirecting...",
       });
 
-      // Redirect to home page
+      // Redirect to feed/home page
       setTimeout(() => {
-        window.location.href = "/";
+        router.push('/post-listing'); // or wherever you want to redirect after login
       }, 1500);
-    } catch (error) {
+    } catch (error: any) {
       setMessage({
         type: "error",
-        text: "Invalid email or password. Please try again.",
+        text: error.message || "Invalid email or password. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -119,13 +144,13 @@ export default function SignInPage() {
                   htmlFor="email"
                   className="block text-white text-sm font-medium mb-2"
                 >
-                  Email Address
+                  LSUS Email Address
                 </label>
                 <input
                   id="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="Enter your email"
+                  placeholder="yourname@lsus.edu"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   aria-invalid={Boolean(emailError)}
