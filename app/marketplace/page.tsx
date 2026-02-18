@@ -40,7 +40,7 @@ const mockListings = [
   },
 ];
 
-export default function MarketplaceHomePage() {
+export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilters, setSelectedFilters] = useState({
     furniture: false,
@@ -68,7 +68,7 @@ export default function MarketplaceHomePage() {
         <div className="max-w-[1600px] mx-auto px-6">
           <div className="flex items-center justify-between gap-8">
             {/* Logo */}
-            <Link href="/" className="text-2xl font-bold text-white flex items-center gap-2 whitespace-nowrap">
+            <Link href="/marketplace" className="text-2xl font-bold text-white flex items-center gap-2 whitespace-nowrap">
               <span className="text-[#FDD023]">LSUS</span>
               <span>CONNECT</span>
             </Link>
