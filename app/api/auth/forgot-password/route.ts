@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { randomBytes } from 'crypto';
+import { sendPasswordResetEmail } from '@/lib/email/resend';
+
 export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
@@ -50,16 +53,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Send reset password email
-    // For now, we'll just return the token (in production, you'd email this)
-    console.log('Reset Token:', resetToken);
-    console.log('Reset Link:', `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`);
+    // Send password reset email
+    await sendPasswordResetEmail(email, resetToken);
 
     return NextResponse.json(
       { 
         message: 'If an account exists with this email, you will receive a password reset link.',
-        // Remove this in production - only for testing
-        resetToken: resetToken 
       },
       { status: 200 }
     );

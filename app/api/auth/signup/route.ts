@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 export const dynamic = 'force-dynamic';
+import { sendVerificationEmail } from '@/lib/email/resend';
+
 export async function POST(request: NextRequest) {
   try {
     const { email, password, fullName } = await request.json();
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Send verification email (we'll implement this next)
+  await sendVerificationEmail(email, verificationToken);
     
     return NextResponse.json(
       {

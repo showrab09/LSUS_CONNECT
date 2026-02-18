@@ -17,13 +17,13 @@ const protectedRoutes = [
   '/contact-team',
 ];
 
-// Pages that should redirect to home if already logged in
+// Pages that should redirect to marketplace if already logged in
 const authRoutes = ['/signin', '/signup'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Get token from cookie or localStorage (we'll use cookie for server-side)
+  // Get token from cookie
   const token = request.cookies.get('token')?.value;
 
   // Check if the route is protected
@@ -42,12 +42,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // If accessing auth route with valid token, redirect to home
+  // If accessing auth route with valid token, redirect to marketplace
   if (isAuthRoute && token) {
     try {
       // Verify token is valid
       await jwtVerify(token, JWT_SECRET);
-      const url = new URL('/post-listing', request.url);
+      const url = new URL('/marketplace', request.url);
       return NextResponse.redirect(url);
     } catch (error) {
       // Token invalid, allow access to auth page
