@@ -148,7 +148,7 @@ export default function MarketplacePage() {
                     onChange={() => toggleFilter("freeSwap")}
                     className="w-5 h-5 accent-[#FDD023] cursor-pointer"
                   />
-                  <span className="text-base">Free / Swap</span>
+                  <span className="text-base">Free / Swaps</span>
                 </label>
               </div>
 

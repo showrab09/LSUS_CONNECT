@@ -33,19 +33,29 @@ function EmailVerificationContent() {
     setMessage("Verifying your email...");
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // REAL API CALL - This actually verifies the email in the database
+      const response = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: verificationToken }),
+      });
 
-      setStatus("success");
-      setMessage("Email verified successfully! Redirecting to sign in...");
+      const data = await response.json();
 
-      setTimeout(() => {
-        window.location.href = "/signin";
-      }, 3000);
+      if (response.ok) {
+        setStatus("success");
+        setMessage(data.message || "Email verified successfully! Redirecting to sign in...");
+
+        setTimeout(() => {
+          window.location.href = "/signin";
+        }, 3000);
+      } else {
+        setStatus("error");
+        setMessage(data.error || "This verification link is invalid or has expired. Please request a new verification email.");
+      }
     } catch (error) {
       setStatus("error");
-      setMessage(
-        "This verification link is invalid or has expired. Please request a new verification email."
-      );
+      setMessage("Something went wrong. Please try again or request a new verification email.");
     }
   }
 

@@ -46,21 +46,30 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Replace with actual API call
-      // Example: await fetch('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email: trimmed }) })
-      
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Security best practice: Don't reveal whether account exists
-      // Always show same success message
-      setMessage({
-        type: "success",
-        text: "If an account exists with this email, you will receive a password reset link.",
+      // REAL API CALL - Actually sends password reset email
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmed }),
       });
-      
-      // Clear email field on success
-      setEmail("");
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Security best practice: Don't reveal whether account exists
+        setMessage({
+          type: "success",
+          text: data.message || "If an account exists with this email, you will receive a password reset link.",
+        });
+        
+        // Clear email field on success
+        setEmail("");
+      } else {
+        setMessage({
+          type: "error",
+          text: data.error || "Something went wrong. Please try again.",
+        });
+      }
     } catch (error) {
       setMessage({
         type: "error",
@@ -124,7 +133,7 @@ export default function ForgotPasswordPage() {
             type="submit"
             disabled={isSubmitting || Boolean(emailError) || !email.trim()}
           >
-            Reset Password
+            {isSubmitting ? "Sending..." : "Reset Password"}
           </button>
 
           {/* Success/Error Message */}
