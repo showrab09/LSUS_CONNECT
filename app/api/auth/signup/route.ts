@@ -9,13 +9,13 @@ export async function POST(request: NextRequest) {
   try {
     const { email, password, fullName } = await request.json();
 
-    // Validate LSUS email
-    if (!email.endsWith('@lsus.edu')) {
-      return NextResponse.json(
-        { error: 'Only @lsus.edu email addresses are allowed' },
-        { status: 400 }
-      );
-    }
+    // // Validate LSUS email
+    // if (!email.endsWith('@lsus.edu')) {
+    //   return NextResponse.json(
+    //     { error: 'Only @lsus.edu email addresses are allowed' },
+    //     { status: 400 }
+    //   );
+    // }
 
     // Check if user already exists
     const { data: existingUser } = await supabase

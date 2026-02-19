@@ -27,7 +27,7 @@ export default function SignInPage() {
   const emailError = useMemo(() => {
     if (!email) return null;
     if (!isValidEmail(email)) return "Please enter a valid email address.";
-    if (!email.endsWith('@lsus.edu')) return "Please use your LSUS email (@lsus.edu)";
+    // if (!email.endsWith('@lsus.edu')) return "Please use your LSUS email (@lsus.edu)";
     return null;
   }, [email]);
 
@@ -46,13 +46,13 @@ export default function SignInPage() {
       return;
     }
 
-    if (!trimmedEmail.endsWith('@lsus.edu')) {
-      setMessage({
-        type: "error",
-        text: "Please use your LSUS email address (@lsus.edu).",
-      });
-      return;
-    }
+    // if (!trimmedEmail.endsWith('@lsus.edu')) {
+    //   setMessage({
+    //     type: "error",
+    //     text: "Please use your LSUS email address (@lsus.edu).",
+    //   });
+    //   return;
+    // }
 
     if (!trimmedPassword) {
       setMessage({
