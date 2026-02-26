@@ -1,52 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 /**
- * LSUS Connect - Marketplace Home Page (FULLY RESPONSIVE)
- * Mobile: 375px (hamburger menu, filter modal, 1 column)
- * Tablet: 768px (2 columns)
- * Desktop: 1024px+ (original layout with sidebar)
- * 
- * INCLUDES: Logout functionality
+ * LSUS Connect - Marketplace Home Page (DYNAMIC + RESPONSIVE)
+ * Now fetches REAL data from the database via API
  */
 
-// Mock data for listings
-const mockListings = [
-  {
-    id: 1,
-    title: "Toyota 4runner",
-    price: "25,000 $",
-    image: "/api/placeholder/400/300",
-    category: "Vehicles"
-  },
-  {
-    id: 2,
-    title: "Chair",
-    price: "Free",
-    image: "/api/placeholder/400/300",
-    category: "Furniture"
-  },
-  {
-    id: 3,
-    title: "Chemical Equipment",
-    price: "10 $",
-    image: "/api/placeholder/400/300",
-    category: "Other"
-  },
-  {
-    id: 4,
-    title: "Table",
-    price: "Free",
-    image: "/api/placeholder/400/300",
-    category: "Furniture"
-  },
-];
+interface User {
+  id: string;
+  full_name: string;
+  email: string;
+  profile_picture: string | null;
+}
+
+interface Listing {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  price_type: string;
+  category: string;
+  condition: string;
+  location: string;
+  images: string[];
+  status: string;
+  created_at: string;
+  user: User;
+}
 
 export default function MarketplacePage() {
   const router = useRouter();
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilters, setSelectedFilters] = useState({
     furniture: false,
@@ -58,6 +46,29 @@ export default function MarketplacePage() {
   // Mobile UI state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
+  // Fetch listings from API on mount
+  useEffect(() => {
+    fetchListings();
+  }, []);
+
+  const fetchListings = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/listings');
+      const data = await response.json();
+      
+      if (response.ok) {
+        setListings(data.listings);
+      } else {
+        console.error('Failed to fetch listings:', data.error);
+      }
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const toggleFilter = (filter: keyof typeof selectedFilters) => {
     setSelectedFilters((prev) => ({
@@ -82,15 +93,44 @@ export default function MarketplacePage() {
   };
 
   const handleLogout = () => {
-    // Clear token from cookie and localStorage
     document.cookie = "token=; path=/; max-age=0";
     localStorage.removeItem("token");
-    
-    // Redirect to signin
     router.push("/signin");
   };
 
   const activeFilterCount = Object.values(selectedFilters).filter(Boolean).length;
+
+  // Filter listings based on search
+  const filteredListings = listings.filter((listing) => {
+    const matchesSearch = 
+      searchQuery.trim() === "" ||
+      listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      listing.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return matchesSearch;
+  });
+
+  // Format price display
+  const formatPrice = (listing: Listing) => {
+    if (listing.price_type === 'FREE') return 'Free';
+    if (listing.price_type === 'SWAP') return 'Swap';
+    return `$${listing.price.toLocaleString()}`;
+  };
+
+  // Format time ago
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInDays === 1) return 'Yesterday';
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    return date.toLocaleDateString();
+  };
 
   return (
     <div className="min-h-screen bg-[#461D7C]">
@@ -99,13 +139,11 @@ export default function MarketplacePage() {
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6">
           {/* Desktop Header */}
           <div className="hidden lg:flex items-center justify-between gap-8">
-            {/* Logo */}
             <Link href="/marketplace" className="text-2xl font-bold text-white flex items-center gap-2 whitespace-nowrap">
               <span className="text-[#FDD023]">LSUS</span>
               <span>CONNECT</span>
             </Link>
 
-            {/* Search Bar */}
             <div className="flex-1 max-w-3xl">
               <div className="relative">
                 <input
@@ -123,14 +161,10 @@ export default function MarketplacePage() {
               </div>
             </div>
 
-            {/* Profile & Logout */}
             <div className="flex items-center gap-4 text-white text-sm font-medium whitespace-nowrap">
               <Link href="/user-profile" className="hover:text-[#FDD023] transition-colors">Profile</Link>
               <Link href="/" className="hover:text-[#FDD023] transition-colors">Notifications</Link>
-              <button 
-                onClick={handleLogout}
-                className="hover:text-[#FDD023] transition-colors"
-              >
+              <button onClick={handleLogout} className="hover:text-[#FDD023] transition-colors">
                 Logout
               </button>
             </div>
@@ -139,7 +173,6 @@ export default function MarketplacePage() {
           {/* Mobile/Tablet Header */}
           <div className="lg:hidden">
             <div className="flex items-center justify-between mb-3">
-              {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="p-2 text-white hover:text-[#FDD023] transition-colors"
@@ -154,13 +187,11 @@ export default function MarketplacePage() {
                 </svg>
               </button>
 
-              {/* Logo */}
               <Link href="/marketplace" className="text-xl font-bold text-white flex items-center gap-2">
                 <span className="text-[#FDD023]">LSUS</span>
                 <span>CONNECT</span>
               </Link>
 
-              {/* Profile Icon */}
               <Link href="/user-profile" className="p-2 text-white hover:text-[#FDD023] transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -168,7 +199,6 @@ export default function MarketplacePage() {
               </Link>
             </div>
 
-            {/* Mobile Search */}
             <div className="relative">
               <input
                 type="text"
@@ -198,10 +228,7 @@ export default function MarketplacePage() {
                 <Link href="/post-listing" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
                   Post Listing
                 </Link>
-                <button 
-                  onClick={handleLogout}
-                  className="text-left text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]"
-                >
+                <button onClick={handleLogout} className="text-left text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
                   Logout
                 </button>
               </nav>
@@ -218,7 +245,6 @@ export default function MarketplacePage() {
             <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c] sticky top-24">
               <h2 className="text-white font-bold text-lg mb-6">Filters</h2>
 
-              {/* Filter Checkboxes */}
               <div className="space-y-4">
                 <label className="flex items-center gap-3 text-white cursor-pointer hover:text-[#FDD023] transition-colors">
                   <input
@@ -261,7 +287,6 @@ export default function MarketplacePage() {
                 </label>
               </div>
 
-              {/* Apply Filters Button */}
               <button
                 onClick={handleApplyFilters}
                 className="w-full mt-6 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors min-h-[44px]"
@@ -269,7 +294,6 @@ export default function MarketplacePage() {
                 Apply Filters
               </button>
 
-              {/* Help Links */}
               <div className="mt-8 pt-6 border-t border-[#5a2d8c]">
                 <div className="space-y-3 text-sm">
                   <Link href="/contact-team" className="block text-gray-300 hover:text-[#FDD023] transition-colors">
@@ -306,43 +330,78 @@ export default function MarketplacePage() {
               </button>
 
               <p className="text-gray-300 text-sm">
-                {mockListings.length} listing{mockListings.length !== 1 ? 's' : ''}
+                {filteredListings.length} listing{filteredListings.length !== 1 ? 's' : ''}
               </p>
             </div>
 
-            {/* Responsive Grid: 1 column (mobile), 2 columns (tablet+) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              {mockListings.map((listing) => (
-                <Link
-                  key={listing.id}
-                  href="/product-detail"
-                  className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow block"
-                >
-                  {/* Image */}
-                  <div className="relative h-48 sm:h-64 bg-gray-200">
-                    <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
+            {/* Loading State */}
+            {isLoading && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-[#3a1364] rounded-lg p-4 border border-[#5a2d8c] animate-pulse">
+                    <div className="aspect-video bg-[#2a0d44] rounded-lg mb-4"></div>
+                    <div className="h-4 bg-[#2a0d44] rounded w-3/4 mb-2"></div>
+                    <div className="h-6 bg-[#2a0d44] rounded w-1/2"></div>
                   </div>
+                ))}
+              </div>
+            )}
 
-                  {/* Content */}
-                  <div className="p-4">
-                    {/* Title */}
-                    <h3 className="text-black font-bold text-lg sm:text-xl mb-2 line-clamp-2">
-                      {listing.title}
-                    </h3>
-
-                    {/* Price */}
-                    <p className="text-[#461D7C] font-bold text-base sm:text-lg mb-4">
-                      {listing.price}
-                    </p>
-
-                    {/* Message Button - Touch friendly */}
-                    <div className="w-full py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors text-center min-h-[44px] flex items-center justify-center">
-                      Message
+            {/* Listings Grid */}
+            {!isLoading && filteredListings.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                {filteredListings.map((listing) => (
+                  <Link
+                    key={listing.id}
+                    href={`/product-detail?id=${listing.id}`}
+                    className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow block"
+                  >
+                    <div className="relative h-48 sm:h-64 bg-gray-200">
+                      <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
                     </div>
-                  </div>
+
+                    <div className="p-4">
+                      <h3 className="text-black font-bold text-lg sm:text-xl mb-2 line-clamp-2">
+                        {listing.title}
+                      </h3>
+
+                      <p className="text-[#461D7C] font-bold text-base sm:text-lg mb-2">
+                        {formatPrice(listing)}
+                      </p>
+
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                        <span>{listing.user.full_name}</span>
+                        <span>•</span>
+                        <span>{formatTimeAgo(listing.created_at)}</span>
+                      </div>
+
+                      <div className="w-full py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors text-center min-h-[44px] flex items-center justify-center">
+                        Message
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!isLoading && filteredListings.length === 0 && (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#3a1364] flex items-center justify-center">
+                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                </div>
+                <h3 className="text-white text-xl font-bold mb-2">No listings found</h3>
+                <p className="text-gray-300 mb-6">Be the first to post something!</p>
+                <Link
+                  href="/post-listing"
+                  className="inline-block px-6 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors min-h-[48px]"
+                >
+                  Create Listing
                 </Link>
-              ))}
-            </div>
+              </div>
+            )}
           </main>
         </div>
       </div>
@@ -350,16 +409,13 @@ export default function MarketplacePage() {
       {/* Mobile Filter Modal */}
       {isFilterModalOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          {/* Backdrop */}
           <div 
             className="absolute inset-0 bg-black/70"
             onClick={() => setIsFilterModalOpen(false)}
           />
           
-          {/* Modal */}
           <div className="absolute inset-y-0 right-0 w-full max-w-sm bg-[#3a1364] shadow-xl overflow-y-auto">
             <div className="p-6">
-              {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-white font-bold text-xl">Filters</h2>
                 <button
@@ -372,7 +428,6 @@ export default function MarketplacePage() {
                 </button>
               </div>
 
-              {/* Filter Checkboxes */}
               <div className="space-y-4 mb-6">
                 <label className="flex items-center gap-3 text-white cursor-pointer py-2">
                   <input
@@ -415,7 +470,6 @@ export default function MarketplacePage() {
                 </label>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex gap-3">
                 <button
                   onClick={clearFilters}
@@ -431,7 +485,6 @@ export default function MarketplacePage() {
                 </button>
               </div>
 
-              {/* Help Links */}
               <div className="mt-8 pt-6 border-t border-[#5a2d8c]">
                 <div className="space-y-3">
                   <Link 
