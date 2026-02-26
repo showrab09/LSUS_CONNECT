@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ProfileDropdown from "@/components/ProfileDropdown";
 
 /**
- * LSUS Connect - Marketplace Home Page (DYNAMIC + RESPONSIVE)
- * Now fetches REAL data from the database via API
+ * LSUS Connect - Marketplace Home Page (DYNAMIC + RESPONSIVE + PROFILE DROPDOWN)
+ * Now includes professional profile dropdown component
  */
 
 interface User {
@@ -80,7 +81,6 @@ export default function MarketplacePage() {
   const handleApplyFilters = () => {
     console.log("Applying filters:", selectedFilters);
     setIsFilterModalOpen(false);
-    // TODO: Filter listings based on selected filters
   };
 
   const clearFilters = () => {
@@ -90,12 +90,6 @@ export default function MarketplacePage() {
       housing: false,
       freeSwap: false,
     });
-  };
-
-  const handleLogout = () => {
-    document.cookie = "token=; path=/; max-age=0";
-    localStorage.removeItem("token");
-    router.push("/signin");
   };
 
   const activeFilterCount = Object.values(selectedFilters).filter(Boolean).length;
@@ -161,12 +155,11 @@ export default function MarketplacePage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 text-white text-sm font-medium whitespace-nowrap">
-              <Link href="/user-profile" className="hover:text-[#FDD023] transition-colors">Profile</Link>
-              <Link href="/" className="hover:text-[#FDD023] transition-colors">Notifications</Link>
-              <button onClick={handleLogout} className="hover:text-[#FDD023] transition-colors">
-                Logout
-              </button>
+            <div className="flex items-center gap-4">
+              <Link href="/" className="text-white hover:text-[#FDD023] transition-colors text-sm">
+                Notifications
+              </Link>
+              <ProfileDropdown />
             </div>
           </div>
 
@@ -192,11 +185,7 @@ export default function MarketplacePage() {
                 <span>CONNECT</span>
               </Link>
 
-              <Link href="/user-profile" className="p-2 text-white hover:text-[#FDD023] transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </Link>
+              <ProfileDropdown />
             </div>
 
             <div className="relative">
@@ -219,18 +208,12 @@ export default function MarketplacePage() {
           {isMobileMenuOpen && (
             <div className="lg:hidden mt-4 pb-4 border-t border-[#5a2d8c] pt-4">
               <nav className="flex flex-col gap-3">
-                <Link href="/user-profile" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
-                  Profile
-                </Link>
                 <Link href="/" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
                   Notifications
                 </Link>
                 <Link href="/post-listing" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
                   Post Listing
                 </Link>
-                <button onClick={handleLogout} className="text-left text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
-                  Logout
-                </button>
               </nav>
             </div>
           )}
