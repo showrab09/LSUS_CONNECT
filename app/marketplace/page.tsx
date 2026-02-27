@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import ProfileDropdown from "@/components/ProfileDropdown";
+import UserDropdown from "@/components/UserDropdown";
 
 /**
  * LSUS Connect - Marketplace Home Page (DYNAMIC + RESPONSIVE + PROFILE DROPDOWN)
@@ -159,7 +159,7 @@ export default function MarketplacePage() {
               <Link href="/" className="text-white hover:text-[#FDD023] transition-colors text-sm">
                 Notifications
               </Link>
-              <ProfileDropdown />
+              <UserDropdown />
             </div>
           </div>
 
@@ -185,7 +185,7 @@ export default function MarketplacePage() {
                 <span>CONNECT</span>
               </Link>
 
-              <ProfileDropdown />
+              <UserDropdown />
             </div>
 
             <div className="relative">
