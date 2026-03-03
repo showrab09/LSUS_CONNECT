@@ -2,13 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import UserDropdown from "@/components/UserDropdown";
 
 /**
- * LSUS Connect - Product Detail Page (FULLY RESPONSIVE)
- * Mobile: Stacked layout, full-width images
- * Tablet: Balanced 2-column layout
- * Desktop: Image gallery + seller sidebar
+ * LSUS Connect - Product Detail Page (RESPONSIVE + USER DROPDOWN)
  */
 
 // Mock product data
@@ -19,7 +16,7 @@ const productData = {
   condition: "Good",
   category: "Vehicle",
   postedTime: "2h ago",
-  description: "Everything is perfect. Well-maintained vehicle with complete service history. Clean title, no accidents. Recently serviced with new tires. Perfect condition inside and out. Garage kept, non-smoker owner. All maintenance records available.",
+  description: "Everything is perfect.",
   mileage: "80,000",
   seller: {
     name: "John Doe",
@@ -35,7 +32,6 @@ const productData = {
 };
 
 export default function ProductDetailPage() {
-  const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(0);
   const [message, setMessage] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -49,10 +45,8 @@ export default function ProductDetailPage() {
     console.log("Saving item");
   };
 
-  const handleLogout = () => {
-    document.cookie = "token=; path=/; max-age=0";
-    localStorage.removeItem("token");
-    router.push("/signin");
+  const handleMessageSeller = () => {
+    console.log("Message seller clicked");
   };
 
   return (
@@ -60,91 +54,98 @@ export default function ProductDetailPage() {
       {/* Header - Responsive */}
       <header className="bg-[#461D7C] border-b border-[#5a2d8c] py-3 sm:py-4 sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between">
-            <Link href="/marketplace" className="text-xl sm:text-2xl font-bold text-white">
-              <span className="text-[#FDD023]">LSUS</span> CONNECT
+          {/* Desktop Header */}
+          <div className="hidden lg:flex items-center justify-between">
+            <Link href="/marketplace" className="text-2xl font-bold text-white flex items-center gap-2">
+              <span className="text-[#FDD023]">LSUS</span>
+              <span>CONNECT</span>
             </Link>
 
-            {/* Desktop Nav */}
-            <div className="hidden md:flex items-center gap-4 sm:gap-6 text-white text-sm">
+            <div className="flex items-center gap-6 text-white text-sm">
               <Link href="/marketplace" className="hover:text-[#FDD023] transition-colors">
                 Back to listings
               </Link>
-              <Link href="/user-profile" className="hover:text-[#FDD023] transition-colors">
-                Profile
+              <Link href="/marketplace" className="hover:text-[#FDD023] transition-colors">
+                Search
               </Link>
-              <button onClick={handleLogout} className="hover:text-[#FDD023] transition-colors">
-                Logout
-              </button>
+              <UserDropdown />
             </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-white hover:text-[#FDD023] transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {isMobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
           </div>
 
-          {/* Mobile Menu */}
-          {isMobileMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 border-t border-[#5a2d8c] pt-4">
-              <nav className="flex flex-col gap-3">
-                <Link href="/marketplace" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
-                  Back to listings
-                </Link>
-                <Link href="/user-profile" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
-                  Profile
-                </Link>
-                <button onClick={handleLogout} className="text-left text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
-                  Logout
-                </button>
-              </nav>
+          {/* Mobile Header */}
+          <div className="lg:hidden">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 text-white hover:text-[#FDD023] transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {isMobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+
+              <Link href="/marketplace" className="text-xl font-bold text-white flex items-center gap-2">
+                <span className="text-[#FDD023]">LSUS</span>
+                <span>CONNECT</span>
+              </Link>
+
+              <UserDropdown />
             </div>
-          )}
+
+            {isMobileMenuOpen && (
+              <div className="mt-4 pb-4 border-t border-[#5a2d8c] pt-4">
+                <nav className="flex flex-col gap-3">
+                  <Link href="/marketplace" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
+                    Back to listings
+                  </Link>
+                  <Link href="/marketplace" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
+                    Search
+                  </Link>
+                </nav>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* Main Content - Responsive Grid */}
+      {/* Main Content - Responsive */}
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* Breadcrumb - Hidden on mobile */}
-        <div className="hidden sm:block mb-6 text-white text-sm">
+        {/* Breadcrumb */}
+        <div className="mb-6 text-white text-sm">
           <Link href="/marketplace" className="hover:text-[#FDD023] transition-colors">
-            Marketplace
+            Home
           </Link>
           <span className="mx-2">›</span>
           <Link href="/marketplace" className="hover:text-[#FDD023] transition-colors">
-            {productData.category}
+            Category
           </Link>
           <span className="mx-2">›</span>
-          <span className="text-gray-400">Item</span>
+          <span className="text-gray-300">{productData.title}</span>
         </div>
 
+        {/* Product Grid - Responsive */}
         <div className="grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-6 lg:gap-8">
-          {/* Left Side - Images & Details */}
+          {/* Left Column - Images & Details */}
           <div className="space-y-6">
             {/* Main Image */}
-            <div className="bg-white rounded-lg overflow-hidden">
-              <div className="aspect-video sm:aspect-[4/3] bg-gray-700">
-                <div className="w-full h-full bg-gradient-to-br from-gray-600 to-gray-800"></div>
-              </div>
+            <div className="bg-[#2a0d44] rounded-lg overflow-hidden border border-[#5a2d8c]">
+              <div className="aspect-video bg-gray-700"></div>
             </div>
 
-            {/* Thumbnail Gallery - Scrollable on mobile */}
-            <div className="flex gap-3 overflow-x-auto pb-2">
+            {/* Thumbnail Images - Responsive Grid */}
+            <div className="grid grid-cols-4 gap-3">
               {productData.images.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(idx)}
-                  className={`flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border-2 transition-colors ${
-                    selectedImage === idx ? "border-[#FDD023]" : "border-[#5a2d8c]"
+                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                    selectedImage === idx
+                      ? "border-[#FDD023]"
+                      : "border-[#5a2d8c] hover:border-[#FDD023]/50"
                   }`}
                 >
                   <div className="w-full h-full bg-gray-700"></div>
@@ -152,93 +153,106 @@ export default function ProductDetailPage() {
               ))}
             </div>
 
-            {/* Product Details Card */}
-            <div className="bg-[#3a1364] rounded-lg p-4 sm:p-6 border border-[#5a2d8c]">
-              <h1 className="text-white text-2xl sm:text-3xl font-bold mb-2">{productData.title}</h1>
-              <p className="text-[#FDD023] text-3xl sm:text-4xl font-bold mb-4">{productData.price}</p>
-              
-              {/* Details Grid - Responsive */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <p className="text-gray-400 text-sm">Condition</p>
-                  <p className="text-white font-semibold">{productData.condition}</p>
+            {/* Product Details */}
+            <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
+              <h2 className="text-white font-bold text-xl mb-4">Details</h2>
+              <div className="space-y-3 text-white">
+                <div className="flex justify-between py-2 border-b border-[#5a2d8c]">
+                  <span className="text-gray-300">Condition</span>
+                  <span className="font-semibold">{productData.condition}</span>
                 </div>
-                <div>
-                  <p className="text-gray-400 text-sm">Category</p>
-                  <p className="text-white font-semibold">{productData.category}</p>
+                <div className="flex justify-between py-2 border-b border-[#5a2d8c]">
+                  <span className="text-gray-300">Category</span>
+                  <span className="font-semibold">{productData.category}</span>
                 </div>
-                <div>
-                  <p className="text-gray-400 text-sm">Mileage</p>
-                  <p className="text-white font-semibold">{productData.mileage} miles</p>
+                <div className="flex justify-between py-2 border-b border-[#5a2d8c]">
+                  <span className="text-gray-300">Mileage</span>
+                  <span className="font-semibold">{productData.mileage}</span>
                 </div>
-                <div>
-                  <p className="text-gray-400 text-sm">Posted</p>
-                  <p className="text-white font-semibold">{productData.postedTime}</p>
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-300">Posted</span>
+                  <span className="font-semibold">{productData.postedTime}</span>
                 </div>
               </div>
+            </div>
 
-              {/* Description */}
-              <div className="mb-6">
-                <h3 className="text-[#FDD023] font-semibold mb-2">Description</h3>
-                <p className="text-white leading-relaxed">{productData.description}</p>
-              </div>
+            {/* Description */}
+            <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
+              <h2 className="text-white font-bold text-xl mb-4">Description</h2>
+              <p className="text-gray-300 leading-relaxed">{productData.description}</p>
             </div>
           </div>
 
-          {/* Right Side - Seller Info & Actions */}
+          {/* Right Column - Seller & Actions */}
           <div className="space-y-6">
-            {/* Seller Card */}
-            <div className="bg-[#3a1364] rounded-lg p-4 sm:p-6 border border-[#5a2d8c]">
-              <h3 className="text-[#FDD023] font-semibold mb-4">Seller Information</h3>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-600 flex-shrink-0"></div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-semibold">{productData.seller.name}</p>
-                  <div className="flex items-center gap-1 text-[#FDD023]">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    <span className="text-sm">{productData.seller.rating}</span>
+            {/* Price Card */}
+            <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c] sticky top-24">
+              <div className="mb-6">
+                <h1 className="text-white font-bold text-2xl sm:text-3xl mb-2">{productData.title}</h1>
+                <p className="text-[#FDD023] font-bold text-3xl sm:text-4xl">{productData.price}</p>
+              </div>
+
+              {/* Seller Info */}
+              <div className="mb-6 pb-6 border-b border-[#5a2d8c]">
+                <h3 className="text-white font-semibold mb-3">Seller</h3>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-[#2a0d44] border-2 border-[#FDD023]"></div>
+                  <div>
+                    <p className="text-white font-semibold">{productData.seller.name}</p>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[#FDD023]">★</span>
+                      <span className="text-white text-sm">{productData.seller.rating}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              {/* Action Buttons - Touch friendly */}
+
+              {/* Action Buttons - Touch Optimized */}
               <div className="space-y-3">
                 <button
-                  onClick={() => setMessage("I'm interested in this item")}
-                  className="w-full min-h-[48px] bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+                  onClick={handleMessageSeller}
+                  className="w-full min-h-[48px] py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
                 >
                   Message Seller
                 </button>
                 <button
                   onClick={handleSaveItem}
-                  className="w-full min-h-[48px] bg-[#2a0d44] text-white font-semibold rounded-lg border border-[#5a2d8c] hover:border-[#FDD023] transition-colors"
+                  className="w-full min-h-[48px] py-3 bg-[#2a0d44] text-white font-semibold rounded-lg border border-[#5a2d8c] hover:border-[#FDD023] transition-colors"
                 >
                   Save Item
                 </button>
               </div>
-            </div>
 
-            {/* Message Box - Appears when button clicked */}
-            {message && (
-              <div className="bg-[#3a1364] rounded-lg p-4 sm:p-6 border border-[#5a2d8c]">
-                <h3 className="text-[#FDD023] font-semibold mb-3">Send Message</h3>
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  rows={4}
-                  placeholder="Type your message..."
-                  className="w-full px-4 py-3 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20 resize-none mb-3"
-                />
-                <button
-                  onClick={handleSendMessage}
-                  className="w-full min-h-[48px] bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
-                >
-                  Send
-                </button>
+              {/* Safety Tips */}
+              <div className="mt-6 p-4 bg-[#2a0d44] rounded-lg border border-[#5a2d8c]">
+                <h4 className="text-[#FDD023] font-semibold mb-2 text-sm">Safety Tips</h4>
+                <ul className="text-gray-300 text-xs space-y-1">
+                  <li>• Meet in a public place</li>
+                  <li>• Check the item before buying</li>
+                  <li>• Don't share personal info</li>
+                </ul>
               </div>
-            )}
+            </div>
+          </div>
+        </div>
+
+        {/* Message Section - Mobile Friendly */}
+        <div className="mt-8 bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
+          <h2 className="text-white font-bold text-xl mb-4">Send Message</h2>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Type your message..."
+              className="flex-1 h-12 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+            />
+            <button
+              onClick={handleSendMessage}
+              className="min-h-[48px] px-6 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+            >
+              Send
+            </button>
           </div>
         </div>
       </div>

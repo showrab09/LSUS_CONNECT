@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 /**
  * UserDropdown Component
@@ -18,7 +17,6 @@ interface User {
 }
 
 export default function UserDropdown() {
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -45,7 +43,6 @@ export default function UserDropdown() {
   const fetchCurrentUser = async () => {
     try {
       // TODO: Replace with actual user API endpoint
-      // For now, get from localStorage or cookie
       const mockUser = {
         id: "1",
         full_name: "Robert Lovelace",
@@ -58,23 +55,26 @@ export default function UserDropdown() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     console.log("LOGOUT CLICKED - Starting logout process...");
     
-    // Clear token from cookie
-    document.cookie = "token=; path=/; max-age=0";
-    console.log("Cookie cleared");
+    // Clear everything
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    localStorage.clear();
+    sessionStorage.clear();
+    console.log("All storage cleared");
     
-    // Clear token from localStorage
-    localStorage.removeItem("token");
-    console.log("LocalStorage cleared");
+    // Close dropdown
+    setIsOpen(false);
     
-    // Force full page redirect to signin
-    console.log("Redirecting to /signin...");
-    window.location.href = "/signin";
+    // Multiple redirect attempts
+    console.log("Attempting redirect...");
+    window.location.replace("/signin");
   };
 
-  // Get user initials for avatar
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -99,7 +99,6 @@ export default function UserDropdown() {
         aria-label="User menu"
         aria-expanded={isOpen}
       >
-        {/* Avatar */}
         <div className="relative">
           {user.profile_picture ? (
             <img
@@ -114,17 +113,11 @@ export default function UserDropdown() {
               </span>
             </div>
           )}
-          
-          {/* Online indicator */}
           <div className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 border-2 border-[#461D7C] rounded-full" />
         </div>
-
-        {/* Name (hidden on mobile) */}
         <span className="hidden md:block text-white font-medium text-sm">
           {user.full_name.split(" ")[0]}
         </span>
-
-        {/* Chevron */}
         <svg
           className={`hidden sm:block w-4 h-4 text-white transition-transform ${
             isOpen ? "rotate-180" : ""
@@ -145,7 +138,6 @@ export default function UserDropdown() {
       {/* Dropdown Menu */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-56 sm:w-64 bg-[#3a1364] border border-[#5a2d8c] rounded-lg shadow-xl z-50 overflow-hidden">
-          {/* User Info Header */}
           <div className="px-4 py-3 border-b border-[#5a2d8c] bg-[#2a0d44]">
             <p className="text-white font-semibold text-sm truncate">
               {user.full_name}
@@ -153,7 +145,6 @@ export default function UserDropdown() {
             <p className="text-gray-400 text-xs truncate">{user.email}</p>
           </div>
 
-          {/* Menu Items */}
           <div className="py-2">
             <Link
               href="/user-profile"
