@@ -294,6 +294,9 @@ export default function HomePage() {
               <Link href="/user-profile" className="w-10 h-10 rounded-full bg-[#2a0d44] border-2 border-[#FDD023] overflow-hidden">
                 <div className="w-full h-full bg-gray-600"></div>
               </Link>
+              <Link href="/" className="text-white hover:text-[#FDD023] transition-colors">
+                Messages
+              </Link>
             </nav>
           </div>
         </div>

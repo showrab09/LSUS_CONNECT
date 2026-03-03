@@ -19,8 +19,8 @@ export default function HomePage() {
       // Not logged in, redirect to signin
       router.push('/signin');
     } else {
-      // Logged in, redirect to marketplace
-      router.push('/marketplace');
+      // Logged in, redirect to User Profile
+      router.push('/user-profile');
     }
   }, [router]);
 
