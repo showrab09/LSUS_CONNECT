@@ -3,25 +3,26 @@
 import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import "./auth-pages.css";
+
+/**
+ * LSUS Connect - Email Verification Page (FULLY RESPONSIVE)
+ * Mobile: Centered card, full-width on small screens
+ * Desktop: Centered card with max-width
+ */
 
 type VerificationStatus = "verifying" | "success" | "error";
 
 function EmailVerificationContent() {
   const searchParams = useSearchParams();
-  const [token, setToken] = useState<string | null>(null);
   const [status, setStatus] = useState<VerificationStatus>("verifying");
   const [message, setMessage] = useState<string>("");
 
   useEffect(() => {
     const tokenParam = searchParams.get("token");
-    setToken(tokenParam);
 
     if (!tokenParam) {
       setStatus("error");
-      setMessage(
-        "Invalid or missing verification token. Please check your email or request a new verification link."
-      );
+      setMessage("Invalid or missing verification token. Please check your email or request a new verification link.");
       return;
     }
 
@@ -33,7 +34,6 @@ function EmailVerificationContent() {
     setMessage("Verifying your email...");
 
     try {
-      // REAL API CALL - This actually verifies the email in the database
       const response = await fetch("/api/auth/verify-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -60,40 +60,19 @@ function EmailVerificationContent() {
   }
 
   return (
-    <div className="authPage">
-      <div className="authCard">
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: "1.5rem",
-          }}
-        >
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#250D44] via-[#461D7C] to-[#5a2d8c] p-4">
+      <div className="w-full max-w-md bg-[#3a1364] rounded-2xl p-6 sm:p-8 border border-[#5a2d8c]">
+        {/* Icon */}
+        <div className="text-center mb-6">
           {status === "verifying" && (
-            <div
-              style={{
-                width: "64px",
-                height: "64px",
-                margin: "0 auto",
-                border: "4px solid rgba(253, 208, 35, 0.3)",
-                borderTop: "4px solid var(--lsus-gold)",
-                borderRadius: "50%",
-                animation: "spin 1s linear infinite",
-              }}
-            />
+            <div className="w-16 h-16 mx-auto border-4 border-[#FDD023]/30 border-t-[#FDD023] rounded-full animate-spin" />
           )}
           {status === "success" && (
-            <svg
-              width="64"
-              height="64"
-              viewBox="0 0 64 64"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              style={{ margin: "0 auto" }}
-            >
+            <svg className="w-16 h-16 mx-auto" viewBox="0 0 64 64" fill="none">
               <circle cx="32" cy="32" r="32" fill="rgba(253, 208, 35, 0.2)" />
               <path
                 d="M20 32L28 40L44 24"
-                stroke="var(--lsus-gold)"
+                stroke="#FDD023"
                 strokeWidth="4"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -101,14 +80,7 @@ function EmailVerificationContent() {
             </svg>
           )}
           {status === "error" && (
-            <svg
-              width="64"
-              height="64"
-              viewBox="0 0 64 64"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              style={{ margin: "0 auto" }}
-            >
+            <svg className="w-16 h-16 mx-auto" viewBox="0 0 64 64" fill="none">
               <circle cx="32" cy="32" r="32" fill="rgba(255, 77, 77, 0.2)" />
               <path
                 d="M24 24L40 40M40 24L24 40"
@@ -120,60 +92,50 @@ function EmailVerificationContent() {
           )}
         </div>
 
-        <h1 className="authTitle">
+        {/* Title */}
+        <h1 className="text-white text-2xl sm:text-3xl font-bold text-center mb-3">
           {status === "verifying" && "Verifying Email"}
           {status === "success" && "Email Verified!"}
           {status === "error" && "Verification Failed"}
         </h1>
 
-        <p
-          className="authSubtitle"
-          style={{
-            color:
-              status === "error"
-                ? "#ff9999"
-                : status === "success"
-                ? "var(--lsus-gold)"
-                : "var(--lsus-text-secondary)",
-          }}
-        >
+        {/* Message */}
+        <p className={`text-center mb-6 text-sm sm:text-base ${
+          status === "error" ? "text-red-400" : 
+          status === "success" ? "text-[#FDD023]" : 
+          "text-gray-300"
+        }`}>
           {message}
         </p>
 
+        {/* Error Actions */}
         {status === "error" && (
-          <div style={{ marginTop: "2rem" }}>
-            <div className="authBottomLinkWrap" style={{ marginTop: "1rem" }}>
-              <Link className="authBottomLink" href="/signup">
-                Back to Sign Up
-              </Link>
-            </div>
-            <div className="authBottomLinkWrap" style={{ marginTop: "0.5rem" }}>
-              <Link className="authBottomLink" href="/signin">
-                Go to Sign In
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {status === "success" && (
-          <div className="authBottomLinkWrap">
-            <Link className="authBottomLink" href="/signin">
-              Go to Sign In Now
+          <div className="space-y-3">
+            <Link
+              href="/signup"
+              className="block w-full py-3 bg-[#2a0d44] text-white font-semibold rounded-lg border border-[#5a2d8c] hover:border-[#FDD023] transition-colors text-center min-h-[48px] flex items-center justify-center"
+            >
+              Back to Sign Up
+            </Link>
+            <Link
+              href="/signin"
+              className="block w-full py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors text-center min-h-[48px] flex items-center justify-center"
+            >
+              Go to Sign In
             </Link>
           </div>
         )}
-      </div>
 
-      <style jsx>{`
-        @keyframes spin {
-          0% {
-            transform: rotate(0deg);
-          }
-          100% {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
+        {/* Success Action */}
+        {status === "success" && (
+          <Link
+            href="/signin"
+            className="block w-full py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors text-center min-h-[48px] flex items-center justify-center"
+          >
+            Go to Sign In Now
+          </Link>
+        )}
+      </div>
     </div>
   );
 }
@@ -182,9 +144,9 @@ export default function EmailVerificationPage() {
   return (
     <Suspense
       fallback={
-        <div className="authPage">
-          <div className="authCard">
-            <h1 className="authTitle">Loading...</h1>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#250D44] via-[#461D7C] to-[#5a2d8c]">
+          <div className="w-full max-w-md bg-[#3a1364] rounded-2xl p-8 border border-[#5a2d8c]">
+            <h1 className="text-white text-2xl font-bold text-center">Loading...</h1>
           </div>
         </div>
       }
