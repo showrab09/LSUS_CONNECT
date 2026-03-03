@@ -2,11 +2,11 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import "./auth-pages.css";
 
 /**
- * LSUS Connect - Reset Password Page
- * Brand Compliant with LSUS Brand Guidelines (January 2026)
+ * LSUS Connect - Reset Password Page (FULLY RESPONSIVE)
+ * Mobile: Centered card, full-width on small screens
+ * Desktop: Centered card with max-width
  */
 
 function isValidPassword(password: string): boolean {
@@ -58,12 +58,6 @@ export default function ResetPasswordPage() {
 
     try {
       // TODO: Replace with actual API call
-      // Example: await fetch('/api/auth/reset-password', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ token: searchParams.get('token'), password })
-      // })
-
-      // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       setMessage({
@@ -71,11 +65,9 @@ export default function ResetPasswordPage() {
         text: "Password reset successfully! Redirecting to sign in...",
       });
 
-      // Clear form
       setPassword("");
       setConfirmPassword("");
 
-      // Redirect to sign in after confirmation
       setTimeout(() => {
         window.location.href = "/signin";
       }, 2500);
@@ -90,19 +82,26 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="authPage">
-      <div className="authCard">
-        <h1 className="authTitle">Reset Password</h1>
-        <p className="authSubtitle">Enter your new password</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#250D44] via-[#461D7C] to-[#5a2d8c] p-4">
+      <div className="w-full max-w-md bg-[#3a1364] rounded-2xl p-6 sm:p-8 border border-[#5a2d8c]">
+        {/* Title */}
+        <h1 className="text-white text-2xl sm:text-3xl font-bold text-center mb-2">
+          Reset Password
+        </h1>
+        
+        {/* Subtitle */}
+        <p className="text-gray-300 text-sm sm:text-base text-center mb-6 sm:mb-8">
+          Enter your new password
+        </p>
 
         <form onSubmit={handleSubmit}>
-          <div className="authField">
-            <label className="authLabel" htmlFor="password">
+          {/* New Password */}
+          <div className="mb-5">
+            <label htmlFor="password" className="sr-only">
               New Password
             </label>
             <input
               id="password"
-              className="authInput"
               type="password"
               autoComplete="new-password"
               placeholder="New Password"
@@ -111,15 +110,12 @@ export default function ResetPasswordPage() {
               aria-invalid={Boolean(passwordError)}
               aria-describedby={passwordError ? "password-error" : undefined}
               required
+              className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
             />
             {passwordError && (
               <span
                 id="password-error"
-                style={{
-                  color: "#ff9999",
-                  fontSize: "12px",
-                  marginTop: "4px",
-                }}
+                className="text-red-400 text-xs mt-1 block"
                 role="alert"
               >
                 {passwordError}
@@ -127,13 +123,13 @@ export default function ResetPasswordPage() {
             )}
           </div>
 
-          <div className="authField">
-            <label className="authLabel" htmlFor="confirmPassword">
+          {/* Confirm Password */}
+          <div className="mb-6">
+            <label htmlFor="confirmPassword" className="sr-only">
               Confirm Password
             </label>
             <input
               id="confirmPassword"
-              className="authInput"
               type="password"
               autoComplete="new-password"
               placeholder="Confirm Password"
@@ -142,15 +138,12 @@ export default function ResetPasswordPage() {
               aria-invalid={Boolean(confirmPasswordError)}
               aria-describedby={confirmPasswordError ? "confirm-password-error" : undefined}
               required
+              className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
             />
             {confirmPasswordError && (
               <span
                 id="confirm-password-error"
-                style={{
-                  color: "#ff9999",
-                  fontSize: "12px",
-                  marginTop: "4px",
-                }}
+                className="text-red-400 text-xs mt-1 block"
                 role="alert"
               >
                 {confirmPasswordError}
@@ -158,8 +151,8 @@ export default function ResetPasswordPage() {
             )}
           </div>
 
+          {/* Submit Button - Touch friendly */}
           <button
-            className="authButton"
             type="submit"
             disabled={
               isSubmitting ||
@@ -168,6 +161,7 @@ export default function ResetPasswordPage() {
               !password.trim() ||
               !confirmPassword.trim()
             }
+            className="w-full min-h-[48px] sm:min-h-[52px] py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-lg"
           >
             {isSubmitting ? "Resetting..." : "Reset Password"}
           </button>
@@ -175,7 +169,11 @@ export default function ResetPasswordPage() {
           {/* Success/Error Message */}
           {message && (
             <div
-              className={`authMessage authMessage--${message.type}`}
+              className={`mt-4 p-3 sm:p-4 rounded-lg text-sm text-center ${
+                message.type === "success"
+                  ? "bg-[#FDD023]/20 text-[#FDD023] border border-[#FDD023]/30"
+                  : "bg-red-500/20 text-red-400 border border-red-500/30"
+              }`}
               role="status"
               aria-live="polite"
             >
@@ -184,8 +182,12 @@ export default function ResetPasswordPage() {
           )}
         </form>
 
-        <div className="authBottomLinkWrap">
-          <Link className="authBottomLink" href="/signin">
+        {/* Back to Sign In Link */}
+        <div className="mt-6 sm:mt-8 text-center">
+          <Link
+            href="/signin"
+            className="text-[#FDD023] font-semibold hover:text-[#FFE34A] transition-colors text-sm sm:text-base inline-block py-2"
+          >
             Back to Sign In
           </Link>
         </div>

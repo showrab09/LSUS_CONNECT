@@ -1,18 +1,15 @@
 "use client";
-import "./auth-pages.css";
+
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
 /**
- * LSUS Connect - Forgot Password Page
- * Brand Compliant with LSUS Brand Guidelines (January 2026)
- * 
- * Colors: LSUS Purple (#461D7C), LSUS Gold (#FDD023)
- * Typography: Proxima Nova (headings), Roboto (body)
+ * LSUS Connect - Forgot Password Page (FULLY RESPONSIVE)
+ * Mobile: Centered card, full-width on small screens
+ * Desktop: Centered card with max-width
  */
 
 function isValidEmail(value: string): boolean {
-  // Basic email validation - UI side only
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
@@ -46,7 +43,6 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      // REAL API CALL - Actually sends password reset email
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -56,13 +52,10 @@ export default function ForgotPasswordPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Security best practice: Don't reveal whether account exists
         setMessage({
           type: "success",
           text: data.message || "If an account exists with this email, you will receive a password reset link.",
         });
-        
-        // Clear email field on success
         setEmail("");
       } else {
         setMessage({
@@ -81,25 +74,26 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="authPage">
-      <div className="authCard">
-        {/* Title - Matches Figma Design */}
-        <h1 className="authTitle">Forgot Password?</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#250D44] via-[#461D7C] to-[#5a2d8c] p-4">
+      <div className="w-full max-w-md bg-[#3a1364] rounded-2xl p-6 sm:p-8 border border-[#5a2d8c]">
+        {/* Title */}
+        <h1 className="text-white text-2xl sm:text-3xl font-bold text-center mb-2">
+          Forgot Password?
+        </h1>
         
-        {/* Subtitle - Matches Figma Design */}
-        <p className="authSubtitle">Enter your email to reset your password</p>
+        {/* Subtitle */}
+        <p className="text-gray-300 text-sm sm:text-base text-center mb-6 sm:mb-8">
+          Enter your email to reset your password
+        </p>
 
         <form onSubmit={handleSubmit}>
-          <div className="authField">
-            {/* Visually hidden label for accessibility - Figma doesn't show visible label */}
-            <label className="authLabel" htmlFor="email">
+          {/* Email Field */}
+          <div className="mb-6">
+            <label htmlFor="email" className="sr-only">
               Email Address
             </label>
-            
-            {/* Email Input - Matches Figma Design */}
             <input
               id="email"
-              className="authInput"
               type="email"
               inputMode="email"
               autoComplete="email"
@@ -109,17 +103,13 @@ export default function ForgotPasswordPage() {
               aria-invalid={Boolean(emailError)}
               aria-describedby={emailError ? "email-error" : undefined}
               required
+              className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
             />
             
-            {/* Inline error message for validation */}
             {emailError && (
               <span
                 id="email-error"
-                style={{
-                  color: "#ff9999",
-                  fontSize: "12px",
-                  marginTop: "4px",
-                }}
+                className="text-red-400 text-xs mt-1 block"
                 role="alert"
               >
                 {emailError}
@@ -127,11 +117,11 @@ export default function ForgotPasswordPage() {
             )}
           </div>
 
-          {/* Submit Button - Matches Figma Design */}
+          {/* Submit Button - Touch friendly */}
           <button
-            className="authButton"
             type="submit"
             disabled={isSubmitting || Boolean(emailError) || !email.trim()}
+            className="w-full min-h-[48px] sm:min-h-[52px] py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-lg"
           >
             {isSubmitting ? "Sending..." : "Reset Password"}
           </button>
@@ -139,7 +129,11 @@ export default function ForgotPasswordPage() {
           {/* Success/Error Message */}
           {message && (
             <div
-              className={`authMessage authMessage--${message.type}`}
+              className={`mt-4 p-3 sm:p-4 rounded-lg text-sm text-center ${
+                message.type === "success"
+                  ? "bg-[#FDD023]/20 text-[#FDD023] border border-[#FDD023]/30"
+                  : "bg-red-500/20 text-red-400 border border-red-500/30"
+              }`}
               role="status"
               aria-live="polite"
             >
@@ -148,9 +142,12 @@ export default function ForgotPasswordPage() {
           )}
         </form>
 
-        {/* Back to Sign In Link - Matches Figma Design */}
-        <div className="authBottomLinkWrap">
-          <Link className="authBottomLink" href="/signin">
+        {/* Back to Sign In Link */}
+        <div className="mt-6 sm:mt-8 text-center">
+          <Link
+            href="/signin"
+            className="text-[#FDD023] font-semibold hover:text-[#FFE34A] transition-colors text-sm sm:text-base inline-block py-2"
+          >
             Back to Sign In
           </Link>
         </div>

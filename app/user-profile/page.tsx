@@ -1,524 +1,234 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 /**
- * LSUS Connect - Home Page / Marketplace Feed
- * Brand Compliant with LSUS Brand Guidelines (January 2026)
- *
- * ─── SWITCHING TO PRODUCTION DATA ────────────────────────────────────────
- * 1. Set USE_MOCK_DATA to false below.
- * 2. Replace the body of fetchListings() with your real API call:
- *        const res = await fetch("/api/listings");
- *        return res.json();
- *    Make sure your API returns an array that matches the Listing type.
- * 3. Done. Mock data, the simulated delay, and the mock array are all ignored.
- * ─────────────────────────────────────────────────────────────────────────
+ * LSUS Connect - User Profile Page (FULLY RESPONSIVE)
+ * Mobile: Stacked layout, hamburger menu
+ * Tablet: 2-column grid for listings
+ * Desktop: Full layout with stats
  */
 
-// ┌─────────────────────────────────────────┐
-// │  FLIP THIS TO false WHEN GOING LIVE     │
-// └─────────────────────────────────────────┘
-const USE_MOCK_DATA = true;
+// Mock user data
+const mockUser = {
+  id: 1,
+  name: "John Doe",
+  email: "john.doe@lsus.edu",
+  avatar: "/api/placeholder/128/128",
+  stats: {
+    listings: 12,
+    sold: 8,
+    rating: 4.8
+  }
+};
 
-// ─── Shared type — mock data and your API must both conform to this ─────────
-interface Listing {
-  id: number;
-  title: string;
-  price: number;
-  image: string;
-  user: {
-    name: string;
-    avatar: string;
-    time: string;
-  };
-  category: string;
-  condition: string;
-  delivery: string;
-}
-
-// ─── Mock data (only used when USE_MOCK_DATA is true) ────────────────────────
-const MOCK_LISTINGS: Listing[] = [
-  {
-    id: 1,
-    title: "Office Desk",
-    price: 120,
-    image: "/api/placeholder/300/200",
-    user: { name: "Sarah Mitchell", avatar: "/api/placeholder/40/40", time: "2 hours ago" },
-    category: "Furniture",
-    condition: "Good",
-    delivery: "Pickup",
-  },
-  {
-    id: 2,
-    title: "Office Chair",
-    price: 80,
-    image: "/api/placeholder/300/200",
-    user: { name: "Sarah Mitchell", avatar: "/api/placeholder/40/40", time: "2 hours ago" },
-    category: "Furniture",
-    condition: "Like New",
-    delivery: "Delivery Available",
-  },
-  {
-    id: 3,
-    title: "Gaming Setup",
-    price: 450,
-    image: "/api/placeholder/300/200",
-    user: { name: "Jason White", avatar: "/api/placeholder/40/40", time: "5 hours ago" },
-    category: "Electronics",
-    condition: "Good",
-    delivery: "Shipping",
-  },
-  {
-    id: 4,
-    title: "Textbooks Bundle",
-    price: 45,
-    image: "/api/placeholder/300/200",
-    user: { name: "Emma Davis", avatar: "/api/placeholder/40/40", time: "1 day ago" },
-    category: "Books",
-    condition: "Fair",
-    delivery: "Pickup",
-  },
-  {
-    id: 5,
-    title: "Storage Containers",
-    price: 25,
-    image: "/api/placeholder/300/200",
-    user: { name: "Michael Chen", avatar: "/api/placeholder/40/40", time: "1 day ago" },
-    category: "Home",
-    condition: "New",
-    delivery: "Pickup",
-  },
-  {
-    id: 6,
-    title: "House for Rent",
-    price: 1200,
-    image: "/api/placeholder/300/200",
-    user: { name: "Bryan Smith", avatar: "/api/placeholder/40/40", time: "2 days ago" },
-    category: "Housing",
-    condition: "New",
-    delivery: "Delivery Available",
-  },
+// Mock user listings
+const mockListings = [
+  { id: 1, title: "Gaming Laptop", price: "$800", image: "/api/placeholder/300/200", status: "Active" },
+  { id: 2, title: "Desk Chair", price: "$50", image: "/api/placeholder/300/200", status: "Active" },
+  { id: 3, title: "Textbooks", price: "$120", image: "/api/placeholder/300/200", status: "Sold" },
 ];
 
-// ─── Data fetcher — single place to swap mock vs real ────────────────────────
-async function fetchListings(): Promise<Listing[]> {
-  if (USE_MOCK_DATA) {
-    // Simulate network latency so loading state is visible during dev
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    return MOCK_LISTINGS;
-  }
+export default function UserProfilePage() {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<"listings" | "saved">("listings");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // ── PRODUCTION: replace with your actual API call ──
-  // const res = await fetch("/api/listings");
-  // if (!res.ok) throw new Error("Failed to fetch listings");
-  // return res.json();
-
-  throw new Error("Production fetch not yet implemented");
-}
-
-// ─── Skeleton card rendered while data is loading ───────────────────────────
-function ListingSkeleton() {
-  return (
-    <div className="bg-[#3a1364] rounded-lg overflow-hidden border border-[#5a2d8c] animate-pulse">
-      <div className="h-48 bg-[#2a0d44]" />
-      <div className="p-4 space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#2a0d44]" />
-          <div className="flex-1 space-y-2">
-            <div className="h-3 bg-[#2a0d44] rounded w-3/4" />
-            <div className="h-2 bg-[#2a0d44] rounded w-1/2" />
-          </div>
-        </div>
-        <div className="h-4 bg-[#2a0d44] rounded w-2/3" />
-        <div className="h-5 bg-[#2a0d44] rounded w-1/3" />
-        <div className="h-9 bg-[#2a0d44] rounded w-full" />
-      </div>
-    </div>
-  );
-}
-
-export default function HomePage() {
-  // ─── Data state ──────────────────────────────────────────────────────────
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-
-  // ─── Filter state ────────────────────────────────────────────────────────
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
-  const [priceRange, setPriceRange] = useState([0, 1500]);
-  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
-  const [selectedDelivery, setSelectedDelivery] = useState<string[]>([]);
-
-  const categories = [
-    "All Categories",
-    "Electronics",
-    "Furniture",
-    "Books",
-    "Clothing",
-    "Housing",
-    "Home",
-    "Other",
-  ];
-  const conditions = ["New", "Like New", "Good", "Fair"];
-  const deliveryOptions = ["Pickup", "Delivery Available", "Shipping"];
-
-  // ─── Fetch on mount ──────────────────────────────────────────────────────
-  const loadListings = useCallback(async () => {
-    setIsLoading(true);
-    setFetchError(null);
-    try {
-      const data = await fetchListings();
-      setListings(data);
-    } catch (err) {
-      setFetchError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadListings();
-  }, [loadListings]);
-
-  // ─── Filter toggles ──────────────────────────────────────────────────────
-  const toggleCondition = (condition: string) => {
-    setSelectedConditions((prev) =>
-      prev.includes(condition)
-        ? prev.filter((c) => c !== condition)
-        : [...prev, condition]
-    );
+  const handleLogout = () => {
+    document.cookie = "token=; path=/; max-age=0";
+    localStorage.removeItem("token");
+    router.push("/signin");
   };
-
-  const toggleDelivery = (delivery: string) => {
-    setSelectedDelivery((prev) =>
-      prev.includes(delivery)
-        ? prev.filter((d) => d !== delivery)
-        : [...prev, delivery]
-    );
-  };
-
-  const clearAllFilters = () => {
-    setSearchQuery("");
-    setSelectedCategory("All Categories");
-    setPriceRange([0, 1500]);
-    setSelectedConditions([]);
-    setSelectedDelivery([]);
-  };
-
-  // ─── Derived filtered list ───────────────────────────────────────────────
-  const filteredListings = useMemo(() => {
-    return listings.filter((listing) => {
-      const matchesSearch =
-        searchQuery.trim() === "" ||
-        listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        listing.user.name.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesCategory =
-        selectedCategory === "All Categories" ||
-        listing.category === selectedCategory;
-
-      const matchesPrice =
-        listing.price >= priceRange[0] && listing.price <= priceRange[1];
-
-      const matchesCondition =
-        selectedConditions.length === 0 ||
-        selectedConditions.includes(listing.condition);
-
-      const matchesDelivery =
-        selectedDelivery.length === 0 ||
-        selectedDelivery.includes(listing.delivery);
-
-      return matchesSearch && matchesCategory && matchesPrice && matchesCondition && matchesDelivery;
-    });
-  }, [listings, searchQuery, selectedCategory, priceRange, selectedConditions, selectedDelivery]);
-
-  // ─── Determine which main-feed state to render ──────────────────────────
-  // Priority: error → loading → empty (zero listings in DB) → filtered-empty → populated
-  const getFeedState = (): "error" | "loading" | "empty" | "filtered-empty" | "populated" => {
-    if (fetchError) return "error";
-    if (isLoading) return "loading";
-    if (listings.length === 0) return "empty";
-    if (filteredListings.length === 0) return "filtered-empty";
-    return "populated";
-  };
-
-  const feedState = getFeedState();
 
   return (
     <div className="min-h-screen bg-[#461D7C]">
-      {/* Header */}
-      <header className="bg-[#3a1364] border-b border-[#5a2d8c]">
-        <div className="max-w-[1920px] mx-auto px-6 py-4">
-          <div className="flex items-center justify-between gap-6">
+      {/* Header - Responsive */}
+      <header className="bg-[#3a1364] border-b border-[#5a2d8c] sticky top-0 z-50">
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="text-2xl font-bold text-white flex items-center gap-2">
+            <Link href="/marketplace" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
               <span className="text-[#FDD023]">LSUS</span>
               <span>CONNECT</span>
             </Link>
 
-            {/* Search Bar */}
-            <div className="flex-1 max-w-2xl">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search for items..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-12 px-4 pr-12 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
-                />
-                <button className="absolute right-3 top-1/2 -translate-y-1/2 text-[#FDD023] hover:text-[#FFE34A]">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Navigation Links */}
-            <nav className="flex items-center gap-6">
-              <Link href="/" className="text-white hover:text-[#FDD023] transition-colors">
-                Home
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-4 text-white text-sm">
+              <Link href="/marketplace" className="hover:text-[#FDD023] transition-colors">
+                Marketplace
               </Link>
-              <Link href="/user-profile" className="text-white hover:text-[#FDD023] transition-colors">
-                My Listings
-              </Link>
-              <Link href="/" className="text-white hover:text-[#FDD023] transition-colors">
-                Messages
-              </Link>
-              <Link href="/post-listing" className="px-6 py-2 bg-[#FDD023] text-black font-semibold rounded-lg hover:bg-[#FFE34A] transition-colors">
+              <Link href="/post-listing" className="hover:text-[#FDD023] transition-colors">
                 Post Listing
               </Link>
-              <Link href="/user-profile" className="w-10 h-10 rounded-full bg-[#2a0d44] border-2 border-[#FDD023] overflow-hidden">
-                <div className="w-full h-full bg-gray-600"></div>
-              </Link>
-            </nav>
+              <button 
+                onClick={handleLogout}
+                className="hover:text-[#FDD023] transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 text-white hover:text-[#FDD023] transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
+
+          {/* Mobile Menu Dropdown */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden mt-4 pb-4 border-t border-[#5a2d8c] pt-4">
+              <nav className="flex flex-col gap-3">
+                <Link href="/marketplace" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#461D7C]">
+                  Marketplace
+                </Link>
+                <Link href="/post-listing" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#461D7C]">
+                  Post Listing
+                </Link>
+                <button 
+                  onClick={handleLogout}
+                  className="text-left text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#461D7C]"
+                >
+                  Logout
+                </button>
+              </nav>
+            </div>
+          )}
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="max-w-[1920px] mx-auto px-6 py-8">
-        <div className="flex gap-6">
-          {/* Left Sidebar - Filters */}
-          <aside className="w-64 flex-shrink-0">
-            <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c] sticky top-8">
-              <h2 className="text-white font-bold text-lg mb-4">Filters</h2>
-
-              {/* Categories */}
-              <div className="mb-6">
-                <h3 className="text-[#FDD023] font-semibold text-sm mb-3">Categories</h3>
-                <div className="space-y-2">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                        selectedCategory === category
-                          ? "bg-[#FDD023] text-black font-semibold"
-                          : "text-white hover:bg-[#2a0d44]"
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Price Range */}
-              <div className="mb-6">
-                <h3 className="text-[#FDD023] font-semibold text-sm mb-3">Price Range</h3>
-                <div className="space-y-3">
-                  <input
-                    type="range"
-                    min="0"
-                    max="1500"
-                    value={priceRange[1]}
-                    onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
-                    className="w-full accent-[#FDD023]"
-                  />
-                  <div className="flex justify-between text-sm text-gray-300">
-                    <span>${priceRange[0]}</span>
-                    <span>${priceRange[1].toLocaleString()}{priceRange[1] < 1500 ? "" : "+"}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Condition */}
-              <div className="mb-6">
-                <h3 className="text-[#FDD023] font-semibold text-sm mb-3">Condition</h3>
-                <div className="space-y-2">
-                  {conditions.map((condition) => (
-                    <label key={condition} className="flex items-center gap-2 text-white text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="accent-[#FDD023]"
-                        checked={selectedConditions.includes(condition)}
-                        onChange={() => toggleCondition(condition)}
-                      />
-                      <span>{condition}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Delivery */}
-              <div>
-                <h3 className="text-[#FDD023] font-semibold text-sm mb-3">Delivery</h3>
-                <div className="space-y-2">
-                  {deliveryOptions.map((delivery) => (
-                    <label key={delivery} className="flex items-center gap-2 text-white text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="accent-[#FDD023]"
-                        checked={selectedDelivery.includes(delivery)}
-                        onChange={() => toggleDelivery(delivery)}
-                      />
-                      <span>{delivery}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Profile Header Card */}
+        <div className="bg-[#3a1364] rounded-lg p-6 sm:p-8 border border-[#5a2d8c] mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            {/* Avatar */}
+            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gray-600 flex-shrink-0 overflow-hidden">
+              <div className="w-full h-full bg-gradient-to-br from-gray-500 to-gray-700"></div>
             </div>
-          </aside>
 
-          {/* Main Feed */}
-          <main className="flex-1">
+            {/* User Info */}
+            <div className="flex-1 text-center sm:text-left">
+              <h1 className="text-white text-2xl sm:text-3xl font-bold mb-2">{mockUser.name}</h1>
+              <p className="text-gray-300 mb-4">{mockUser.email}</p>
 
-            {/* STATE: fetch error */}
-            {feedState === "error" && (
-              <div className="flex flex-col items-center justify-center py-24 bg-[#3a1364] rounded-lg border border-[#5a2d8c]">
-                <p className="text-red-400 text-lg font-semibold mb-2">Failed to load listings</p>
-                <p className="text-gray-400 text-sm mb-4">{fetchError}</p>
-                <button
-                  onClick={loadListings}
-                  className="px-6 py-2 bg-[#FDD023] text-black font-semibold rounded-lg hover:bg-[#FFE34A] transition-colors"
-                >
-                  Try Again
-                </button>
-              </div>
-            )}
-
-            {/* STATE: loading skeletons */}
-            {feedState === "loading" && (
-              <div className="grid grid-cols-3 gap-6">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <ListingSkeleton key={i} />
-                ))}
-              </div>
-            )}
-
-            {/* STATE: no listings exist at all (fresh launch / empty DB) */}
-            {feedState === "empty" && (
-              <div className="flex flex-col items-center justify-center py-32 bg-[#3a1364] rounded-lg border border-[#5a2d8c]">
-                <div className="w-20 h-20 rounded-full bg-[#2a0d44] flex items-center justify-center mb-6">
-                  <svg className="w-10 h-10 text-[#FDD023]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
-                  </svg>
+              {/* Stats - Responsive Grid */}
+              <div className="flex flex-wrap justify-center sm:justify-start gap-4 sm:gap-6 mb-4">
+                <div>
+                  <p className="text-[#FDD023] text-2xl font-bold">{mockUser.stats.listings}</p>
+                  <p className="text-gray-300 text-sm">Listings</p>
                 </div>
-                <h2 className="text-white text-2xl font-bold mb-3">No listings yet</h2>
-                <p className="text-gray-400 text-sm text-center max-w-md mb-6">
-                  LSUS Connect is brand new — be the first to post something and get the marketplace started.
-                </p>
-                <Link
-                  href="/post-listing"
-                  className="px-8 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
-                >
-                  Post the First Listing
-                </Link>
-              </div>
-            )}
-
-            {/* STATE: listings exist but filters knocked them all out */}
-            {feedState === "filtered-empty" && (
-              <div className="flex flex-col items-center justify-center py-24 bg-[#3a1364] rounded-lg border border-[#5a2d8c]">
-                <p className="text-white text-lg font-semibold mb-2">No listings match your filters</p>
-                <p className="text-gray-400 text-sm mb-4">Try adjusting your search or filters</p>
-                <button
-                  onClick={clearAllFilters}
-                  className="px-6 py-2 bg-[#FDD023] text-black font-semibold rounded-lg hover:bg-[#FFE34A] transition-colors"
-                >
-                  Clear All Filters
-                </button>
-              </div>
-            )}
-
-            {/* STATE: populated grid */}
-            {feedState === "populated" && (
-              <div className="grid grid-cols-3 gap-6">
-                {filteredListings.map((listing) => (
-                  <Link
-                    key={listing.id}
-                    href="/product-detail"
-                    className="bg-[#3a1364] rounded-lg overflow-hidden border border-[#5a2d8c] hover:border-[#FDD023] transition-all hover:shadow-lg hover:shadow-[#FDD023]/20 block"
-                  >
-                    {/* Image */}
-                    <div className="relative h-48 bg-gray-700">
-                      <div className="w-full h-full bg-gradient-to-br from-gray-600 to-gray-800"></div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-4">
-                      {/* User Info */}
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-600"></div>
-                        <div className="flex-1">
-                          <p className="text-white text-sm font-semibold">{listing.user.name}</p>
-                          <p className="text-gray-400 text-xs">{listing.user.time}</p>
-                        </div>
-                      </div>
-
-                      {/* Title & Price */}
-                      <h3 className="text-white font-bold text-lg mb-1">{listing.title}</h3>
-                      <p className="text-[#FDD023] font-bold text-xl mb-3">
-                        {listing.category === "Housing"
-                          ? `$${listing.price.toLocaleString()}/mo`
-                          : `$${listing.price.toLocaleString()}`}
-                      </p>
-
-                      {/* Action Button */}
-                      <div className="w-full py-2 bg-[#2a0d44] text-white rounded-lg border border-[#5a2d8c] hover:bg-[#FDD023] hover:text-black hover:border-[#FDD023] transition-colors font-semibold text-center">
-                        Leave a Comment
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </main>
-
-          {/* Right Sidebar - Ads */}
-          <aside className="w-80 flex-shrink-0">
-            <div className="space-y-6 sticky top-8">
-              <div className="bg-[#FDD023] rounded-lg p-6 text-center">
-                <h3 className="text-black font-bold text-xl mb-2">STUDENT DISCOUNT</h3>
-                <p className="text-black text-4xl font-bold mb-2">15% off</p>
-                <p className="text-black text-sm">At Macbooks</p>
-              </div>
-
-              <div className="bg-[#FDD023] rounded-lg p-6 text-center">
-                <h3 className="text-black font-bold text-xl mb-2">STUDENT DISCOUNT</h3>
-                <p className="text-black text-4xl font-bold mb-2">15% off</p>
-                <p className="text-black text-sm">At Textbooks</p>
-              </div>
-
-              <div className="bg-white rounded-lg overflow-hidden">
-                <div className="p-4 bg-gradient-to-r from-orange-500 to-red-500 text-white text-center">
-                  <h3 className="font-bold text-lg">ACADEMY Deal DAYS</h3>
-                  <p className="text-sm">Up to 30% off + Extra 20% off</p>
+                <div>
+                  <p className="text-[#FDD023] text-2xl font-bold">{mockUser.stats.sold}</p>
+                  <p className="text-gray-300 text-sm">Sold</p>
+                </div>
+                <div>
+                  <p className="text-[#FDD023] text-2xl font-bold">{mockUser.stats.rating}</p>
+                  <p className="text-gray-300 text-sm">Rating</p>
                 </div>
               </div>
 
-              <div className="bg-orange-500 rounded-lg p-6 text-center">
-                <h3 className="text-white font-bold text-xl">PRO FOOTBALL</h3>
-                <h3 className="text-white font-bold text-xl">HALL OF FAME</h3>
-                <p className="text-white text-sm mt-2">CELEBRATE THE GAME</p>
-              </div>
+              {/* Edit Profile Button */}
+              <button className="w-full sm:w-auto px-6 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors min-h-[48px]">
+                Edit Profile
+              </button>
             </div>
-          </aside>
+          </div>
         </div>
+
+        {/* Tabs - Responsive */}
+        <div className="flex gap-2 sm:gap-4 mb-6 overflow-x-auto pb-2">
+          <button
+            onClick={() => setActiveTab("listings")}
+            className={`px-4 sm:px-6 py-3 rounded-lg font-semibold transition-colors whitespace-nowrap min-h-[44px] ${
+              activeTab === "listings"
+                ? "bg-[#FDD023] text-black"
+                : "bg-[#3a1364] text-white border border-[#5a2d8c] hover:border-[#FDD023]"
+            }`}
+          >
+            My Listings
+          </button>
+          <button
+            onClick={() => setActiveTab("saved")}
+            className={`px-4 sm:px-6 py-3 rounded-lg font-semibold transition-colors whitespace-nowrap min-h-[44px] ${
+              activeTab === "saved"
+                ? "bg-[#FDD023] text-black"
+                : "bg-[#3a1364] text-white border border-[#5a2d8c] hover:border-[#FDD023]"
+            }`}
+          >
+            Saved Items
+          </button>
+        </div>
+
+        {/* Listings Grid - Responsive */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {mockListings.map((listing) => (
+            <div
+              key={listing.id}
+              className="bg-[#3a1364] rounded-lg overflow-hidden border border-[#5a2d8c] hover:border-[#FDD023] transition-all"
+            >
+              {/* Image */}
+              <div className="aspect-video bg-gray-700">
+                <div className="w-full h-full bg-gradient-to-br from-gray-600 to-gray-800"></div>
+              </div>
+
+              {/* Content */}
+              <div className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-white font-bold text-base sm:text-lg">{listing.title}</h3>
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    listing.status === "Active" 
+                      ? "bg-green-500/20 text-green-400" 
+                      : "bg-gray-500/20 text-gray-400"
+                  }`}>
+                    {listing.status}
+                  </span>
+                </div>
+
+                <p className="text-[#FDD023] font-bold mb-3">{listing.price}</p>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <button className="flex-1 py-2 bg-[#2a0d44] text-white text-sm rounded-lg border border-[#5a2d8c] hover:border-[#FDD023] transition-colors min-h-[44px]">
+                    Edit
+                  </button>
+                  <button className="flex-1 py-2 bg-[#2a0d44] text-white text-sm rounded-lg border border-[#5a2d8c] hover:border-red-500 transition-colors min-h-[44px]">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Empty State (when no listings) */}
+        {mockListings.length === 0 && (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#3a1364] flex items-center justify-center">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+            </div>
+            <h3 className="text-white text-xl font-bold mb-2">No listings yet</h3>
+            <p className="text-gray-300 mb-6">Start selling by creating your first listing!</p>
+            <Link
+              href="/post-listing"
+              className="inline-block px-6 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors min-h-[48px]"
+            >
+              Create Listing
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
