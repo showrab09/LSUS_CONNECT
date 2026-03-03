@@ -95,7 +95,7 @@ export default function SignInPage() {
 
       // Redirect to feed/home page
       setTimeout(() => {
-        router.push('/marketplace'); // or wherever you want to redirect after login
+        router.push('/user-profile'); // or wherever you want to redirect after login
       }, 1500);
     } catch (error: any) {
       setMessage({
