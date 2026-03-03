@@ -2,7 +2,7 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM_EMAIL = 'LSUS Connect <onboarding@resend.dev>';
+const FROM_EMAIL = 'LSUS Connect <noreply@lsusconnect.com>';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 // Send verification email
