@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 /**
- * ProfileDropdown Component
+ * UserDropdown Component
  * Displays user avatar/name with dropdown menu
  * Includes: Profile, Settings, Logout
  */
@@ -59,9 +59,19 @@ export default function UserDropdown() {
   };
 
   const handleLogout = () => {
+    console.log("LOGOUT CLICKED - Starting logout process...");
+    
+    // Clear token from cookie
     document.cookie = "token=; path=/; max-age=0";
+    console.log("Cookie cleared");
+    
+    // Clear token from localStorage
     localStorage.removeItem("token");
-    router.push("/signin");
+    console.log("LocalStorage cleared");
+    
+    // Force full page redirect to signin
+    console.log("Redirecting to /signin...");
+    window.location.href = "/signin";
   };
 
   // Get user initials for avatar
