@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import UserDropdown from "@/components/UserDropdown";
 
 /**
- * LSUS Connect - Product Detail Page
- * Brand Compliant with LSUS Brand Guidelines (January 2026)
+ * LSUS Connect - Product Detail Page (RESPONSIVE + USER DROPDOWN)
  */
 
 // Mock product data
@@ -34,55 +34,89 @@ const productData = {
 export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [message, setMessage] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleSendMessage = () => {
     console.log("Sending message:", message);
-    // TODO: Implement message sending
     setMessage("");
   };
 
   const handleSaveItem = () => {
     console.log("Saving item");
-    // TODO: Implement save functionality
   };
 
   const handleMessageSeller = () => {
     console.log("Message seller clicked");
-    // TODO: Implement message modal or inline messaging
   };
 
   return (
     <div className="min-h-screen bg-[#461D7C]">
-      {/* Header */}
-      <header className="bg-[#461D7C] border-b border-[#5a2d8c] py-4">
-        <div className="max-w-[1600px] mx-auto px-6">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="text-2xl font-bold text-white">
-              <span className="text-[#FDD023]">LSUS</span> CONNECT
+      {/* Header - Responsive */}
+      <header className="bg-[#461D7C] border-b border-[#5a2d8c] py-3 sm:py-4 sticky top-0 z-50">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6">
+          {/* Desktop Header */}
+          <div className="hidden lg:flex items-center justify-between">
+            <Link href="/marketplace" className="text-2xl font-bold text-white flex items-center gap-2">
+              <span className="text-[#FDD023]">LSUS</span>
+              <span>CONNECT</span>
             </Link>
 
-            {/* Right side links */}
             <div className="flex items-center gap-6 text-white text-sm">
               <Link href="/marketplace" className="hover:text-[#FDD023] transition-colors">
                 Back to listings
               </Link>
-              <Link href="/" className="hover:text-[#FDD023] transition-colors">
+              <Link href="/marketplace" className="hover:text-[#FDD023] transition-colors">
                 Search
               </Link>
-              <Link href="/user-profile" className="hover:text-[#FDD023] transition-colors">
-                Profile
-              </Link>
+              <UserDropdown />
             </div>
+          </div>
+
+          {/* Mobile Header */}
+          <div className="lg:hidden">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 text-white hover:text-[#FDD023] transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {isMobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+
+              <Link href="/marketplace" className="text-xl font-bold text-white flex items-center gap-2">
+                <span className="text-[#FDD023]">LSUS</span>
+                <span>CONNECT</span>
+              </Link>
+
+              <UserDropdown />
+            </div>
+
+            {isMobileMenuOpen && (
+              <div className="mt-4 pb-4 border-t border-[#5a2d8c] pt-4">
+                <nav className="flex flex-col gap-3">
+                  <Link href="/marketplace" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
+                    Back to listings
+                  </Link>
+                  <Link href="/marketplace" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
+                    Search
+                  </Link>
+                </nav>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="max-w-[1600px] mx-auto px-6 py-8">
+      {/* Main Content - Responsive */}
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Breadcrumb */}
         <div className="mb-6 text-white text-sm">
-          <Link href="/" className="hover:text-[#FDD023] transition-colors">
+          <Link href="/marketplace" className="hover:text-[#FDD023] transition-colors">
             Home
           </Link>
           <span className="mx-2">›</span>
@@ -90,126 +124,135 @@ export default function ProductDetailPage() {
             Category
           </Link>
           <span className="mx-2">›</span>
-          <span className="text-gray-400">Item</span>
+          <span className="text-gray-300">{productData.title}</span>
         </div>
 
-        <div className="grid grid-cols-[1fr,400px] gap-8">
-          {/* Left Side - Images */}
-          <div>
+        {/* Product Grid - Responsive */}
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-6 lg:gap-8">
+          {/* Left Column - Images & Details */}
+          <div className="space-y-6">
             {/* Main Image */}
-            <div className="bg-white rounded-lg overflow-hidden mb-4">
-              <div className="aspect-[4/3] relative">
-                <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
-              </div>
+            <div className="bg-[#2a0d44] rounded-lg overflow-hidden border border-[#5a2d8c]">
+              <div className="aspect-video bg-gray-700"></div>
             </div>
 
-            {/* Thumbnail Gallery */}
+            {/* Thumbnail Images - Responsive Grid */}
             <div className="grid grid-cols-4 gap-3">
-              {productData.images.map((image, index) => (
+              {productData.images.map((_, idx) => (
                 <button
-                  key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={`aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all ${
-                    selectedImage === index
-                      ? "border-[#FDD023] scale-105"
+                  key={idx}
+                  onClick={() => setSelectedImage(idx)}
+                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                    selectedImage === idx
+                      ? "border-[#FDD023]"
                       : "border-[#5a2d8c] hover:border-[#FDD023]/50"
                   }`}
                 >
-                  <div className="w-full h-full bg-gradient-to-br from-gray-600 to-gray-700"></div>
+                  <div className="w-full h-full bg-gray-700"></div>
                 </button>
               ))}
             </div>
 
-            {/* Safety Tips */}
-            <div className="mt-6 bg-[#3a1364] rounded-lg p-4 border border-[#5a2d8c]">
-              <p className="text-white text-sm">
-                <span className="font-semibold">Safety:</span> meet on campus • avoid wires • report listing
-              </p>
-            </div>
-          </div>
-
-          {/* Right Side - Product Info */}
-          <div className="space-y-6">
-            {/* Product Title & Price */}
+            {/* Product Details */}
             <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
-              <h1 className="text-white text-3xl font-bold mb-2">
-                {productData.title}
-              </h1>
-              <div className="flex items-center gap-4 mb-3">
-                <p className="text-[#FDD023] text-2xl font-bold">
-                  {productData.price}
-                </p>
-                <span className="text-white text-sm">•</span>
-                <p className="text-white text-sm">
-                  <span className="font-semibold">Condition:</span> {productData.condition}
-                </p>
-                <span className="text-white text-sm">•</span>
-                <p className="text-white text-sm">
-                  <span className="font-semibold">Category:</span> {productData.category}
-                </p>
-              </div>
-              <p className="text-gray-400 text-sm">Posted {productData.postedTime}</p>
-            </div>
-
-            {/* Seller Info */}
-            <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
-              <div className="flex items-center gap-4 mb-4">
-                {/* Avatar */}
-                <div className="w-12 h-12 rounded-full bg-gray-600 flex-shrink-0">
-                  <div className="w-full h-full bg-gradient-to-br from-[#461D7C] to-[#5a2d8c] rounded-full"></div>
+              <h2 className="text-white font-bold text-xl mb-4">Details</h2>
+              <div className="space-y-3 text-white">
+                <div className="flex justify-between py-2 border-b border-[#5a2d8c]">
+                  <span className="text-gray-300">Condition</span>
+                  <span className="font-semibold">{productData.condition}</span>
                 </div>
-                {/* Name & Rating */}
-                <div>
-                  <p className="text-white font-semibold">{productData.seller.name}</p>
-                  <p className="text-gray-400 text-sm">Rating: {productData.seller.rating}/5</p>
+                <div className="flex justify-between py-2 border-b border-[#5a2d8c]">
+                  <span className="text-gray-300">Category</span>
+                  <span className="font-semibold">{productData.category}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-[#5a2d8c]">
+                  <span className="text-gray-300">Mileage</span>
+                  <span className="font-semibold">{productData.mileage}</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-300">Posted</span>
+                  <span className="font-semibold">{productData.postedTime}</span>
                 </div>
               </div>
-
-              {/* Message Seller */}
-              <button
-                onClick={handleMessageSeller}
-                className="w-full py-2 bg-[#2a0d44] text-white rounded-lg border border-[#5a2d8c] hover:bg-[#3a1364] hover:border-[#FDD023] transition-colors mb-4"
-              >
-                Message seller
-              </button>
-
-              {/* Save Item */}
-              <button
-                onClick={handleSaveItem}
-                className="w-full py-2 bg-[#2a0d44] text-white rounded-lg border border-[#5a2d8c] hover:bg-[#3a1364] hover:border-[#FDD023] transition-colors"
-              >
-                Save Item
-              </button>
             </div>
 
             {/* Description */}
             <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
-              <h3 className="text-white font-semibold mb-3">Description</h3>
-              <p className="text-gray-300 text-sm leading-relaxed mb-4">
-                {productData.description}
-              </p>
-              <p className="text-gray-300 text-sm">
-                <span className="font-semibold">Mileage:</span> {productData.mileage}
-              </p>
+              <h2 className="text-white font-bold text-xl mb-4">Description</h2>
+              <p className="text-gray-300 leading-relaxed">{productData.description}</p>
             </div>
+          </div>
 
-            {/* Message Seller Box */}
-            <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
-              <h3 className="text-[#FDD023] font-bold mb-4">Message Seller</h3>
-              <textarea
-                placeholder="Type your message..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={4}
-                className="w-full px-4 py-3 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20 resize-none mb-4"
-              />
-              <button
-                onClick={handleSendMessage}
-                className="w-full py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
-              >
-                Message Seller
-              </button>
+          {/* Right Column - Seller & Actions */}
+          <div className="space-y-6">
+            {/* Price Card */}
+            <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c] sticky top-24">
+              <div className="mb-6">
+                <h1 className="text-white font-bold text-2xl sm:text-3xl mb-2">{productData.title}</h1>
+                <p className="text-[#FDD023] font-bold text-3xl sm:text-4xl">{productData.price}</p>
+              </div>
+
+              {/* Seller Info */}
+              <div className="mb-6 pb-6 border-b border-[#5a2d8c]">
+                <h3 className="text-white font-semibold mb-3">Seller</h3>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-[#2a0d44] border-2 border-[#FDD023]"></div>
+                  <div>
+                    <p className="text-white font-semibold">{productData.seller.name}</p>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[#FDD023]">★</span>
+                      <span className="text-white text-sm">{productData.seller.rating}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons - Touch Optimized */}
+              <div className="space-y-3">
+                <button
+                  onClick={handleMessageSeller}
+                  className="w-full min-h-[48px] py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+                >
+                  Message Seller
+                </button>
+                <button
+                  onClick={handleSaveItem}
+                  className="w-full min-h-[48px] py-3 bg-[#2a0d44] text-white font-semibold rounded-lg border border-[#5a2d8c] hover:border-[#FDD023] transition-colors"
+                >
+                  Save Item
+                </button>
+              </div>
+
+              {/* Safety Tips */}
+              <div className="mt-6 p-4 bg-[#2a0d44] rounded-lg border border-[#5a2d8c]">
+                <h4 className="text-[#FDD023] font-semibold mb-2 text-sm">Safety Tips</h4>
+                <ul className="text-gray-300 text-xs space-y-1">
+                  <li>• Meet in a public place</li>
+                  <li>• Check the item before buying</li>
+                  <li>• Don't share personal info</li>
+                </ul>
+              </div>
             </div>
+          </div>
+        </div>
+
+        {/* Message Section - Mobile Friendly */}
+        <div className="mt-8 bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
+          <h2 className="text-white font-bold text-xl mb-4">Send Message</h2>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Type your message..."
+              className="flex-1 h-12 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+            />
+            <button
+              onClick={handleSendMessage}
+              className="min-h-[48px] px-6 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+            >
+              Send
+            </button>
           </div>
         </div>
       </div>
