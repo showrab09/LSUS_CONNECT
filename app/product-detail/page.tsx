@@ -1,80 +1,152 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
 
 /**
- * LSUS Connect - Product Detail Page (RESPONSIVE + USER DROPDOWN)
+ * LSUS Connect - Product Detail Page (DYNAMIC - FETCHES FROM API)
  */
 
-// Mock product data
-const productData = {
-  id: 1,
-  title: "Toyota 4Runner 2022",
-  price: "$25,000",
-  condition: "Good",
-  category: "Vehicle",
-  postedTime: "2h ago",
-  description: "Everything is perfect.",
-  mileage: "80,000",
-  seller: {
-    name: "John Doe",
-    avatar: "/api/placeholder/50/50",
-    rating: 4.8,
-  },
-  images: [
-    "/api/placeholder/800/600",
-    "/api/placeholder/800/600",
-    "/api/placeholder/800/600",
-    "/api/placeholder/800/600",
-  ],
-};
+interface Listing {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  price_type: "PAID" | "FREE" | "SWAP";
+  category: string;
+  condition: string;
+  location: string;
+  images: string[];
+  tags: string[];
+  status: string;
+  created_at: string;
+  user_id: string;
+  user?: {
+    name: string;
+    email: string;
+  };
+}
 
 export default function ProductDetailPage() {
+  const searchParams = useSearchParams();
+  const listingId = searchParams.get("id");
+
+  const [listing, setListing] = useState<Listing | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
   const [selectedImage, setSelectedImage] = useState(0);
   const [message, setMessage] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  useEffect(() => {
+    if (listingId) {
+      fetchListing(listingId);
+    } else {
+      setError("No listing ID provided");
+      setIsLoading(false);
+    }
+  }, [listingId]);
+
+  const fetchListing = async (id: string) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/listings/${id}`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch listing');
+      }
+
+      const data = await response.json();
+      setListing(data.listing || data);
+      setError("");
+    } catch (err) {
+      console.error("Error fetching listing:", err);
+      setError("Failed to load listing. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatPrice = () => {
+    if (!listing) return "";
+    if (listing.price_type === "FREE") return "Free";
+    if (listing.price_type === "SWAP") return "Trade/Swap";
+    return `$${listing.price.toFixed(2)}`;
+  };
+
   const handleSendMessage = () => {
     console.log("Sending message:", message);
+    // TODO: Implement message sending
     setMessage("");
   };
 
   const handleSaveItem = () => {
-    console.log("Saving item");
+    console.log("Saving item:", listingId);
+    // TODO: Implement save functionality
   };
 
-  const handleMessageSeller = () => {
-    console.log("Message seller clicked");
-  };
+  // Loading State
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#461D7C] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-16 h-16 border-4 border-[#FDD023] border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-white text-lg">Loading listing...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error State
+  if (error || !listing) {
+    return (
+      <div className="min-h-screen bg-[#461D7C]">
+        <header className="bg-[#3a1364] border-b border-[#5a2d8c] py-4">
+          <div className="max-w-[1600px] mx-auto px-6">
+            <Link href="/marketplace" className="text-2xl font-bold text-white">
+              <span className="text-[#FDD023]">LSUS</span> CONNECT
+            </Link>
+          </div>
+        </header>
+        <div className="max-w-[1600px] mx-auto px-6 py-16 text-center">
+          <div className="bg-red-500/20 border border-red-500/30 text-red-300 rounded-lg p-8 inline-block">
+            <h2 className="text-2xl font-bold mb-4">Listing Not Found</h2>
+            <p className="mb-6">{error || "This listing could not be loaded."}</p>
+            <Link
+              href="/marketplace"
+              className="inline-block px-8 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+            >
+              Back to Marketplace
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#461D7C]">
       {/* Header - Responsive */}
-      <header className="bg-[#461D7C] border-b border-[#5a2d8c] py-3 sm:py-4 sticky top-0 z-50">
+      <header className="bg-[#3a1364] border-b border-[#5a2d8c] py-3 sm:py-4 sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6">
-          {/* Desktop Header */}
-          <div className="hidden lg:flex items-center justify-between">
-            <Link href="/marketplace" className="text-2xl font-bold text-white flex items-center gap-2">
+          <div className="flex items-center justify-between">
+            <Link href="/marketplace" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
               <span className="text-[#FDD023]">LSUS</span>
               <span>CONNECT</span>
             </Link>
 
-            <div className="flex items-center gap-6 text-white text-sm">
+            <div className="hidden md:flex items-center gap-6 text-white text-sm">
               <Link href="/marketplace" className="hover:text-[#FDD023] transition-colors">
                 Back to listings
               </Link>
-              <Link href="/marketplace" className="hover:text-[#FDD023] transition-colors">
-                Search
-              </Link>
               <UserDropdown />
             </div>
-          </div>
 
-          {/* Mobile Header */}
-          <div className="lg:hidden">
-            <div className="flex items-center justify-between">
+            <div className="md:hidden flex items-center gap-3">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="p-2 text-white hover:text-[#FDD023] transition-colors"
@@ -87,28 +159,19 @@ export default function ProductDetailPage() {
                   )}
                 </svg>
               </button>
-
-              <Link href="/marketplace" className="text-xl font-bold text-white flex items-center gap-2">
-                <span className="text-[#FDD023]">LSUS</span>
-                <span>CONNECT</span>
-              </Link>
-
               <UserDropdown />
             </div>
-
-            {isMobileMenuOpen && (
-              <div className="mt-4 pb-4 border-t border-[#5a2d8c] pt-4">
-                <nav className="flex flex-col gap-3">
-                  <Link href="/marketplace" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
-                    Back to listings
-                  </Link>
-                  <Link href="/marketplace" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
-                    Search
-                  </Link>
-                </nav>
-              </div>
-            )}
           </div>
+
+          {isMobileMenuOpen && (
+            <div className="md:hidden mt-4 pb-4 border-t border-[#5a2d8c] pt-4">
+              <nav className="flex flex-col gap-3">
+                <Link href="/marketplace" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#461D7C]">
+                  Back to listings
+                </Link>
+              </nav>
+            </div>
+          )}
         </div>
       </header>
 
@@ -121,10 +184,10 @@ export default function ProductDetailPage() {
           </Link>
           <span className="mx-2">›</span>
           <Link href="/marketplace" className="hover:text-[#FDD023] transition-colors">
-            Category
+            {listing.category}
           </Link>
           <span className="mx-2">›</span>
-          <span className="text-gray-300">{productData.title}</span>
+          <span className="text-gray-300">{listing.title}</span>
         </div>
 
         {/* Product Grid - Responsive */}
@@ -133,25 +196,39 @@ export default function ProductDetailPage() {
           <div className="space-y-6">
             {/* Main Image */}
             <div className="bg-[#2a0d44] rounded-lg overflow-hidden border border-[#5a2d8c]">
-              <div className="aspect-video bg-gray-700"></div>
+              <div className="aspect-video bg-gray-700">
+                {listing.images && listing.images.length > 0 ? (
+                  <img
+                    src={listing.images[selectedImage]}
+                    alt={listing.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-500">
+                    No image available
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Thumbnail Images - Responsive Grid */}
-            <div className="grid grid-cols-4 gap-3">
-              {productData.images.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedImage(idx)}
-                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-                    selectedImage === idx
-                      ? "border-[#FDD023]"
-                      : "border-[#5a2d8c] hover:border-[#FDD023]/50"
-                  }`}
-                >
-                  <div className="w-full h-full bg-gray-700"></div>
-                </button>
-              ))}
-            </div>
+            {listing.images && listing.images.length > 1 && (
+              <div className="grid grid-cols-4 gap-3">
+                {listing.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImage(idx)}
+                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                      selectedImage === idx
+                        ? "border-[#FDD023]"
+                        : "border-[#5a2d8c] hover:border-[#FDD023]/50"
+                    }`}
+                  >
+                    <img src={img} alt={`View ${idx + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Product Details */}
             <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
@@ -159,19 +236,21 @@ export default function ProductDetailPage() {
               <div className="space-y-3 text-white">
                 <div className="flex justify-between py-2 border-b border-[#5a2d8c]">
                   <span className="text-gray-300">Condition</span>
-                  <span className="font-semibold">{productData.condition}</span>
+                  <span className="font-semibold">{listing.condition}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-[#5a2d8c]">
                   <span className="text-gray-300">Category</span>
-                  <span className="font-semibold">{productData.category}</span>
+                  <span className="font-semibold">{listing.category}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-[#5a2d8c]">
-                  <span className="text-gray-300">Mileage</span>
-                  <span className="font-semibold">{productData.mileage}</span>
+                  <span className="text-gray-300">Location</span>
+                  <span className="font-semibold">{listing.location}</span>
                 </div>
                 <div className="flex justify-between py-2">
                   <span className="text-gray-300">Posted</span>
-                  <span className="font-semibold">{productData.postedTime}</span>
+                  <span className="font-semibold">
+                    {new Date(listing.created_at).toLocaleDateString()}
+                  </span>
                 </div>
               </div>
             </div>
@@ -179,7 +258,20 @@ export default function ProductDetailPage() {
             {/* Description */}
             <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
               <h2 className="text-white font-bold text-xl mb-4">Description</h2>
-              <p className="text-gray-300 leading-relaxed">{productData.description}</p>
+              <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">{listing.description}</p>
+              
+              {listing.tags && listing.tags.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {listing.tags.map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 bg-[#2a0d44] text-[#FDD023] text-sm rounded-full border border-[#5a2d8c]"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -188,21 +280,22 @@ export default function ProductDetailPage() {
             {/* Price Card */}
             <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c] sticky top-24">
               <div className="mb-6">
-                <h1 className="text-white font-bold text-2xl sm:text-3xl mb-2">{productData.title}</h1>
-                <p className="text-[#FDD023] font-bold text-3xl sm:text-4xl">{productData.price}</p>
+                <h1 className="text-white font-bold text-2xl sm:text-3xl mb-2">{listing.title}</h1>
+                <p className="text-[#FDD023] font-bold text-3xl sm:text-4xl">{formatPrice()}</p>
               </div>
 
               {/* Seller Info */}
               <div className="mb-6 pb-6 border-b border-[#5a2d8c]">
                 <h3 className="text-white font-semibold mb-3">Seller</h3>
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-[#2a0d44] border-2 border-[#FDD023]"></div>
+                  <div className="w-12 h-12 rounded-full bg-[#FDD023] flex items-center justify-center text-black font-bold text-xl">
+                    {listing.user?.name?.charAt(0).toUpperCase() || "?"}
+                  </div>
                   <div>
-                    <p className="text-white font-semibold">{productData.seller.name}</p>
-                    <div className="flex items-center gap-1">
-                      <span className="text-[#FDD023]">★</span>
-                      <span className="text-white text-sm">{productData.seller.rating}</span>
-                    </div>
+                    <p className="text-white font-semibold">
+                      {listing.user?.name || "Anonymous User"}
+                    </p>
+                    <p className="text-gray-400 text-sm">{listing.user?.email || "No email"}</p>
                   </div>
                 </div>
               </div>
@@ -210,7 +303,7 @@ export default function ProductDetailPage() {
               {/* Action Buttons - Touch Optimized */}
               <div className="space-y-3">
                 <button
-                  onClick={handleMessageSeller}
+                  onClick={() => console.log("Message seller")}
                   className="w-full min-h-[48px] py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
                 >
                   Message Seller
@@ -233,26 +326,6 @@ export default function ProductDetailPage() {
                 </ul>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Message Section - Mobile Friendly */}
-        <div className="mt-8 bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
-          <h2 className="text-white font-bold text-xl mb-4">Send Message</h2>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 h-12 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
-            />
-            <button
-              onClick={handleSendMessage}
-              className="min-h-[48px] px-6 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
-            >
-              Send
-            </button>
           </div>
         </div>
       </div>

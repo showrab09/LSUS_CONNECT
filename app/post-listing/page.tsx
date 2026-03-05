@@ -6,32 +6,42 @@ import { useRouter } from "next/navigation";
 import UserDropdown from "@/components/UserDropdown";
 
 /**
- * LSUS Connect - Post Listing Page (RESPONSIVE + PROFILE DROPDOWN)
- * Mobile: Stacked form fields, simplified layout
- * Tablet: Balanced form layout
- * Desktop: Form + Preview sidebar
+ * LSUS Connect - Post Listing Page (RESPONSIVE + API CONNECTED)
  */
 
-type ListingType = "regular" | "featured";
-type PriceType = "paid" | "free" | "swap";
+type PriceType = "PAID" | "FREE" | "SWAP";
 
 export default function PostListingPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
-  const [priceType, setPriceType] = useState<PriceType>("paid");
+  const [priceType, setPriceType] = useState<PriceType>("PAID");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [condition, setCondition] = useState("");
   const [location, setLocation] = useState("");
-  const [listingType, setListingType] = useState<ListingType>("regular");
   const [images, setImages] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const categories = ["Electronics", "Furniture", "Books", "Clothing", "Housing", "Home", "Other"];
   const conditions = ["New", "Like New", "Good", "Fair", "For Parts"];
+
+  // Format price as currency
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9.]/g, ''); // Remove non-numeric except decimal
+    setPrice(value);
+  };
+
+  const formatCurrencyDisplay = (value: string) => {
+    if (!value) return '';
+    const num = parseFloat(value);
+    if (isNaN(num)) return '';
+    return `$${num.toFixed(2)}`;
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -62,14 +72,86 @@ export default function PostListingPage() {
     setImages(images.filter((_, i) => i !== index));
   };
 
-  const handleSaveDraft = () => {
-    console.log("Saving draft...");
-    router.push("/user-profile");
+  const handlePublish = async () => {
+    console.log("=== PUBLISH CLICKED ===");
+    
+    // Validation
+    if (!title.trim()) {
+      setError("Title is required");
+      return;
+    }
+    if (!category) {
+      setError("Category is required");
+      return;
+    }
+    if (priceType === "PAID" && !price) {
+      setError("Price is required for paid items");
+      return;
+    }
+    if (!description.trim()) {
+      setError("Description is required");
+      return;
+    }
+    if (!condition) {
+      setError("Condition is required");
+      return;
+    }
+    if (!location.trim()) {
+      setError("Location is required");
+      return;
+    }
+
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      // Prepare listing data
+      const listingData = {
+        title: title.trim(),
+        description: description.trim(),
+        price: priceType === "PAID" ? parseFloat(price) : 0,
+        price_type: priceType,
+        category: category,
+        condition: condition,
+        location: location.trim(),
+        images: images,
+        tags: tags.split(",").map(t => t.trim()).filter(Boolean),
+        status: "ACTIVE"
+      };
+
+      console.log("Sending data:", listingData);
+
+      // Call API
+      const response = await fetch('/api/listings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(listingData),
+      });
+
+      console.log("Response status:", response.status);
+      const data = await response.json();
+      console.log("Response data:", data);
+
+      if (response.ok) {
+        console.log("SUCCESS! Redirecting to marketplace...");
+        router.push('/marketplace');
+      } else {
+        setError(data.error || "Failed to create listing");
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      console.error("Error creating listing:", error);
+      setError("Something went wrong. Please try again.");
+      setIsSubmitting(false);
+    }
   };
 
-  const handlePublish = () => {
-    console.log("Publishing listing...");
-    router.push("/marketplace");
+  const handleSaveDraft = () => {
+    console.log("Draft saving not implemented yet");
+    router.push("/user-profile");
   };
 
   return (
@@ -122,30 +204,37 @@ export default function PostListingPage() {
 
       {/* Main Content - Responsive Grid */}
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6 lg:gap-8">
+        <div className="max-w-4xl mx-auto">
           {/* Form Section */}
-          <div className="space-y-6">
-            <h1 className="text-white text-2xl sm:text-3xl font-bold">Create New Listing</h1>
+          <div className="space-y-3">
+            <h1 className="text-white text-xl font-bold mb-3">Create New Listing</h1>
+
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-500/20 border border-red-500/30 text-red-300 rounded-lg p-4">
+                {error}
+              </div>
+            )}
 
             {/* Title */}
             <div>
-              <label className="block text-[#FDD023] font-semibold mb-2 text-sm sm:text-base">Title</label>
+              <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Title *</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="What are you selling?"
-                className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                className="w-full h-10 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
               />
             </div>
 
             {/* Category */}
             <div>
-              <label className="block text-[#FDD023] font-semibold mb-2 text-sm sm:text-base">Category</label>
+              <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Category *</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                className="w-full h-10 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
               >
                 <option value="">Select a category</option>
                 {categories.map((cat) => (
@@ -156,40 +245,49 @@ export default function PostListingPage() {
 
             {/* Price Type - Mobile Optimized */}
             <div>
-              <label className="block text-[#FDD023] font-semibold mb-2 text-sm sm:text-base">Price</label>
-              <div className="flex flex-wrap gap-3 mb-3">
-                {(["paid", "free", "swap"] as PriceType[]).map((type) => (
+              <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Price *</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {(["PAID", "FREE", "SWAP"] as PriceType[]).map((type) => (
                   <button
                     key={type}
+                    type="button"
                     onClick={() => setPriceType(type)}
-                    className={`px-4 sm:px-6 py-3 rounded-lg font-semibold transition-colors min-h-[44px] ${
+                    className={`px-4 py-2 text-sm rounded-lg font-semibold transition-colors ${
                       priceType === type
                         ? "bg-[#FDD023] text-black"
                         : "bg-[#2a0d44] text-white border border-[#5a2d8c] hover:border-[#FDD023]"
                     }`}
                   >
-                    {type === "paid" ? "Paid" : type === "free" ? "Free" : "Swap"}
+                    {type === "PAID" ? "For Sale" : type === "FREE" ? "Free" : "Trade/Swap"}
                   </button>
                 ))}
               </div>
-              {priceType === "paid" && (
-                <input
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="Enter price"
-                  className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
-                />
+              {priceType === "PAID" && (
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-sm">$</span>
+                  <input
+                    type="text"
+                    value={price}
+                    onChange={handlePriceChange}
+                    placeholder="0.00"
+                    className="w-full h-10 pl-8 pr-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                  />
+                  {price && (
+                    <div className="mt-1 text-xs text-gray-300">
+                      Preview: <span className="text-[#FDD023] font-semibold">{formatCurrencyDisplay(price)}</span>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
             {/* Condition */}
             <div>
-              <label className="block text-[#FDD023] font-semibold mb-2 text-sm sm:text-base">Condition</label>
+              <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Condition *</label>
               <select
                 value={condition}
                 onChange={(e) => setCondition(e.target.value)}
-                className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                className="w-full h-10 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
               >
                 <option value="">Select condition</option>
                 {conditions.map((cond) => (
@@ -200,48 +298,48 @@ export default function PostListingPage() {
 
             {/* Description */}
             <div>
-              <label className="block text-[#FDD023] font-semibold mb-2 text-sm sm:text-base">Description</label>
+              <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Description *</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe your item..."
-                rows={6}
-                className="w-full px-4 py-3 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20 resize-none"
+                rows={4}
+                className="w-full px-4 py-2 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20 resize-none"
               />
             </div>
 
             {/* Location */}
             <div>
-              <label className="block text-[#FDD023] font-semibold mb-2 text-sm sm:text-base">Location</label>
+              <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Location *</label>
               <input
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g., On Campus, Near Student Union"
-                className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                className="w-full h-10 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
               />
             </div>
 
             {/* Tags */}
             <div>
-              <label className="block text-[#FDD023] font-semibold mb-2 text-sm sm:text-base">Tags (comma separated)</label>
+              <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Tags (comma separated)</label>
               <input
                 type="text"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
                 placeholder="e.g., laptop, gaming, barely used"
-                className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                className="w-full h-10 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
               />
             </div>
 
             {/* Image Upload - Touch Optimized */}
             <div>
-              <label className="block text-[#FDD023] font-semibold mb-2 text-sm sm:text-base">Images</label>
+              <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Images</label>
               <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors ${
+                className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
                   isDragging ? "border-[#FDD023] bg-[#FDD023]/10" : "border-[#5a2d8c] bg-[#2a0d44]"
                 }`}
               >
@@ -254,23 +352,28 @@ export default function PostListingPage() {
                   id="image-upload"
                 />
                 <label htmlFor="image-upload" className="cursor-pointer">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#FDD023]/20 flex items-center justify-center">
-                    <svg className="w-8 h-8 text-[#FDD023]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-[#FDD023]/20 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-[#FDD023]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                   </div>
-                  <p className="text-white font-semibold mb-1">Click to upload or drag and drop</p>
-                  <p className="text-gray-400 text-sm">PNG, JPG up to 10MB</p>
+                  <p className="text-white font-semibold text-sm mb-1">Click to upload or drag and drop</p>
+                  <p className="text-gray-400 text-xs">PNG, JPG up to 10MB</p>
                 </label>
               </div>
 
               {/* Image Previews - Responsive Grid */}
               {images.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-3">
                   {images.map((img, idx) => (
                     <div key={idx} className="relative aspect-square rounded-lg overflow-hidden bg-[#2a0d44] border border-[#5a2d8c]">
-                      <div className="w-full h-full bg-gradient-to-br from-gray-600 to-gray-800"></div>
+                      <img 
+                        src={img} 
+                        alt={`Upload ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
                       <button
+                        type="button"
                         onClick={() => removeImage(idx)}
                         className="absolute top-2 right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
                       >
@@ -285,36 +388,25 @@ export default function PostListingPage() {
             </div>
           </div>
 
-          {/* Preview Sidebar - Hidden on mobile, visible on desktop */}
-          <div className="hidden lg:block">
-            <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c] sticky top-24">
-              <h3 className="text-white font-bold text-lg mb-4">Preview</h3>
-              <div className="bg-[#2a0d44] rounded-lg p-4 border border-[#5a2d8c]">
-                <div className="aspect-video bg-gray-700 rounded-lg mb-3"></div>
-                <h4 className="text-white font-bold mb-2">{title || "Your listing title"}</h4>
-                <p className="text-[#FDD023] font-bold text-xl mb-2">
-                  {priceType === "paid" ? `$${price || "0"}` : priceType === "free" ? "Free" : "Swap"}
-                </p>
-                <p className="text-gray-300 text-sm line-clamp-3">{description || "Your description here..."}</p>
-              </div>
-            </div>
+          {/* Action Buttons - Mobile Optimized */}
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={isSubmitting}
+              className="flex-1 h-11 px-6 bg-[#2a0d44] text-white font-semibold text-sm rounded-lg border border-[#5a2d8c] hover:border-[#FDD023] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Save Draft
+            </button>
+            <button
+              type="button"
+              onClick={handlePublish}
+              disabled={isSubmitting}
+              className="flex-1 h-11 px-6 bg-[#FDD023] text-black font-bold text-sm rounded-lg hover:bg-[#FFE34A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? "Publishing..." : "Publish Listing"}
+            </button>
           </div>
-        </div>
-
-        {/* Action Buttons - Mobile Optimized */}
-        <div className="mt-8 flex flex-col sm:flex-row gap-4">
-          <button
-            onClick={handleSaveDraft}
-            className="flex-1 min-h-[48px] px-6 py-3 bg-[#2a0d44] text-white font-semibold rounded-lg border border-[#5a2d8c] hover:border-[#FDD023] transition-colors"
-          >
-            Save Draft
-          </button>
-          <button
-            onClick={handlePublish}
-            className="flex-1 min-h-[48px] px-6 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
-          >
-            Publish Listing
-          </button>
         </div>
       </div>
     </div>

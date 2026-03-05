@@ -1,232 +1,400 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import UserDropdown from "@/components/UserDropdown";
 
 /**
- * LSUS Connect - User Profile Page (FULLY RESPONSIVE)
- * Mobile: Stacked layout, hamburger menu
- * Tablet: 2-column grid for listings
- * Desktop: Full layout with stats
+ * LSUS Connect - User Profile Page (READS FROM JWT TOKEN)
  */
 
-// Mock user data
-const mockUser = {
-  id: 1,
-  name: "John Doe",
-  email: "john.doe@lsus.edu",
-  avatar: "/api/placeholder/128/128",
-  stats: {
-    listings: 12,
-    sold: 8,
-    rating: 4.8
-  }
-};
+interface UserProfile {
+  name: string;
+  email: string;
+  bio: string;
+  location: string;
+  phone: string;
+}
 
-// Mock user listings
-const mockListings = [
-  { id: 1, title: "Gaming Laptop", price: "$800", image: "/api/placeholder/300/200", status: "Active" },
-  { id: 2, title: "Desk Chair", price: "$50", image: "/api/placeholder/300/200", status: "Active" },
-  { id: 3, title: "Textbooks", price: "$120", image: "/api/placeholder/300/200", status: "Sold" },
-];
+interface Listing {
+  id: string;
+  title: string;
+  price: number;
+  price_type: string;
+  status: string;
+  images: string[];
+}
+
+// Decode JWT token
+function parseJwt(token: string) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error('Error parsing JWT:', e);
+    return null;
+  }
+}
 
 export default function UserProfilePage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"listings" | "saved">("listings");
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<UserProfile>({
+    name: "",
+    email: "",
+    bio: "",
+    location: "",
+    phone: "",
+  });
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState<UserProfile>({
+    name: "",
+    email: "",
+    bio: "",
+    location: "",
+    phone: "",
+  });
 
-  const handleLogout = () => {
-    document.cookie = "token=; path=/; max-age=0";
-    localStorage.removeItem("token");
-    router.push("/signin");
+  useEffect(() => {
+    loadUserProfile();
+    loadUserListings();
+  }, []);
+
+  const loadUserProfile = () => {
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (token) {
+        // Decode the JWT token
+        const decoded = parseJwt(token);
+        console.log('Decoded token:', decoded);
+        
+        // Check if there are any saved profile edits
+        const savedProfile = localStorage.getItem('userProfileEdits');
+        
+        const baseProfile = {
+          name: decoded?.name || decoded?.user?.name || "User",
+          email: decoded?.email || decoded?.user?.email || "",
+          bio: decoded?.bio || "",
+          location: decoded?.location || "",
+          phone: decoded?.phone || "",
+        };
+
+        if (savedProfile) {
+          const edits = JSON.parse(savedProfile);
+          setUser({ ...baseProfile, ...edits });
+        } else {
+          setUser(baseProfile);
+        }
+      } else {
+        console.log("No token found in localStorage");
+        setUser({
+          name: "User",
+          email: "",
+          bio: "",
+          location: "",
+          phone: "",
+        });
+      }
+    } catch (error) {
+      console.error("Error loading profile:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const loadUserListings = async () => {
+    try {
+      const response = await fetch('/api/listings', {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const allListings = data.listings || [];
+        setListings(allListings);
+      }
+    } catch (error) {
+      console.error("Error loading listings:", error);
+      setListings([]);
+    }
+  };
+
+  const handleEditClick = () => {
+    setEditForm({ ...user });
+    setIsEditing(true);
+  };
+
+  const handleSaveProfile = () => {
+    // Get token to preserve name/email from auth
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decoded = parseJwt(token);
+      const updatedUser = {
+        name: decoded?.name || decoded?.user?.name || editForm.name,
+        email: decoded?.email || decoded?.user?.email || editForm.email,
+        bio: editForm.bio,
+        location: editForm.location,
+        phone: editForm.phone,
+      };
+      
+      setUser(updatedUser);
+      
+      // Save only the editable parts
+      localStorage.setItem('userProfileEdits', JSON.stringify({
+        bio: editForm.bio,
+        location: editForm.location,
+        phone: editForm.phone,
+      }));
+    }
+    
+    setIsEditing(false);
+    alert("Profile updated successfully!");
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditForm({ ...user });
+  };
+
+  const getInitials = () => {
+    if (!user.name) return "?";
+    return user.name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const activeListings = listings.filter(l => l.status === "ACTIVE");
+  const soldListings = listings.filter(l => l.status === "SOLD");
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#461D7C] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-16 h-16 border-4 border-[#FDD023] border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-white text-lg">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#461D7C]">
-      {/* Header - Responsive */}
+      {/* Header */}
       <header className="bg-[#3a1364] border-b border-[#5a2d8c] sticky top-0 z-50">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            {/* Logo */}
             <Link href="/marketplace" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
               <span className="text-[#FDD023]">LSUS</span>
               <span>CONNECT</span>
             </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-4 text-white text-sm">
-              <Link href="/marketplace" className="hover:text-[#FDD023] transition-colors">
+            <div className="flex items-center gap-4">
+              <Link href="/marketplace" className="text-white hover:text-[#FDD023] transition-colors text-sm">
                 Marketplace
               </Link>
-              <Link href="/post-listing" className="hover:text-[#FDD023] transition-colors">
+              <Link href="/post-listing" className="text-white hover:text-[#FDD023] transition-colors text-sm">
                 Post Listing
               </Link>
-              <button 
-                onClick={handleLogout}
-                className="hover:text-[#FDD023] transition-colors"
-              >
-                Logout
-              </button>
+              <UserDropdown />
             </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-white hover:text-[#FDD023] transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {isMobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
           </div>
-
-          {/* Mobile Menu Dropdown */}
-          {isMobileMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 border-t border-[#5a2d8c] pt-4">
-              <nav className="flex flex-col gap-3">
-                <Link href="/marketplace" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#461D7C]">
-                  Marketplace
-                </Link>
-                <Link href="/post-listing" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#461D7C]">
-                  Post Listing
-                </Link>
-                <button 
-                  onClick={handleLogout}
-                  className="text-left text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#461D7C]"
-                >
-                  Logout
-                </button>
-              </nav>
-            </div>
-          )}
         </div>
       </header>
 
+      {/* Edit Profile Modal */}
+      {isEditing && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#3a1364] rounded-lg p-6 max-w-md w-full border border-[#5a2d8c]">
+            <h2 className="text-white text-2xl font-bold mb-6">Edit Profile</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-400 mb-2 text-sm">Name (from account)</label>
+                <div className="w-full h-10 px-4 rounded-lg bg-[#1a0d24] border border-[#5a2d8c] text-gray-400 flex items-center">
+                  {user.name}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Contact support to change</p>
+              </div>
+
+              <div>
+                <label className="block text-gray-400 mb-2 text-sm">Email (from account)</label>
+                <div className="w-full h-10 px-4 rounded-lg bg-[#1a0d24] border border-[#5a2d8c] text-gray-400 flex items-center">
+                  {user.email}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Contact support to change</p>
+              </div>
+
+              <div>
+                <label className="block text-[#FDD023] font-semibold mb-2 text-sm">Location</label>
+                <input
+                  type="text"
+                  value={editForm.location}
+                  onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                  placeholder="e.g., Shreveport, LA"
+                  className="w-full h-10 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white placeholder-gray-400 focus:outline-none focus:border-[#FDD023]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#FDD023] font-semibold mb-2 text-sm">Phone</label>
+                <input
+                  type="tel"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  placeholder="(318) 555-1234"
+                  className="w-full h-10 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white placeholder-gray-400 focus:outline-none focus:border-[#FDD023]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#FDD023] font-semibold mb-2 text-sm">Bio</label>
+                <textarea
+                  value={editForm.bio}
+                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                  placeholder="Tell us about yourself..."
+                  rows={3}
+                  className="w-full px-4 py-2 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white placeholder-gray-400 focus:outline-none focus:border-[#FDD023] resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleCancelEdit}
+                className="flex-1 h-11 bg-[#2a0d44] text-white font-semibold rounded-lg border border-[#5a2d8c] hover:border-[#FDD023] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveProfile}
+                className="flex-1 h-11 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* Profile Header Card */}
-        <div className="bg-[#3a1364] rounded-lg p-6 sm:p-8 border border-[#5a2d8c] mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8">
+        {/* Profile Header */}
+        <div className="bg-[#3a1364] rounded-lg p-6 sm:p-8 border border-[#5a2d8c] mb-6">
+          <div className="flex flex-col sm:flex-row items-center gap-6">
             {/* Avatar */}
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gray-600 flex-shrink-0 overflow-hidden">
-              <div className="w-full h-full bg-gradient-to-br from-gray-500 to-gray-700"></div>
+            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-[#FDD023] flex items-center justify-center text-black text-4xl sm:text-5xl font-bold">
+              {getInitials()}
             </div>
 
             {/* User Info */}
             <div className="flex-1 text-center sm:text-left">
-              <h1 className="text-white text-2xl sm:text-3xl font-bold mb-2">{mockUser.name}</h1>
-              <p className="text-gray-300 mb-4">{mockUser.email}</p>
+              <h1 className="text-white text-2xl sm:text-3xl font-bold mb-2">{user.name}</h1>
+              <p className="text-gray-300 mb-4">{user.email}</p>
+              
+              {user.bio && (
+                <p className="text-gray-300 mb-4">{user.bio}</p>
+              )}
 
-              {/* Stats - Responsive Grid */}
-              <div className="flex flex-wrap justify-center sm:justify-start gap-4 sm:gap-6 mb-4">
+              {user.location && (
+                <p className="text-gray-400 text-sm mb-4">📍 {user.location}</p>
+              )}
+
+              <div className="flex flex-wrap gap-6 justify-center sm:justify-start mb-4">
                 <div>
-                  <p className="text-[#FDD023] text-2xl font-bold">{mockUser.stats.listings}</p>
-                  <p className="text-gray-300 text-sm">Listings</p>
+                  <div className="text-[#FDD023] text-2xl font-bold">{activeListings.length}</div>
+                  <div className="text-gray-300 text-sm">Active Listings</div>
                 </div>
                 <div>
-                  <p className="text-[#FDD023] text-2xl font-bold">{mockUser.stats.sold}</p>
-                  <p className="text-gray-300 text-sm">Sold</p>
+                  <div className="text-[#FDD023] text-2xl font-bold">{soldListings.length}</div>
+                  <div className="text-gray-300 text-sm">Sold</div>
                 </div>
                 <div>
-                  <p className="text-[#FDD023] text-2xl font-bold">{mockUser.stats.rating}</p>
-                  <p className="text-gray-300 text-sm">Rating</p>
+                  <div className="text-[#FDD023] text-2xl font-bold">4.8</div>
+                  <div className="text-gray-300 text-sm">Rating</div>
                 </div>
               </div>
 
-              {/* Edit Profile Button */}
-              <button className="w-full sm:w-auto px-6 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors min-h-[48px]">
+              <button
+                onClick={handleEditClick}
+                className="px-8 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+              >
                 Edit Profile
               </button>
             </div>
           </div>
         </div>
 
-        {/* Tabs - Responsive */}
-        <div className="flex gap-2 sm:gap-4 mb-6 overflow-x-auto pb-2">
-          <button
-            onClick={() => setActiveTab("listings")}
-            className={`px-4 sm:px-6 py-3 rounded-lg font-semibold transition-colors whitespace-nowrap min-h-[44px] ${
-              activeTab === "listings"
-                ? "bg-[#FDD023] text-black"
-                : "bg-[#3a1364] text-white border border-[#5a2d8c] hover:border-[#FDD023]"
-            }`}
-          >
+        {/* Tabs */}
+        <div className="flex gap-4 mb-6">
+          <button className="px-6 py-3 bg-[#FDD023] text-black font-bold rounded-lg">
             My Listings
           </button>
-          <button
-            onClick={() => setActiveTab("saved")}
-            className={`px-4 sm:px-6 py-3 rounded-lg font-semibold transition-colors whitespace-nowrap min-h-[44px] ${
-              activeTab === "saved"
-                ? "bg-[#FDD023] text-black"
-                : "bg-[#3a1364] text-white border border-[#5a2d8c] hover:border-[#FDD023]"
-            }`}
-          >
+          <button className="px-6 py-3 bg-[#2a0d44] text-white font-semibold rounded-lg border border-[#5a2d8c] hover:border-[#FDD023] transition-colors">
             Saved Items
           </button>
         </div>
 
-        {/* Listings Grid - Responsive */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {mockListings.map((listing) => (
-            <div
-              key={listing.id}
-              className="bg-[#3a1364] rounded-lg overflow-hidden border border-[#5a2d8c] hover:border-[#FDD023] transition-all"
-            >
-              {/* Image */}
-              <div className="aspect-video bg-gray-700">
-                <div className="w-full h-full bg-gradient-to-br from-gray-600 to-gray-800"></div>
-              </div>
-
-              {/* Content */}
-              <div className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-white font-bold text-base sm:text-lg">{listing.title}</h3>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    listing.status === "Active" 
-                      ? "bg-green-500/20 text-green-400" 
-                      : "bg-gray-500/20 text-gray-400"
-                  }`}>
-                    {listing.status}
-                  </span>
-                </div>
-
-                <p className="text-[#FDD023] font-bold mb-3">{listing.price}</p>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <button className="flex-1 py-2 bg-[#2a0d44] text-white text-sm rounded-lg border border-[#5a2d8c] hover:border-[#FDD023] transition-colors min-h-[44px]">
-                    Edit
-                  </button>
-                  <button className="flex-1 py-2 bg-[#2a0d44] text-white text-sm rounded-lg border border-[#5a2d8c] hover:border-red-500 transition-colors min-h-[44px]">
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Empty State (when no listings) */}
-        {mockListings.length === 0 && (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#3a1364] flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {/* Listings Grid */}
+        {activeListings.length === 0 ? (
+          <div className="text-center py-16 bg-[#3a1364] rounded-lg border border-[#5a2d8c]">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#2a0d44] flex items-center justify-center">
+              <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
               </svg>
             </div>
             <h3 className="text-white text-xl font-bold mb-2">No listings yet</h3>
-            <p className="text-gray-300 mb-6">Start selling by creating your first listing!</p>
+            <p className="text-gray-300 mb-6">Create your first listing to get started!</p>
             <Link
               href="/post-listing"
-              className="inline-block px-6 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors min-h-[48px]"
+              className="inline-block px-8 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
             >
               Create Listing
             </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {activeListings.map((listing) => (
+              <div
+                key={listing.id}
+                className="bg-[#3a1364] rounded-lg overflow-hidden border border-[#5a2d8c]"
+              >
+                <div className="aspect-square bg-[#2a0d44]">
+                  {listing.images && listing.images.length > 0 ? (
+                    <img src={listing.images[0]} alt={listing.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-500">No image</div>
+                  )}
+                </div>
+                <div className="p-4">
+                  <h3 className="text-white font-bold mb-2 line-clamp-2">{listing.title}</h3>
+                  <p className="text-[#FDD023] font-bold text-xl mb-3">
+                    {listing.price_type === "FREE" ? "Free" : listing.price_type === "SWAP" ? "Trade/Swap" : `$${listing.price.toFixed(2)}`}
+                  </p>
+                  <div className="flex gap-2">
+                    <button className="flex-1 py-2 bg-[#2a0d44] text-white text-sm font-semibold rounded border border-[#5a2d8c] hover:border-[#FDD023] transition-colors">
+                      Edit
+                    </button>
+                    <button className="flex-1 py-2 bg-red-500/20 text-red-300 text-sm font-semibold rounded border border-red-500/30 hover:bg-red-500/30 transition-colors">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

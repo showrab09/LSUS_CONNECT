@@ -4,14 +4,25 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 /**
- * LSUS Connect - Home Page
+ * LSUS Connect - Home Page  
  * Redirects to signin if not authenticated
+ * FIXED: Respects logout flag
  */
 
 export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
+    // Check if we're in the middle of logging out
+    const isLoggingOut = sessionStorage.getItem('isLoggingOut');
+    
+    if (isLoggingOut) {
+      // Clear the flag and go to signin
+      sessionStorage.removeItem('isLoggingOut');
+      router.push('/signin');
+      return;
+    }
+    
     // Check if user is logged in (localStorage is only available on client)
     const token = localStorage.getItem('token');
     
@@ -19,8 +30,8 @@ export default function HomePage() {
       // Not logged in, redirect to signin
       router.push('/signin');
     } else {
-      // Logged in, redirect to User Profile
-      router.push('/user-profile');
+      // Logged in, redirect to marketplace
+      router.push('/marketplace');
     }
   }, [router]);
 
