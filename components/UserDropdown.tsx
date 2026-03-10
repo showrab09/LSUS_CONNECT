@@ -11,6 +11,7 @@ interface User {
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,7 +28,6 @@ export default function UserDropdown() {
         // Extract name from email if no name field
         let displayName = decoded.name || "User";
         if (!decoded.name && decoded.email) {
-          // Get the part before @ and capitalize it
           const emailName = decoded.email.split('@')[0];
           displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
         }
@@ -42,6 +42,9 @@ export default function UserDropdown() {
     } else {
       setUser({ full_name: "User", email: "" });
     }
+
+    // Fetch unread count
+    fetchUnreadCount();
   }, []);
 
   useEffect(() => {
@@ -56,6 +59,21 @@ export default function UserDropdown() {
     }
   }, [isOpen]);
 
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await fetch('/api/messages/unread-count', {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadCount(data.unread_count || 0);
+      }
+    } catch (err) {
+      // Mock data for development
+      setUnreadCount(3);
+    }
+  };
+
   const handleLogout = () => {
     window.location.href = "/logout";
   };
@@ -68,11 +86,18 @@ export default function UserDropdown() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#3a1364] transition-colors">
+      <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#3a1364] transition-colors relative">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FDD023] to-[#FFE34A] flex items-center justify-center border-2 border-[#FDD023]">
           <span className="text-black font-bold text-base">{getInitials(user.full_name)}</span>
         </div>
         <span className="hidden md:block text-white font-medium text-sm">{user.full_name.split(" ")[0]}</span>
+        
+        {/* Unread Badge */}
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
       </button>
 
       {isOpen && (
@@ -81,12 +106,27 @@ export default function UserDropdown() {
             <p className="text-white font-semibold text-sm">{user.full_name}</p>
             <p className="text-gray-400 text-xs">{user.email}</p>
           </div>
+          
           <div className="py-2">
             <Link href="/marketplace" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 text-white hover:bg-[#461D7C]">
               <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               <span className="text-sm">Marketplace</span>
+            </Link>
+
+            <Link href="/messages" onClick={() => setIsOpen(false)} className="flex items-center justify-between px-4 py-3 text-white hover:bg-[#461D7C]">
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <span className="text-sm">Messages</span>
+              </div>
+              {unreadCount > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </Link>
 
             <Link href="/lost-found" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 text-white hover:bg-[#461D7C]">

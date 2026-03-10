@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import UserDropdown from "@/components/UserDropdown";
 import SaveButton from "@/components/SaveButton";
 
 /**
- * LSUS Connect - Marketplace Page (WITH SEARCH & SAVE BUTTONS)
+ * LSUS Connect - Category Page
+ * Shows all listings in a specific category
  */
 
 interface Listing {
@@ -25,30 +27,43 @@ interface Listing {
   user_id: string;
 }
 
-export default function MarketplacePage() {
+const CATEGORIES = [
+  { slug: "electronics", name: "Electronics", icon: "💻" },
+  { slug: "furniture", name: "Furniture", icon: "🛋️" },
+  { slug: "books", name: "Books", icon: "📚" },
+  { slug: "clothing", name: "Clothing", icon: "👕" },
+  { slug: "housing", name: "Housing", icon: "🏠" },
+  { slug: "home", name: "Home", icon: "🏡" },
+  { slug: "other", name: "Other", icon: "📦" },
+];
+
+export default function CategoryPage() {
+  const params = useParams();
+  const categorySlug = params.slug as string;
+  
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFilters, setSelectedFilters] = useState<{
-    categories: string[];
-    priceTypes: string[];
-  }>({
-    categories: [],
-    priceTypes: [],
-  });
+  const [selectedPriceTypes, setSelectedPriceTypes] = useState<string[]>([]);
 
-  const categories = ["Electronics", "Furniture", "Books", "Clothing", "Housing", "Home", "Other"];
   const priceTypes = [
     { value: "PAID", label: "For Sale" },
     { value: "FREE", label: "Free" },
     { value: "SWAP", label: "Trade/Swap" },
   ];
 
-  // Fetch listings from API
+  // Get current category info
+  const currentCategory = CATEGORIES.find(
+    cat => cat.slug === categorySlug.toLowerCase()
+  );
+
+  const categoryName = currentCategory?.name || categorySlug;
+  const categoryIcon = currentCategory?.icon || "📦";
+
   useEffect(() => {
     fetchListings();
-  }, []);
+  }, [categorySlug]);
 
   const fetchListings = async () => {
     try {
@@ -72,48 +87,43 @@ export default function MarketplacePage() {
     }
   };
 
-  // Toggle filter
-  const toggleFilter = (type: 'categories' | 'priceTypes', value: string) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [type]: prev[type].includes(value)
-        ? prev[type].filter(item => item !== value)
-        : [...prev[type], value]
-    }));
+  const togglePriceType = (value: string) => {
+    setSelectedPriceTypes(prev =>
+      prev.includes(value)
+        ? prev.filter(item => item !== value)
+        : [...prev, value]
+    );
   };
 
-  // Clear all filters
   const clearFilters = () => {
-    setSelectedFilters({ categories: [], priceTypes: [] });
+    setSelectedPriceTypes([]);
     setSearchQuery("");
   };
 
-  // Filter listings - WITH WORKING SEARCH!
+  // Filter listings by category and other filters
   const filteredListings = listings.filter((listing) => {
-    // Search filter - searches title, description, location, and tags
-    const matchesSearch = 
+    // Category filter (case-insensitive)
+    const matchesCategory = listing.category.toLowerCase() === categorySlug.toLowerCase();
+
+    // Search filter
+    const matchesSearch =
       searchQuery === "" ||
       listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       listing.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       listing.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (listing.tags && listing.tags.some(tag => 
+      (listing.tags && listing.tags.some(tag =>
         tag.toLowerCase().includes(searchQuery.toLowerCase())
       ));
-    
-    // Category filter
-    const matchesCategory =
-      selectedFilters.categories.length === 0 ||
-      selectedFilters.categories.includes(listing.category);
 
     // Price type filter
     const matchesPriceType =
-      selectedFilters.priceTypes.length === 0 ||
-      selectedFilters.priceTypes.includes(listing.price_type);
+      selectedPriceTypes.length === 0 ||
+      selectedPriceTypes.includes(listing.price_type);
 
     // Only show active listings
     const isActive = listing.status === "ACTIVE";
 
-    return matchesSearch && matchesCategory && matchesPriceType && isActive;
+    return matchesCategory && matchesSearch && matchesPriceType && isActive;
   });
 
   const formatPrice = (listing: Listing) => {
@@ -137,14 +147,13 @@ export default function MarketplacePage() {
             <div className="flex-1 max-w-2xl">
               <input
                 type="text"
-                placeholder="Search listings..."
+                placeholder={`Search in ${categoryName}...`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-10 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
               />
             </div>
 
-            {/* Right Side */}
             <div className="flex items-center gap-3">
               <UserDropdown />
             </div>
@@ -152,7 +161,7 @@ export default function MarketplacePage() {
         </div>
       </header>
 
-      {/* Main Content with Sidebar */}
+      {/* Main Content */}
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-6">
         <div className="flex gap-6">
           {/* Left Sidebar - Filters */}
@@ -160,7 +169,7 @@ export default function MarketplacePage() {
             <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c] sticky top-24">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-white font-bold text-lg">Filters</h2>
-                {(selectedFilters.categories.length > 0 || selectedFilters.priceTypes.length > 0 || searchQuery) && (
+                {(selectedPriceTypes.length > 0 || searchQuery) && (
                   <button
                     onClick={clearFilters}
                     className="text-[#FDD023] text-xs hover:underline"
@@ -168,27 +177,6 @@ export default function MarketplacePage() {
                     Clear all
                   </button>
                 )}
-              </div>
-
-              {/* Categories */}
-              <div className="mb-6">
-                <h3 className="text-white font-semibold mb-3 text-sm">Category</h3>
-                <div className="space-y-2">
-                  {categories.map((category) => (
-                    <label
-                      key={category}
-                      className="flex items-center gap-2 text-white text-sm cursor-pointer hover:text-[#FDD023] transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedFilters.categories.includes(category)}
-                        onChange={() => toggleFilter('categories', category)}
-                        className="w-4 h-4 rounded border-[#5a2d8c] bg-[#2a0d44] text-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
-                      />
-                      <span>{category}</span>
-                    </label>
-                  ))}
-                </div>
               </div>
 
               {/* Price Type */}
@@ -202,8 +190,8 @@ export default function MarketplacePage() {
                     >
                       <input
                         type="checkbox"
-                        checked={selectedFilters.priceTypes.includes(type.value)}
-                        onChange={() => toggleFilter('priceTypes', type.value)}
+                        checked={selectedPriceTypes.includes(type.value)}
+                        onChange={() => togglePriceType(type.value)}
                         className="w-4 h-4 rounded border-[#5a2d8c] bg-[#2a0d44] text-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
                       />
                       <span>{type.label}</span>
@@ -211,11 +199,35 @@ export default function MarketplacePage() {
                   ))}
                 </div>
               </div>
+
+              {/* All Categories Link */}
+              <div className="mt-6 pt-6 border-t border-[#5a2d8c]">
+                <Link
+                  href="/marketplace"
+                  className="text-[#FDD023] hover:text-[#FFE34A] text-sm flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  All Categories
+                </Link>
+              </div>
             </div>
           </aside>
 
           {/* Main Content Area */}
           <div className="flex-1">
+            {/* Category Header */}
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-4xl">{categoryIcon}</span>
+                <h1 className="text-white text-3xl font-bold">{categoryName}</h1>
+              </div>
+              <p className="text-gray-300">
+                Browse all {categoryName.toLowerCase()} listings
+              </p>
+            </div>
+
             {/* Results Count & Create Button */}
             <div className="flex items-center justify-between mb-6">
               <div className="text-white text-sm">
@@ -257,16 +269,14 @@ export default function MarketplacePage() {
               <>
                 {filteredListings.length === 0 ? (
                   <div className="text-center py-16">
-                    <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#3a1364] flex items-center justify-center">
-                      <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
+                    <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#3a1364] flex items-center justify-center text-4xl">
+                      {categoryIcon}
                     </div>
                     <h3 className="text-white text-xl font-bold mb-2">
-                      {searchQuery ? `No results for "${searchQuery}"` : "No listings found"}
+                      {searchQuery ? `No results for "${searchQuery}"` : `No ${categoryName.toLowerCase()} listings yet`}
                     </h3>
                     <p className="text-gray-300 mb-6">
-                      {searchQuery ? "Try a different search term" : "Be the first to post something!"}
+                      {searchQuery ? "Try a different search term" : `Be the first to post a ${categoryName.toLowerCase()} listing!`}
                     </p>
                     {searchQuery && (
                       <button
