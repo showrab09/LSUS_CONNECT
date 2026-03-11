@@ -231,7 +231,6 @@ export default function EditListingModal({ listing, isOpen, onClose, onSuccess }
             >
               <option value="ACTIVE">Active</option>
               <option value="SOLD">Sold</option>
-              <option value="INACTIVE">Inactive</option>
             </select>
           </div>
 

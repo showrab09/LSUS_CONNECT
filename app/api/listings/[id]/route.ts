@@ -23,7 +23,7 @@ async function verifyToken(request: NextRequest) {
 // PATCH /api/listings/[id] - Update a listing
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await verifyToken(request);
@@ -34,7 +34,7 @@ export async function PATCH(
       );
     }
 
-    const listingId = params.id;
+    const { id: listingId } = await params;
     const body = await request.json();
 
     // Check if listing exists and belongs to user
@@ -110,7 +110,7 @@ export async function PATCH(
 // DELETE /api/listings/[id] - Delete a listing
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await verifyToken(request);
@@ -121,7 +121,7 @@ export async function DELETE(
       );
     }
 
-    const listingId = params.id;
+    const { id: listingId } = await params;
 
     // Check if listing exists and belongs to user
     const { data: existingListing, error: fetchError } = await supabase
