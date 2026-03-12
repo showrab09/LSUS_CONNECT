@@ -95,6 +95,20 @@ export async function POST(request: NextRequest) {
       location,
       images,
       tags,
+      // Housing-specific fields
+      listing_type,
+      monthly_rent,
+      location_type,
+      move_in_date,
+      lease_length,
+      bedrooms,
+      bathrooms,
+      utilities_included,
+      pets_allowed,
+      pet_details,
+      gender_preference,
+      smoking_allowed,
+      quiet_hours,
     } = body;
 
     // Validate required fields
@@ -105,24 +119,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Create listing object
+    const listingData: any = {
+      user_id: user.userId,
+      title,
+      description,
+      category,
+      location,
+      images: images || [],
+      tags: tags || [],
+      status: 'ACTIVE',
+    };
+
+    // Handle pricing - different for housing vs regular items
+    if (category === 'Housing') {
+      listingData.price = monthly_rent ? parseFloat(monthly_rent) : 0;
+      listingData.price_type = 'PAID';
+      listingData.monthly_rent = monthly_rent ? parseFloat(monthly_rent) : null;
+      
+      // Add all housing-specific fields
+      listingData.listing_type = listing_type || null;
+      listingData.location_type = location_type || null;
+      listingData.move_in_date = move_in_date || null;
+      listingData.lease_length = lease_length || null;
+      listingData.bedrooms = bedrooms || null;
+      listingData.bathrooms = bathrooms || null;
+      listingData.utilities_included = utilities_included || null;
+      listingData.pets_allowed = pets_allowed || null;
+      listingData.pet_details = pet_details || null;
+      listingData.gender_preference = gender_preference || null;
+      listingData.smoking_allowed = smoking_allowed || null;
+      listingData.quiet_hours = quiet_hours || null;
+      
+      // Condition not applicable for housing
+      listingData.condition = null;
+    } else {
+      // Regular item listing
+      listingData.price = price_type === 'PAID' ? parseFloat(price) : 0;
+      listingData.price_type = price_type || 'PAID';
+      listingData.condition = condition || null;
+      
+      // Set housing fields to null for non-housing items
+      listingData.listing_type = null;
+      listingData.monthly_rent = null;
+      listingData.location_type = null;
+      listingData.move_in_date = null;
+      listingData.lease_length = null;
+      listingData.bedrooms = null;
+      listingData.bathrooms = null;
+      listingData.utilities_included = null;
+      listingData.pets_allowed = null;
+      listingData.pet_details = null;
+      listingData.gender_preference = null;
+      listingData.smoking_allowed = null;
+      listingData.quiet_hours = null;
+    }
+
     // Create listing
     const { data: listing, error } = await supabase
       .from('listings')
-      .insert([
-        {
-          user_id: user.userId,
-          title,
-          description,
-          price: price_type === 'PAID' ? parseFloat(price) : 0,
-          price_type: price_type || 'PAID',
-          category,
-          condition,
-          location,
-          images: images || [],
-          tags: tags || [],
-          status: 'ACTIVE',
-        },
-      ])
+      .insert([listingData])
       .select(`
         *,
         user:users(id, full_name, email, profile_picture)

@@ -5,17 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import UserDropdown from "@/components/UserDropdown";
 
-/**
- * LSUS Connect - Messages/Inbox Page
- * Shows all conversations for the user
- */
-
 interface Conversation {
   id: string;
   listing: {
     id: string;
     title: string;
     price: number;
+    price_type: string;
     images: string[];
   };
   other_user: {
@@ -41,59 +37,21 @@ export default function MessagesPage() {
   const fetchConversations = async () => {
     try {
       setIsLoading(true);
+      setError("");
       const response = await fetch('/api/messages/conversations', {
         credentials: 'include',
       });
 
       if (!response.ok) {
-     const errorData = await response.json();
-    console.error('API Error:', errorData);
-    throw new Error(errorData.error || 'Failed to fetch conversations');
-    }   
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch conversations');
+      }
 
       const data = await response.json();
       setConversations(data.conversations || []);
-      setError("");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching conversations:", err);
-      // Mock data for development
-      setConversations([
-        {
-          id: "1",
-          listing: {
-            id: "listing-1",
-            title: "iPhone 13 Pro - Like New",
-            price: 800,
-            images: ["https://via.placeholder.com/150"],
-          },
-          other_user: {
-            id: "user-1",
-            name: "John Seller",
-            profile_picture: "",
-          },
-          last_message: "Yes, it's still available! When would you like to meet?",
-          last_message_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 min ago
-          unread_count: 2,
-        },
-        {
-          id: "2",
-          listing: {
-            id: "listing-2",
-            title: "MacBook Pro 2021",
-            price: 1200,
-            images: ["https://via.placeholder.com/150"],
-          },
-          other_user: {
-            id: "user-2",
-            name: "Sarah Buyer",
-            profile_picture: "",
-          },
-          last_message: "Can you do $1000?",
-          last_message_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-          unread_count: 0,
-        },
-      ]);
-      setError("");
+      setError(err.message || "Failed to load conversations. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -118,6 +76,12 @@ export default function MessagesPage() {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
+  const formatPrice = (conversation: Conversation) => {
+    if (conversation.listing.price_type === "FREE") return "Free";
+    if (conversation.listing.price_type === "SWAP") return "Trade/Swap";
+    return `$${conversation.listing.price?.toFixed(2)}`;
+  };
+
   return (
     <div className="min-h-screen bg-[#461D7C]">
       {/* Header */}
@@ -128,7 +92,6 @@ export default function MessagesPage() {
               <span className="text-[#FDD023]">LSUS</span>
               <span>CONNECT</span>
             </Link>
-
             <div className="flex items-center gap-4">
               <UserDropdown />
             </div>
@@ -193,8 +156,8 @@ export default function MessagesPage() {
                       {/* Listing Image */}
                       <div className="w-20 h-20 rounded-lg bg-[#2a0d44] overflow-hidden flex-shrink-0">
                         {conversation.listing.images?.[0] ? (
-                          <img 
-                            src={conversation.listing.images[0]} 
+                          <img
+                            src={conversation.listing.images[0]}
                             alt={conversation.listing.title}
                             className="w-full h-full object-cover"
                           />
@@ -210,11 +173,10 @@ export default function MessagesPage() {
                         {/* Header Row */}
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <div className="flex items-center gap-2 min-w-0">
-                            {/* Other User Avatar */}
                             {conversation.other_user.profile_picture ? (
                               <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                                <img 
-                                  src={conversation.other_user.profile_picture} 
+                                <img
+                                  src={conversation.other_user.profile_picture}
                                   alt={conversation.other_user.name}
                                   className="w-full h-full object-cover"
                                 />
@@ -228,7 +190,7 @@ export default function MessagesPage() {
                               {conversation.other_user.name}
                             </h3>
                           </div>
-                          
+
                           {/* Time & Unread Badge */}
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <span className="text-gray-400 text-xs">
@@ -242,9 +204,9 @@ export default function MessagesPage() {
                           </div>
                         </div>
 
-                        {/* Listing Title */}
+                        {/* Listing Title + Price */}
                         <p className="text-gray-400 text-sm mb-1 truncate">
-                          Re: {conversation.listing.title}
+                          Re: {conversation.listing.title} — <span className="text-[#FDD023]">{formatPrice(conversation)}</span>
                         </p>
 
                         {/* Last Message */}

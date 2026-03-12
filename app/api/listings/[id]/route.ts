@@ -110,6 +110,21 @@ export async function PATCH(
     if (body.tags !== undefined) updateData.tags = body.tags;
     if (body.status !== undefined) updateData.status = body.status;
 
+    // Housing-specific fields
+    if (body.listing_type !== undefined) updateData.listing_type = body.listing_type;
+    if (body.monthly_rent !== undefined) updateData.monthly_rent = body.monthly_rent;
+    if (body.location_type !== undefined) updateData.location_type = body.location_type;
+    if (body.move_in_date !== undefined) updateData.move_in_date = body.move_in_date;
+    if (body.lease_length !== undefined) updateData.lease_length = body.lease_length;
+    if (body.bedrooms !== undefined) updateData.bedrooms = body.bedrooms;
+    if (body.bathrooms !== undefined) updateData.bathrooms = body.bathrooms;
+    if (body.utilities_included !== undefined) updateData.utilities_included = body.utilities_included;
+    if (body.pets_allowed !== undefined) updateData.pets_allowed = body.pets_allowed;
+    if (body.pet_details !== undefined) updateData.pet_details = body.pet_details;
+    if (body.gender_preference !== undefined) updateData.gender_preference = body.gender_preference;
+    if (body.smoking_allowed !== undefined) updateData.smoking_allowed = body.smoking_allowed;
+    if (body.quiet_hours !== undefined) updateData.quiet_hours = body.quiet_hours;
+
     updateData.updated_at = new Date().toISOString();
 
     // Update listing

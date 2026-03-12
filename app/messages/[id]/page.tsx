@@ -5,11 +5,6 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import UserDropdown from "@/components/UserDropdown";
 
-/**
- * LSUS Connect - Chat/Conversation Page
- * Shows messages between buyer and seller for a specific listing
- */
-
 interface Message {
   id: string;
   sender_id: string;
@@ -38,7 +33,6 @@ interface Conversation {
   };
 }
 
-// Decode JWT to get current user ID
 function getCurrentUserId(): string {
   try {
     const token = localStorage.getItem('token');
@@ -75,76 +69,32 @@ export default function ChatPage() {
   }, [conversationId]);
 
   useEffect(() => {
-    // Scroll to bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const fetchConversation = async () => {
     try {
       setIsLoading(true);
+      setError("");
+
       const response = await fetch(`/api/messages/conversations/${conversationId}`, {
         credentials: 'include',
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch conversation');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch conversation');
       }
 
       const data = await response.json();
       setConversation(data.conversation);
       setMessages(data.messages || []);
-      setError("");
 
       // Mark messages as read
       markAsRead();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching conversation:", err);
-      // Mock data for development
-      setConversation({
-        id: conversationId,
-        listing: {
-          id: "listing-1",
-          title: "iPhone 13 Pro - Like New",
-          price: 800,
-          price_type: "PAID",
-          images: ["https://via.placeholder.com/150"],
-        },
-        buyer: {
-          id: "buyer-1",
-          name: "Jane Buyer",
-        },
-        seller: {
-          id: "seller-1",
-          name: "John Seller",
-        },
-      });
-      setMessages([
-        {
-          id: "1",
-          sender_id: "buyer-1",
-          sender_name: "Jane Buyer",
-          message: "Hi! Is this still available?",
-          is_read: true,
-          created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-        },
-        {
-          id: "2",
-          sender_id: "seller-1",
-          sender_name: "John Seller",
-          message: "Yes, it's still available! Would you like to meet up?",
-          is_read: true,
-          created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-        },
-        {
-          id: "3",
-          sender_id: "buyer-1",
-          sender_name: "Jane Buyer",
-          message: "Great! How about tomorrow at 3pm at the Student Union?",
-          is_read: false,
-          created_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-        },
-      ]);
-      setError("");
+      setError(err.message || "Failed to load conversation. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -163,7 +113,7 @@ export default function ChatPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newMessage.trim() || isSending) return;
 
     setIsSending(true);
@@ -171,9 +121,7 @@ export default function ChatPage() {
     try {
       const response = await fetch('/api/messages', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
           conversation_id: conversationId,
@@ -182,12 +130,12 @@ export default function ChatPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send message');
       }
 
       const data = await response.json();
-      
-      // Add new message to list
+
       const sentMessage: Message = {
         id: data.message.id,
         sender_id: currentUserId,
@@ -196,22 +144,12 @@ export default function ChatPage() {
         is_read: false,
         created_at: new Date().toISOString(),
       };
-      
-      setMessages([...messages, sentMessage]);
+
+      setMessages(prev => [...prev, sentMessage]);
       setNewMessage("");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error sending message:", err);
-      // Mock: Add message anyway for development
-      const mockMessage: Message = {
-        id: `msg-${Date.now()}`,
-        sender_id: currentUserId,
-        sender_name: "You",
-        message: newMessage.trim(),
-        is_read: false,
-        created_at: new Date().toISOString(),
-      };
-      setMessages([...messages, mockMessage]);
-      setNewMessage("");
+      setError(err.message || "Failed to send message. Please try again.");
     } finally {
       setIsSending(false);
     }
@@ -221,7 +159,7 @@ export default function ChatPage() {
     const date = new Date(timestamp);
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
-    
+
     if (isToday) {
       return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     }
@@ -232,12 +170,11 @@ export default function ChatPage() {
     if (!conversation) return "";
     if (conversation.listing.price_type === "FREE") return "Free";
     if (conversation.listing.price_type === "SWAP") return "Trade/Swap";
-    return `$${conversation.listing.price.toFixed(2)}`;
+    return `$${conversation.listing.price?.toFixed(2)}`;
   };
 
   const getOtherUser = () => {
     if (!conversation) return null;
-    // If current user is buyer, show seller; if seller, show buyer
     return currentUserId === conversation.buyer.id ? conversation.seller : conversation.buyer;
   };
 
@@ -247,6 +184,19 @@ export default function ChatPage() {
         <div className="text-center">
           <div className="inline-block w-16 h-16 border-4 border-[#FDD023] border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="text-white text-lg">Loading conversation...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !conversation) {
+    return (
+      <div className="min-h-screen bg-[#461D7C] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-400 text-xl mb-4">{error}</p>
+          <Link href="/messages" className="text-[#FDD023] hover:underline">
+            Back to Messages
+          </Link>
         </div>
       </div>
     );
@@ -274,7 +224,7 @@ export default function ChatPage() {
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link 
+              <Link
                 href="/messages"
                 className="text-white hover:text-[#FDD023] transition-colors"
               >
@@ -287,7 +237,6 @@ export default function ChatPage() {
                 <p className="text-gray-400 text-xs">Re: {conversation.listing.title}</p>
               </div>
             </div>
-
             <div className="flex items-center gap-4">
               <UserDropdown />
             </div>
@@ -302,8 +251,8 @@ export default function ChatPage() {
           <Link href={`/product-detail?id=${conversation.listing.id}`} className="flex gap-4 hover:opacity-80 transition-opacity">
             <div className="w-20 h-20 rounded-lg bg-[#2a0d44] overflow-hidden flex-shrink-0">
               {conversation.listing.images?.[0] ? (
-                <img 
-                  src={conversation.listing.images[0]} 
+                <img
+                  src={conversation.listing.images[0]}
                   alt={conversation.listing.title}
                   className="w-full h-full object-cover"
                 />
@@ -321,8 +270,20 @@ export default function ChatPage() {
           </Link>
         </div>
 
+        {/* Send Error */}
+        {error && conversation && (
+          <div className="mx-4 mt-2 bg-red-500/20 border border-red-500/30 text-red-300 rounded-lg p-3 text-sm">
+            {error}
+          </div>
+        )}
+
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {messages.length === 0 && (
+            <div className="text-center text-gray-400 text-sm py-8">
+              No messages yet. Say hello!
+            </div>
+          )}
           {messages.map((message) => {
             const isCurrentUser = message.sender_id === currentUserId;
             return (
