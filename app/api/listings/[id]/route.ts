@@ -20,6 +20,44 @@ async function verifyToken(request: NextRequest) {
   }
 }
 
+// GET /api/listings/[id] - Get single listing details
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: listingId } = await params;
+
+    const { data: listing, error } = await supabase
+      .from('listings')
+      .select(`
+        *,
+        user:users(id, full_name, email, profile_picture)
+      `)
+      .eq('id', listingId)
+      .single();
+
+    if (error || !listing) {
+      return NextResponse.json(
+        { error: 'Listing not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { listing },
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error('Get listing error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
 // PATCH /api/listings/[id] - Update a listing
 export async function PATCH(
   request: NextRequest,

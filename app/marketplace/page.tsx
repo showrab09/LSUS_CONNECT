@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
 import SaveButton from "@/components/SaveButton";
+import MessageSellerButton from "@/components/MessageSellerButton";
 
 /**
- * LSUS Connect - Marketplace Page (WITH SEARCH & SAVE BUTTONS)
+ * LSUS Connect - Marketplace Page
+ * Browse, search, and filter listings
  */
 
 interface Listing {
@@ -23,29 +25,57 @@ interface Listing {
   status: string;
   created_at: string;
   user_id: string;
+  user?: {
+    id: string;
+    full_name: string;
+    email: string;
+    profile_picture?: string;
+  };
 }
+
+const CATEGORIES = [
+  "Electronics",
+  "Furniture",
+  "Books",
+  "Clothing",
+  "Housing",
+  "Home",
+  "Other",
+];
 
 export default function MarketplacePage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFilters, setSelectedFilters] = useState<{
-    categories: string[];
-    priceTypes: string[];
-  }>({
-    categories: [],
-    priceTypes: [],
-  });
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedPriceTypes, setSelectedPriceTypes] = useState<string[]>([]);
 
-  const categories = ["Electronics", "Furniture", "Books", "Clothing", "Housing", "Home", "Other"];
   const priceTypes = [
     { value: "PAID", label: "For Sale" },
     { value: "FREE", label: "Free" },
     { value: "SWAP", label: "Trade/Swap" },
   ];
 
-  // Fetch listings from API
+  // Get current user ID
+  const getCurrentUserId = (): string => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return "";
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+      );
+      const decoded = JSON.parse(jsonPayload);
+      return decoded.userId || "";
+    } catch (e) {
+      return "";
+    }
+  };
+
+  const currentUserId = getCurrentUserId();
+
   useEffect(() => {
     fetchListings();
   }, []);
@@ -72,54 +102,57 @@ export default function MarketplacePage() {
     }
   };
 
-  // Toggle filter
-  const toggleFilter = (type: 'categories' | 'priceTypes', value: string) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [type]: prev[type].includes(value)
-        ? prev[type].filter(item => item !== value)
-        : [...prev[type], value]
-    }));
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(item => item !== category)
+        : [...prev, category]
+    );
   };
 
-  // Clear all filters
+  const togglePriceType = (value: string) => {
+    setSelectedPriceTypes(prev =>
+      prev.includes(value)
+        ? prev.filter(item => item !== value)
+        : [...prev, value]
+    );
+  };
+
   const clearFilters = () => {
-    setSelectedFilters({ categories: [], priceTypes: [] });
+    setSelectedCategories([]);
+    setSelectedPriceTypes([]);
     setSearchQuery("");
   };
 
-  // Filter listings - WITH WORKING SEARCH!
   const filteredListings = listings.filter((listing) => {
-    // Search filter - searches title, description, location, and tags
-    const matchesSearch = 
+    const matchesSearch =
       searchQuery === "" ||
       listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       listing.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       listing.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (listing.tags && listing.tags.some(tag => 
+      (listing.tags && listing.tags.some(tag =>
         tag.toLowerCase().includes(searchQuery.toLowerCase())
       ));
-    
-    // Category filter
+
     const matchesCategory =
-      selectedFilters.categories.length === 0 ||
-      selectedFilters.categories.includes(listing.category);
+      selectedCategories.length === 0 ||
+      selectedCategories.includes(listing.category);
 
-    // Price type filter
     const matchesPriceType =
-      selectedFilters.priceTypes.length === 0 ||
-      selectedFilters.priceTypes.includes(listing.price_type);
+      selectedPriceTypes.length === 0 ||
+      selectedPriceTypes.includes(listing.price_type);
 
-    // Only show active listings
-    const isActive = listing.status === "ACTIVE";
-
-    return matchesSearch && matchesCategory && matchesPriceType && isActive;
+    return matchesSearch && matchesCategory && matchesPriceType;
   });
 
   const formatPrice = (listing: Listing) => {
     if (listing.price_type === "FREE") return "Free";
     if (listing.price_type === "SWAP") return "Trade/Swap";
     return `$${listing.price.toFixed(2)}`;
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
   return (
@@ -144,15 +177,20 @@ export default function MarketplacePage() {
               />
             </div>
 
-            {/* Right Side */}
             <div className="flex items-center gap-3">
+              <Link
+                href="/post-listing"
+                className="hidden sm:block px-6 py-2.5 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+              >
+                + Create Listing
+              </Link>
               <UserDropdown />
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content with Sidebar */}
+      {/* Main Content */}
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-6">
         <div className="flex gap-6">
           {/* Left Sidebar - Filters */}
@@ -160,7 +198,7 @@ export default function MarketplacePage() {
             <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c] sticky top-24">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-white font-bold text-lg">Filters</h2>
-                {(selectedFilters.categories.length > 0 || selectedFilters.priceTypes.length > 0 || searchQuery) && (
+                {(selectedCategories.length > 0 || selectedPriceTypes.length > 0 || searchQuery) && (
                   <button
                     onClick={clearFilters}
                     className="text-[#FDD023] text-xs hover:underline"
@@ -174,15 +212,15 @@ export default function MarketplacePage() {
               <div className="mb-6">
                 <h3 className="text-white font-semibold mb-3 text-sm">Category</h3>
                 <div className="space-y-2">
-                  {categories.map((category) => (
+                  {CATEGORIES.map((category) => (
                     <label
                       key={category}
                       className="flex items-center gap-2 text-white text-sm cursor-pointer hover:text-[#FDD023] transition-colors"
                     >
                       <input
                         type="checkbox"
-                        checked={selectedFilters.categories.includes(category)}
-                        onChange={() => toggleFilter('categories', category)}
+                        checked={selectedCategories.includes(category)}
+                        onChange={() => toggleCategory(category)}
                         className="w-4 h-4 rounded border-[#5a2d8c] bg-[#2a0d44] text-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
                       />
                       <span>{category}</span>
@@ -202,8 +240,8 @@ export default function MarketplacePage() {
                     >
                       <input
                         type="checkbox"
-                        checked={selectedFilters.priceTypes.includes(type.value)}
-                        onChange={() => toggleFilter('priceTypes', type.value)}
+                        checked={selectedPriceTypes.includes(type.value)}
+                        onChange={() => togglePriceType(type.value)}
                         className="w-4 h-4 rounded border-[#5a2d8c] bg-[#2a0d44] text-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
                       />
                       <span>{type.label}</span>
@@ -228,9 +266,9 @@ export default function MarketplacePage() {
               </div>
               <Link
                 href="/post-listing"
-                className="px-6 py-2.5 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+                className="sm:hidden px-6 py-2.5 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
               >
-                + Create Listing
+                + Create
               </Link>
             </div>
 
@@ -257,16 +295,14 @@ export default function MarketplacePage() {
               <>
                 {filteredListings.length === 0 ? (
                   <div className="text-center py-16">
-                    <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#3a1364] flex items-center justify-center">
-                      <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
+                    <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#3a1364] flex items-center justify-center text-4xl">
+                      📦
                     </div>
                     <h3 className="text-white text-xl font-bold mb-2">
-                      {searchQuery ? `No results for "${searchQuery}"` : "No listings found"}
+                      {searchQuery ? `No results for "${searchQuery}"` : "No listings yet"}
                     </h3>
                     <p className="text-gray-300 mb-6">
-                      {searchQuery ? "Try a different search term" : "Be the first to post something!"}
+                      {searchQuery ? "Try a different search term" : "Be the first to post a listing!"}
                     </p>
                     {searchQuery && (
                       <button
@@ -285,53 +321,107 @@ export default function MarketplacePage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredListings.map((listing) => (
-                      <Link
-                        key={listing.id}
-                        href={`/product-detail?id=${listing.id}`}
-                        className="bg-[#3a1364] rounded-lg overflow-hidden border border-[#5a2d8c] hover:border-[#FDD023] transition-all hover:transform hover:scale-105"
-                      >
-                        {/* Image */}
-                        <div className="aspect-square bg-[#2a0d44] relative">
-                          {listing.images && listing.images.length > 0 ? (
-                            <img
-                              src={listing.images[0]}
-                              alt={listing.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-500">
-                              No image
-                            </div>
-                          )}
-                          {/* Condition Badge */}
-                          <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                            {listing.condition}
-                          </div>
-                          {/* Save Button */}
-                          <div className="absolute top-2 left-2">
-                            <SaveButton listingId={listing.id} size="md" />
-                          </div>
-                        </div>
+                    {filteredListings.map((listing) => {
+                      // Handle user data (Supabase returns as object or array)
+                      const owner = Array.isArray(listing.user) ? listing.user[0] : listing.user;
+                      const ownerName = owner?.full_name || 'Unknown User';
+                      const ownerProfilePic = owner?.profile_picture;
+                      const isOwnListing = owner?.id === currentUserId;
 
-                        {/* Content */}
-                        <div className="p-4">
-                          <h3 className="text-white font-bold text-lg mb-2 line-clamp-2">
-                            {listing.title}
-                          </h3>
-                          <p className="text-[#FDD023] font-bold text-xl mb-2">
-                            {formatPrice(listing)}
-                          </p>
-                          <p className="text-gray-300 text-sm mb-3 line-clamp-2">
-                            {listing.description}
-                          </p>
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-400">{listing.location}</span>
-                            <span className="text-gray-400">{listing.category}</span>
+                      return (
+                        <div
+                          key={listing.id}
+                          className="bg-[#3a1364] rounded-lg overflow-hidden border border-[#5a2d8c] hover:border-[#FDD023] transition-all"
+                        >
+                          {/* Image */}
+                          <Link href={`/product-detail?id=${listing.id}`} className="block">
+                            <div className="aspect-square bg-[#2a0d44] relative">
+                              {listing.images && listing.images.length > 0 ? (
+                                <img
+                                  src={listing.images[0]}
+                                  alt={listing.title}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-500">Image unavailable</div>';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-500">
+                                  No image
+                                </div>
+                              )}
+                              {/* Condition Badge */}
+                              <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                {listing.condition}
+                              </div>
+                              {/* Save Button */}
+                              <div className="absolute top-2 left-2">
+                                <SaveButton listingId={listing.id} size="md" />
+                              </div>
+                            </div>
+                          </Link>
+
+                          {/* Content */}
+                          <div className="p-4">
+                            {/* Title and Price */}
+                            <Link href={`/product-detail?id=${listing.id}`}>
+                              <h3 className="text-white font-bold text-lg mb-2 line-clamp-2 hover:text-[#FDD023]">
+                                {listing.title}
+                              </h3>
+                            </Link>
+                            <p className="text-[#FDD023] font-bold text-xl mb-2">
+                              {formatPrice(listing)}
+                            </p>
+                            <p className="text-gray-300 text-sm mb-3 line-clamp-2">
+                              {listing.description}
+                            </p>
+
+                            {/* Owner Info */}
+                            <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#5a2d8c]">
+                              {/* Owner Avatar */}
+                              <div className="w-8 h-8 rounded-full bg-[#FDD023] flex items-center justify-center flex-shrink-0">
+                                {ownerProfilePic ? (
+                                  <img
+                                    src={ownerProfilePic}
+                                    alt={ownerName}
+                                    className="w-full h-full rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="text-black font-bold text-xs">
+                                    {getInitials(ownerName)}
+                                  </span>
+                                )}
+                              </div>
+                              {/* Owner Name */}
+                              <span className="text-gray-300 text-sm">{ownerName}</span>
+                            </div>
+
+                            {/* Message Button (only if not own listing) */}
+                            {!isOwnListing && owner?.id && (
+                              <MessageSellerButton
+                                listingId={listing.id}
+                                sellerId={owner.id}
+                                listingTitle={listing.title}
+                              />
+                            )}
+
+                            {/* Own Listing Indicator */}
+                            {isOwnListing && (
+                              <div className="text-center py-2 px-4 bg-[#2a0d44] rounded-lg">
+                                <span className="text-gray-400 text-sm">Your listing</span>
+                              </div>
+                            )}
+
+                            {/* Metadata */}
+                            <div className="flex items-center justify-between text-xs mt-3">
+                              <span className="text-gray-400">{listing.location}</span>
+                              <span className="text-gray-400">{listing.category}</span>
+                            </div>
                           </div>
                         </div>
-                      </Link>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </>

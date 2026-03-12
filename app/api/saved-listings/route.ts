@@ -8,7 +8,6 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
 );
 
-// Verify JWT token and get user ID
 async function verifyToken(request: NextRequest) {
   try {
     const token = request.cookies.get('token')?.value;
@@ -20,7 +19,7 @@ async function verifyToken(request: NextRequest) {
   }
 }
 
-// GET /api/saved-listings - Get all saved listings for user
+// GET /api/saved-listings - Get all saved listings
 export async function GET(request: NextRequest) {
   try {
     const user = await verifyToken(request);
@@ -31,14 +30,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get saved listings with full listing details
-    const { data: savedListings, error: savedError } = await supabase
+    const { data: savedListings, error } = await supabase
       .from('saved_listings')
       .select(`
         id,
         created_at,
-        listing_id,
-        listings:listing_id (
+        listing:listings(
           id,
           title,
           description,
@@ -48,40 +45,23 @@ export async function GET(request: NextRequest) {
           condition,
           location,
           images,
-          tags,
           status,
-          created_at,
-          user_id
+          created_at
         )
       `)
       .eq('user_id', user.userId)
       .order('created_at', { ascending: false });
 
-    if (savedError) {
-      console.error('Error fetching saved listings:', savedError);
+    if (error) {
+      console.error('Error fetching saved listings:', error);
       return NextResponse.json(
         { error: 'Failed to fetch saved listings' },
         { status: 500 }
       );
     }
 
-    // Filter out inactive/deleted listings and format response
-    const activeSavedListings = savedListings
-      .filter(item => {
-        const listing = Array.isArray(item.listings) ? item.listings[0] : item.listings;
-        return listing && listing.status === 'ACTIVE';
-      })
-      .map(item => {
-        const listing = Array.isArray(item.listings) ? item.listings[0] : item.listings;
-        return {
-          id: item.id,
-          created_at: item.created_at,
-          listing: listing,
-        };
-      });
-
     return NextResponse.json(
-      { saved_listings: activeSavedListings },
+      { savedListings: savedListings || [] },
       { status: 200 }
     );
 
@@ -110,57 +90,24 @@ export async function POST(request: NextRequest) {
 
     if (!listing_id) {
       return NextResponse.json(
-        { error: 'Listing ID is required' },
+        { error: 'listing_id is required' },
         { status: 400 }
       );
     }
 
-    // Check if listing exists
-    const { data: listing, error: listingError } = await supabase
-      .from('listings')
-      .select('id')
-      .eq('id', listing_id)
-      .single();
-
-    if (listingError || !listing) {
-      return NextResponse.json(
-        { error: 'Listing not found' },
-        { status: 404 }
-      );
-    }
-
-    // Try to save (will fail if already saved due to UNIQUE constraint)
-    const { data: savedListing, error: saveError } = await supabase
+    const { data, error } = await supabase
       .from('saved_listings')
       .insert([
         {
           user_id: user.userId,
-          listing_id: listing_id,
+          listing_id,
         },
       ])
       .select()
       .single();
 
-    // If duplicate key error, fetch existing record
-    if (saveError && saveError.code === '23505') {
-      const { data: existing } = await supabase
-        .from('saved_listings')
-        .select('*')
-        .eq('user_id', user.userId)
-        .eq('listing_id', listing_id)
-        .single();
-
-      return NextResponse.json(
-        {
-          success: true,
-          saved_listing: existing,
-        },
-        { status: 200 }
-      );
-    }
-
-    if (saveError) {
-      console.error('Error saving listing:', saveError);
+    if (error) {
+      console.error('Error saving listing:', error);
       return NextResponse.json(
         { error: 'Failed to save listing' },
         { status: 500 }
@@ -170,7 +117,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        saved_listing: savedListing,
+        saved_listing: data,
       },
       { status: 201 }
     );
@@ -195,25 +142,24 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { listing_id } = body;
+    const searchParams = request.nextUrl.searchParams;
+    const listingId = searchParams.get('listing_id');
 
-    if (!listing_id) {
+    if (!listingId) {
       return NextResponse.json(
-        { error: 'Listing ID is required' },
+        { error: 'listing_id is required' },
         { status: 400 }
       );
     }
 
-    // Delete the saved listing
-    const { error: deleteError } = await supabase
+    const { error } = await supabase
       .from('saved_listings')
       .delete()
       .eq('user_id', user.userId)
-      .eq('listing_id', listing_id);
+      .eq('listing_id', listingId);
 
-    if (deleteError) {
-      console.error('Error unsaving listing:', deleteError);
+    if (error) {
+      console.error('Error unsaving listing:', error);
       return NextResponse.json(
         { error: 'Failed to unsave listing' },
         { status: 500 }
@@ -221,10 +167,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json(
-      {
-        success: true,
-        message: 'Listing removed from favorites',
-      },
+      { success: true },
       { status: 200 }
     );
 

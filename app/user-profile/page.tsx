@@ -118,7 +118,7 @@ export default function UserProfilePage() {
 
       if (response.ok) {
         const data = await response.json();
-        setSavedListings(data.saved_listings || []);
+        setSavedListings(data.savedListings || []);
       }
     } catch (error) {
       console.error("Error fetching saved listings:", error);

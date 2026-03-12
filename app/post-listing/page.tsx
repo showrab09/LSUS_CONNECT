@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import UserDropdown from "@/components/UserDropdown";
 
 /**
- * LSUS Connect - Post Listing Page (RESPONSIVE + API CONNECTED)
+ * LSUS Connect - Post Listing Page (FIXED: Base64 Images)
  */
 
 type PriceType = "PAID" | "FREE" | "SWAP";
@@ -26,13 +26,14 @@ export default function PostListingPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
 
   const categories = ["Electronics", "Furniture", "Books", "Clothing", "Housing", "Home", "Other"];
   const conditions = ["New", "Like New", "Good", "Fair", "For Parts"];
 
   // Format price as currency
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9.]/g, ''); // Remove non-numeric except decimal
+    const value = e.target.value.replace(/[^0-9.]/g, '');
     setPrice(value);
   };
 
@@ -43,11 +44,32 @@ export default function PostListingPage() {
     return `$${num.toFixed(2)}`;
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Handle image upload with base64 conversion
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const newImages = Array.from(files).map(file => URL.createObjectURL(file));
-      setImages([...images, ...newImages]);
+    if (!files || files.length === 0) return;
+
+    setIsUploadingImages(true);
+    try {
+      const base64Images = await Promise.all(
+        Array.from(files).map(file => fileToBase64(file))
+      );
+      setImages([...images, ...base64Images]);
+    } catch (error) {
+      console.error("Error converting images:", error);
+      setError("Failed to upload images. Please try again.");
+    } finally {
+      setIsUploadingImages(false);
     }
   };
 
@@ -58,13 +80,24 @@ export default function PostListingPage() {
 
   const handleDragLeave = () => setIsDragging(false);
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
+    
     const files = e.dataTransfer.files;
-    if (files) {
-      const newImages = Array.from(files).map(file => URL.createObjectURL(file));
-      setImages([...images, ...newImages]);
+    if (!files || files.length === 0) return;
+
+    setIsUploadingImages(true);
+    try {
+      const base64Images = await Promise.all(
+        Array.from(files).map(file => fileToBase64(file))
+      );
+      setImages([...images, ...base64Images]);
+    } catch (error) {
+      console.error("Error converting images:", error);
+      setError("Failed to upload images. Please try again.");
+    } finally {
+      setIsUploadingImages(false);
     }
   };
 
@@ -114,12 +147,15 @@ export default function PostListingPage() {
         category: category,
         condition: condition,
         location: location.trim(),
-        images: images,
+        images: images, // Now base64 strings
         tags: tags.split(",").map(t => t.trim()).filter(Boolean),
         status: "ACTIVE"
       };
 
-      console.log("Sending data:", listingData);
+      console.log("Sending data:", {
+        ...listingData,
+        images: `[${images.length} images]` // Don't log full base64 in console
+      });
 
       // Call API
       const response = await fetch('/api/listings', {
@@ -350,14 +386,21 @@ export default function PostListingPage() {
                   onChange={handleImageUpload}
                   className="hidden"
                   id="image-upload"
+                  disabled={isUploadingImages}
                 />
-                <label htmlFor="image-upload" className="cursor-pointer">
+                <label htmlFor="image-upload" className={`cursor-pointer ${isUploadingImages ? 'opacity-50' : ''}`}>
                   <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-[#FDD023]/20 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-[#FDD023]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
+                    {isUploadingImages ? (
+                      <div className="w-6 h-6 border-2 border-[#FDD023] border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <svg className="w-6 h-6 text-[#FDD023]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    )}
                   </div>
-                  <p className="text-white font-semibold text-sm mb-1">Click to upload or drag and drop</p>
+                  <p className="text-white font-semibold text-sm mb-1">
+                    {isUploadingImages ? "Uploading..." : "Click to upload or drag and drop"}
+                  </p>
                   <p className="text-gray-400 text-xs">PNG, JPG up to 10MB</p>
                 </label>
               </div>
@@ -401,10 +444,10 @@ export default function PostListingPage() {
             <button
               type="button"
               onClick={handlePublish}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploadingImages}
               className="flex-1 h-11 px-6 bg-[#FDD023] text-black font-bold text-sm rounded-lg hover:bg-[#FFE34A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Publishing..." : "Publish Listing"}
+              {isSubmitting ? "Publishing..." : isUploadingImages ? "Processing Images..." : "Publish Listing"}
             </button>
           </div>
         </div>

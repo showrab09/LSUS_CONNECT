@@ -5,7 +5,7 @@ import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
 
 /**
- * LSUS Connect - Lost & Found Page (DYNAMIC - FETCHES FROM API)
+ * LSUS Connect - Lost & Found Page (FIXED API INTEGRATION)
  */
 
 interface LostFoundItem {
@@ -15,9 +15,17 @@ interface LostFoundItem {
   type: "LOST" | "FOUND";
   category: string;
   location: string;
+  date_lost_found?: string;
+  contact_info?: string;
   images: string[];
   created_at: string;
   status: string;
+  user?: {
+    id: string;
+    full_name: string;
+    email: string;
+    profile_picture?: string;
+  };
 }
 
 export default function LostFoundPage() {
@@ -27,6 +35,8 @@ export default function LostFoundPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "lost" | "found">("all");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportType, setReportType] = useState<"LOST" | "FOUND">("LOST");
 
   useEffect(() => {
     fetchLostFoundItems();
@@ -36,39 +46,16 @@ export default function LostFoundPage() {
     try {
       setIsLoading(true);
       
-      // Try to fetch from dedicated lost-found endpoint
-      let response = await fetch('/api/lost-found', {
+      const response = await fetch('/api/lost-found', {
         credentials: 'include',
       });
-
-      // If that doesn't exist, try fetching from listings
-      if (!response.ok) {
-        response = await fetch('/api/listings?category=lost-found', {
-          credentials: 'include',
-        });
-      }
 
       if (!response.ok) {
         throw new Error('Failed to fetch items');
       }
 
       const data = await response.json();
-      const fetchedItems = data.items || data.listings || [];
-      
-      // Transform listings to lost-found format if needed
-      const transformedItems = fetchedItems.map((item: any) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        type: item.type || item.lost_found_type || "LOST",
-        category: item.category,
-        location: item.location,
-        images: item.images || [],
-        created_at: item.created_at,
-        status: item.status || "ACTIVE",
-      }));
-
-      setItems(transformedItems);
+      setItems(data.items || []);
       setError("");
     } catch (err) {
       console.error("Error fetching lost & found items:", err);
@@ -103,6 +90,10 @@ export default function LostFoundPage() {
     if (diffDays === 1) return "Yesterday";
     if (diffDays < 7) return `${diffDays} days ago`;
     return date.toLocaleDateString();
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
   return (
@@ -157,7 +148,7 @@ export default function LostFoundPage() {
             </div>
           )}
 
-          {/* Search Bar & Report Button - Responsive */}
+          {/* Search Bar & Report Buttons - Responsive */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
             {/* Search Bar */}
             <div className="flex-1">
@@ -170,13 +161,27 @@ export default function LostFoundPage() {
               />
             </div>
 
-            {/* Report Button - Touch Optimized */}
-            <Link
-              href="/report-lost-found"
-              className="min-h-[48px] px-6 sm:px-8 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors whitespace-nowrap text-center"
-            >
-              + Report Lost Item
-            </Link>
+            {/* Report Buttons - Touch Optimized */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setReportType("LOST");
+                  setIsReportModalOpen(true);
+                }}
+                className="flex-1 sm:flex-none min-h-[48px] px-4 sm:px-6 py-3 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition-colors whitespace-nowrap text-center"
+              >
+                Report Lost
+              </button>
+              <button
+                onClick={() => {
+                  setReportType("FOUND");
+                  setIsReportModalOpen(true);
+                }}
+                className="flex-1 sm:flex-none min-h-[48px] px-4 sm:px-6 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition-colors whitespace-nowrap text-center"
+              >
+                Report Found
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -246,71 +251,134 @@ export default function LostFoundPage() {
                   </svg>
                 </div>
                 <h3 className="text-white text-xl font-bold mb-2">No items found</h3>
-                <p className="text-gray-300 mb-6">Try adjusting your search or filter</p>
+                <p className="text-gray-300 mb-6">
+                  {searchQuery ? `No results for "${searchQuery}"` : "No items reported yet"}
+                </p>
+                <button
+                  onClick={() => setIsReportModalOpen(true)}
+                  className="px-8 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+                >
+                  Report an Item
+                </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {filteredItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-[#3a1364] rounded-lg overflow-hidden border border-[#5a2d8c] hover:border-[#FDD023] transition-colors"
-                  >
-                    {/* Image */}
-                    <div className="aspect-square bg-[#2a0d44]">
-                      {item.images && item.images.length > 0 ? (
-                        <img
-                          src={item.images[0]}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-500">
-                          No image
-                        </div>
-                      )}
-                    </div>
+                {filteredItems.map((item) => {
+                  const owner = Array.isArray(item.user) ? item.user[0] : item.user;
+                  const ownerName = owner?.full_name || 'Unknown User';
+                  const ownerProfilePic = owner?.profile_picture;
+                  const emailSubject = encodeURIComponent(item.type + ': ' + item.title);
 
-                    {/* Content */}
-                    <div className="p-4 sm:p-5">
-                      {/* Badge */}
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-bold mb-3 ${
-                          item.type === "LOST"
-                            ? "bg-red-500/20 text-red-300"
-                            : "bg-green-500/20 text-green-300"
-                        }`}
-                      >
-                        {item.type}
-                      </span>
-
-                      {/* Title */}
-                      <h3 className="text-white font-bold text-lg mb-2 line-clamp-2">
-                        {item.title}
-                      </h3>
-
-                      {/* Description */}
-                      <p className="text-gray-300 text-sm mb-3 line-clamp-2">
-                        {item.description}
-                      </p>
-
-                      {/* Location & Date */}
-                      <div className="text-gray-400 text-xs mb-4">
-                        <p>📍 {item.location}</p>
-                        <p>🕒 {formatDate(item.created_at)}</p>
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-[#3a1364] rounded-lg overflow-hidden border border-[#5a2d8c] hover:border-[#FDD023] transition-colors"
+                    >
+                      {/* Image */}
+                      <div className="aspect-square bg-[#2a0d44] relative">
+                        {item.images && item.images.length > 0 ? (
+                          <img
+                            src={item.images[0]}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const parent = e.currentTarget.parentElement;
+                              if (parent) {
+                                parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-500">Image unavailable</div>';
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-500">
+                            No image
+                          </div>
+                        )}
+                        {/* Type Badge */}
+                        <span
+                          className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-bold ${
+                            item.type === "LOST"
+                              ? "bg-red-500/90 text-white"
+                              : "bg-green-500/90 text-white"
+                          }`}
+                        >
+                          {item.type}
+                        </span>
                       </div>
 
-                      {/* Contact Button - Touch Optimized */}
-                      <button className="w-full min-h-[44px] py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors">
-                        Contact
-                      </button>
+                      {/* Content */}
+                      <div className="p-4 sm:p-5">
+                        {/* Title */}
+                        <h3 className="text-white font-bold text-lg mb-2 line-clamp-2">
+                          {item.title}
+                        </h3>
+
+                        {/* Description */}
+                        <p className="text-gray-300 text-sm mb-3 line-clamp-2">
+                          {item.description}
+                        </p>
+
+                        {/* Location & Date */}
+                        <div className="text-gray-400 text-xs mb-3 space-y-1">
+                          <p>📍 {item.location}</p>
+                          <p>🕒 {formatDate(item.created_at)}</p>
+                          {item.category && <p>🏷️ {item.category}</p>}
+                        </div>
+
+                        {/* Owner Info */}
+                        <div className="flex items-center gap-2 mb-3 pb-3 border-t border-[#5a2d8c] pt-3">
+                          <div className="w-6 h-6 rounded-full bg-[#FDD023] flex items-center justify-center flex-shrink-0">
+                            {ownerProfilePic ? (
+                              <img
+                                src={ownerProfilePic}
+                                alt={ownerName}
+                                className="w-full h-full rounded-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-black font-bold text-xs">
+                                {getInitials(ownerName)}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-gray-300 text-xs">Posted by {ownerName}</span>
+                        </div>
+
+                        {/* Contact Button - Touch Optimized */}
+                        <a
+                          href={`mailto:${owner?.email || ''}?subject=${emailSubject}`}
+                          className="block w-full text-center py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+                        >
+                          Contact Owner
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
         )}
       </div>
+
+      {/* Report Modal Placeholder */}
+      {isReportModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#3a1364] rounded-lg max-w-md w-full p-6">
+            <h2 className="text-white text-xl font-bold mb-4">
+              Report {reportType === "LOST" ? "Lost" : "Found"} Item
+            </h2>
+            <p className="text-gray-300 mb-6">
+              This feature is coming soon! The backend needs to implement the full report form.
+            </p>
+            <button
+              onClick={() => setIsReportModalOpen(false)}
+              className="w-full py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
