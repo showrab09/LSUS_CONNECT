@@ -34,7 +34,7 @@ export default function SignUpPage() {
   const emailError = useMemo(() => {
     if (!email) return null;
     if (!isValidEmail(email)) return "Please enter a valid email address.";
-    // if (!email.endsWith('@lsus.edu')) return "Please use your LSUS email (@lsus.edu)";
+    if (!email.endsWith('@lsus.edu')) return "You must use a valid @lsus.edu email address.";
     return null;
   }, [email]);
 
@@ -76,13 +76,13 @@ export default function SignUpPage() {
       return;
     }
 
-    // if (!trimmedEmail.endsWith('@lsus.edu')) {
-    //   setMessage({
-    //     type: "error",
-    //     text: "Please use your LSUS email address (@lsus.edu).",
-    //   });
-    //   return;
-    // }
+    if (!trimmedEmail.endsWith('@lsus.edu')) {
+      setMessage({
+        type: "error",
+        text: "You must use a valid @lsus.edu email address.",
+      });
+      return;
+    }
 
     if (!trimmedPassword || !isValidPassword(trimmedPassword)) {
       setMessage({
@@ -211,7 +211,7 @@ export default function SignUpPage() {
                 </label>
                 <input
                   id="email"
-                  type="email"
+                  type="text"
                   autoComplete="email"
                   placeholder="yourname@lsus.edu"
                   value={email}
