@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
 
@@ -35,26 +35,41 @@ interface Comment {
   user: FeedUser;
 }
 
-const CATEGORIES = ["Furniture", "Books", "Housing", "Electronics", "Free / Swap", "Lost & Found", "Social"];
+const FILTERS = [
+  "Furniture",
+  "Books",
+  "Housing",
+  "Electronics",
+  "Free / Swap",
+  "Lost & Found",
+  "Social",
+];
 
-const NAV_LINKS = [
-  { href: "/home", label: "Home", active: true },
-  { href: "/marketplace", label: "Marketplace" },
-  { href: "/housing", label: "Housing" },
-  { href: "/social", label: "Social" },
-  { href: "/lost-found", label: "Lost & Found" },
-  { href: "/post-listing", label: "Post a Listing" },
+const LEFT_NAV = [
+  { href: "/home", label: "Home", icon: "🏠", active: true },
+  { href: "/marketplace", label: "Marketplace", icon: "🛍️" },
+  { href: "/housing", label: "Housing", icon: "🏠" },
+  { href: "/social", label: "Social", icon: "👥" },
+  { href: "/lost-found", label: "Lost & Found", icon: "🔎" },
+  { href: "/post-listing", label: "Post a Listing", icon: "➕" },
 ];
 
 const EMOJI_LIST = [
-  "😀","😂","😍","🥰","😎","🤔","😊","🙌","👍","❤️",
-  "🔥","✨","🎉","💯","😭","🤣","😅","👀","💪","🙏",
-  "😤","🥳","😱","🤩","😴","💀","🤯","😬","🫶","💬",
-  "👋","🎊","🏆","🎯","💡","📚","☕","🍕","🎵","⭐",
+  "😀", "😂", "😍", "🥰", "😎", "🤔", "😊", "🙌", "👍", "❤️",
+  "🔥", "✨", "🎉", "💯", "😭", "🤣", "😅", "👀", "💪", "🙏",
+  "😤", "🥳", "😱", "🤩", "😴", "💀", "🤯", "😬", "🫶", "💬",
+  "👋", "🎊", "🏆", "🎯", "💡", "📚", "☕", "🍕", "🎵", "⭐",
 ];
 
 function getInitials(name: string) {
-  return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "U";
+  return (
+    name
+      .split(" ")
+      .map(part => part[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U"
+  );
 }
 
 function timeAgo(dateString: string) {
@@ -71,21 +86,41 @@ function formatPrice(price?: number) {
   return `$${price}`;
 }
 
-function Avatar({ user, size = "md" }: { user: { full_name: string; profile_picture?: string }; size?: "sm" | "md" | "lg" }) {
-  const cls = size === "lg" ? "w-11 h-11" : size === "sm" ? "w-8 h-8" : "w-10 h-10";
+function Avatar({
+  user,
+  size = "md",
+}: {
+  user: { full_name: string; profile_picture?: string };
+  size?: "sm" | "md" | "lg";
+}) {
+  const cls =
+    size === "lg"
+      ? "h-12 w-12"
+      : size === "sm"
+        ? "h-8 w-8"
+        : "h-10 w-10";
+
   return (
-    <div className={`${cls} rounded-full bg-gradient-to-br from-[#FDD023] to-[#FFE34A] flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-[#FDD023]`}>
-      {user.profile_picture
-        ? <img src={user.profile_picture} alt={user.full_name} className="w-full h-full object-cover" />
-        : <span className="text-black font-bold text-sm">{getInitials(user.full_name)}</span>
-      }
+    <div
+      className={`${cls} flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#F5A623] bg-gradient-to-br from-[#FFD166] to-[#F5A623]`}
+    >
+      {user.profile_picture ? (
+        <img
+          src={user.profile_picture}
+          alt={user.full_name}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <span className="text-sm font-bold text-[#1E0A42]">{getInitials(user.full_name)}</span>
+      )}
     </div>
   );
 }
 
-// ── Inline Compose Box ───────────────────────────────────────────────────────
-
-function ComposeBox({ currentUser, onPost }: {
+function ComposeBox({
+  currentUser,
+  onPost,
+}: {
   currentUser: { id: string; full_name: string; profile_picture?: string };
   onPost: (item: FeedItem) => void;
 }) {
@@ -103,14 +138,23 @@ function ComposeBox({ currentUser, onPost }: {
 
   useEffect(() => {
     const ta = textareaRef.current;
-    if (ta) { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; }
+    if (ta) {
+      ta.style.height = "auto";
+      ta.style.height = `${ta.scrollHeight}px`;
+    }
   }, [content]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setShowEmojis(false);
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
+        setShowEmojis(false);
+      }
     };
-    if (showEmojis) document.addEventListener("mousedown", handler);
+
+    if (showEmojis) {
+      document.addEventListener("mousedown", handler);
+    }
+
     return () => document.removeEventListener("mousedown", handler);
   }, [showEmojis]);
 
@@ -128,124 +172,200 @@ function ComposeBox({ currentUser, onPost }: {
     e.target.value = "";
   };
 
-  const removePreview = (i: number) => {
-    setPreviews(prev => prev.filter((_, idx) => idx !== i));
-    setImages(prev => prev.filter((_, idx) => idx !== i));
+  const removePreview = (index: number) => {
+    setPreviews(prev => prev.filter((_, i) => i !== index));
+    setImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const insertEmoji = (emoji: string) => {
     const ta = textareaRef.current;
     if (ta) {
-      const s = ta.selectionStart, e2 = ta.selectionEnd;
-      setContent(content.slice(0, s) + emoji + content.slice(e2));
-      setTimeout(() => { ta.selectionStart = ta.selectionEnd = s + emoji.length; ta.focus(); }, 0);
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      setContent(content.slice(0, start) + emoji + content.slice(end));
+      setTimeout(() => {
+        ta.selectionStart = ta.selectionEnd = start + emoji.length;
+        ta.focus();
+      }, 0);
     } else {
-      setContent(p => p + emoji);
+      setContent(prev => prev + emoji);
     }
     setShowEmojis(false);
   };
 
   const handleSubmit = async () => {
-    if (!content.trim()) { setError("Please write something."); return; }
-    setIsPosting(true); setError("");
+    if (!content.trim()) {
+      setError("Please write something.");
+      return;
+    }
+
+    setIsPosting(true);
+    setError("");
+
     try {
       const res = await fetch("/api/posts", {
-        method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
-        body: JSON.stringify({ content: content.trim(), location: location.trim() || null, images }),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          content: content.trim(),
+          location: location.trim() || null,
+          images,
+        }),
       });
+
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Failed to post."); return; }
+      if (!res.ok) {
+        setError(data.error || "Failed to post.");
+        return;
+      }
+
       const p = data.post;
       const owner = Array.isArray(p.user) ? p.user[0] : p.user;
-      onPost({ id: p.id, type: "social", user: owner || currentUser, content: p.content, location: p.location, images: p.images || [], created_at: p.created_at });
-      setContent(""); setLocation(""); setImages([]); setPreviews([]); setShowLocation(false);
-    } catch { setError("Something went wrong. Try again."); }
-    finally { setIsPosting(false); }
+      onPost({
+        id: p.id,
+        type: "social",
+        user: owner || currentUser,
+        content: p.content,
+        location: p.location,
+        images: p.images || [],
+        created_at: p.created_at,
+      });
+
+      setContent("");
+      setLocation("");
+      setImages([]);
+      setPreviews([]);
+      setShowLocation(false);
+    } catch {
+      setError("Something went wrong. Try again.");
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   return (
-    <div className="bg-[#3a1364] rounded-xl border border-[#5a2d8c] p-4 mb-4">
-      <div className="flex gap-3">
+    <div className="rounded-2xl border border-white/10 bg-[#351470] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.35)]">
+      <div className="mb-4 flex items-start gap-3">
         <Avatar user={currentUser} size="lg" />
         <div className="flex-1">
-          <textarea ref={textareaRef} value={content} onChange={e => setContent(e.target.value)}
-            placeholder={`What's on your mind, ${currentUser.full_name.split(" ")[0]}?`}
-            maxLength={1000} rows={2}
-            className="w-full bg-[#2a0d44] text-white text-sm px-4 py-3 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FDD023]/30 resize-none border border-[#5a2d8c] focus:border-[#FDD023] transition-colors min-h-[56px]"
+          <textarea
+            ref={textareaRef}
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            placeholder={`What’s on your mind, ${currentUser.full_name.split(" ")[0]}?`}
+            maxLength={1000}
+            rows={2}
+            className="min-h-[72px] w-full resize-none rounded-2xl border border-white/10 bg-[#2A0F5A] px-4 py-3 text-sm text-white outline-none transition focus:border-[#F5A623]"
           />
         </div>
       </div>
 
       {previews.length > 0 && (
-        <div className={`mt-3 grid gap-2 ${previews.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-          {previews.map((src, i) => (
-            <div key={i} className="relative aspect-video bg-[#2a0d44] rounded-lg overflow-hidden">
-              <img src={src} alt="" className="w-full h-full object-cover" />
-              <button onClick={() => removePreview(i)}
-                className="absolute top-1 right-1 w-6 h-6 bg-black/70 hover:bg-red-500 text-white rounded-full flex items-center justify-center text-xs transition-colors">✕</button>
+        <div className={`mb-4 grid gap-2 ${previews.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+          {previews.map((src, index) => (
+            <div key={index} className="relative aspect-video overflow-hidden rounded-xl bg-[#2A0F5A]">
+              <img src={src} alt="preview" className="h-full w-full object-cover" />
+              <button
+                onClick={() => removePreview(index)}
+                className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-xs text-white transition hover:bg-red-500"
+              >
+                ✕
+              </button>
             </div>
           ))}
         </div>
       )}
 
       {showLocation && (
-        <div className="mt-3 flex items-center gap-2">
-          <span className="text-base">📍</span>
-          <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Add your location..."
-            className="flex-1 bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm px-3 py-2 rounded-lg placeholder-gray-500 focus:outline-none focus:border-[#FDD023]" />
-          <button onClick={() => { setShowLocation(false); setLocation(""); }} className="text-gray-500 hover:text-red-400 text-xs transition-colors">Remove</button>
+        <div className="mb-4 flex items-center gap-2 rounded-xl bg-[#2A0F5A] p-3">
+          <span>📍</span>
+          <input
+            type="text"
+            value={location}
+            onChange={e => setLocation(e.target.value)}
+            placeholder="Add your location..."
+            className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-[#8B72BE]"
+          />
+          <button
+            onClick={() => {
+              setShowLocation(false);
+              setLocation("");
+            }}
+            className="text-xs text-[#C4B0E0] transition hover:text-red-400"
+          >
+            Remove
+          </button>
         </div>
       )}
 
-      {error && <p className="mt-2 text-red-400 text-xs">{error}</p>}
+      {error && <p className="mb-3 text-xs text-red-400">{error}</p>}
 
-      <div className="border-t border-[#5a2d8c] mt-3 pt-3 flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <button onClick={() => fileInputRef.current?.click()} disabled={previews.length >= 4}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-[#2a0d44] disabled:opacity-40 transition-colors text-sm">
-            <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span className="hidden sm:inline">Photo</span>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={previews.length >= 4}
+            className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#C4B0E0] transition hover:bg-[#4A1E8A] hover:text-white disabled:opacity-40"
+          >
+            Photo
           </button>
-          <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoChange} />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handlePhotoChange}
+          />
 
           <div className="relative" ref={emojiRef}>
-            <button onClick={() => setShowEmojis(!showEmojis)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-[#2a0d44] transition-colors text-sm">
-              <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="hidden sm:inline">Emoji</span>
+            <button
+              onClick={() => setShowEmojis(prev => !prev)}
+              className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#C4B0E0] transition hover:bg-[#4A1E8A] hover:text-white"
+            >
+              Emoji
             </button>
             {showEmojis && (
-              <div className="absolute left-0 bottom-11 z-50 bg-[#2a0d44] border border-[#5a2d8c] rounded-xl p-3 shadow-2xl w-72">
+              <div className="absolute bottom-12 left-0 z-50 w-72 rounded-2xl border border-white/10 bg-[#2A0F5A] p-3 shadow-2xl">
                 <div className="grid grid-cols-10 gap-1">
                   {EMOJI_LIST.map(emoji => (
-                    <button key={emoji} onClick={() => insertEmoji(emoji)}
-                      className="text-xl hover:bg-[#3a1364] rounded-lg p-1 transition-colors leading-none">{emoji}</button>
+                    <button
+                      key={emoji}
+                      onClick={() => insertEmoji(emoji)}
+                      className="rounded-lg p-1 text-xl leading-none transition hover:bg-[#3A1870]"
+                    >
+                      {emoji}
+                    </button>
                   ))}
                 </div>
               </div>
             )}
           </div>
 
-          <button onClick={() => setShowLocation(!showLocation)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-sm ${showLocation ? "text-[#FDD023] bg-[#2a0d44]" : "text-gray-300 hover:text-white hover:bg-[#2a0d44]"}`}>
-            <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span className="hidden sm:inline">Location</span>
+          <button
+            onClick={() => setShowLocation(prev => !prev)}
+            className={`rounded-full border px-3 py-2 text-sm transition ${
+              showLocation
+                ? "border-[#F5A623] bg-[#4A1E8A] text-[#F5A623]"
+                : "border-white/10 bg-white/5 text-[#C4B0E0] hover:bg-[#4A1E8A] hover:text-white"
+            }`}
+          >
+            Location
           </button>
         </div>
 
         <div className="flex items-center gap-3">
           {content.length > 800 && (
-            <span className={`text-xs ${content.length >= 1000 ? "text-red-400" : "text-gray-400"}`}>{content.length}/1000</span>
+            <span className={`text-xs ${content.length >= 1000 ? "text-red-400" : "text-[#C4B0E0]"}`}>
+              {content.length}/1000
+            </span>
           )}
-          <button onClick={handleSubmit} disabled={isPosting || !content.trim()}
-            className="px-6 py-2 bg-[#FDD023] text-black font-bold text-sm rounded-lg hover:bg-[#FFE34A] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+          <button
+            onClick={handleSubmit}
+            disabled={isPosting || !content.trim()}
+            className="rounded-full bg-[#F5A623] px-6 py-2 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166] disabled:cursor-not-allowed disabled:opacity-40"
+          >
             {isPosting ? "Posting..." : "Post"}
           </button>
         </div>
@@ -253,8 +373,6 @@ function ComposeBox({ currentUser, onPost }: {
     </div>
   );
 }
-
-// ── Comment Section ──────────────────────────────────────────────────────────
 
 function CommentSection({ item }: { item: FeedItem }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -267,72 +385,106 @@ function CommentSection({ item }: { item: FeedItem }) {
   const fetchComments = async () => {
     setIsLoading(true);
     try {
-      const key = item.type === "social" ? "post_id" : item.type === "listing" ? "listing_id" : "lost_found_id";
-      const res = await fetch(`/api/comments?${key}=${item.id}`, { credentials: "include" });
+      const key =
+        item.type === "social"
+          ? "post_id"
+          : item.type === "listing"
+            ? "listing_id"
+            : "lost_found_id";
+
+      const res = await fetch(`/api/comments?${key}=${item.id}`, {
+        credentials: "include",
+      });
+
       if (res.ok) {
         const data = await res.json();
         setComments(data.comments || []);
       }
-    } finally { setIsLoading(false); }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleToggle = () => {
     if (!isOpen) fetchComments();
-    setIsOpen(!isOpen);
+    setIsOpen(prev => !prev);
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
   const handleSubmit = async () => {
     if (!newComment.trim() || isPosting) return;
     setIsPosting(true);
+
     try {
-      const key = item.type === "social" ? "post_id" : item.type === "listing" ? "listing_id" : "lost_found_id";
+      const key =
+        item.type === "social"
+          ? "post_id"
+          : item.type === "listing"
+            ? "listing_id"
+            : "lost_found_id";
+
       const res = await fetch("/api/comments", {
-        method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ content: newComment.trim(), [key]: item.id }),
       });
+
       if (res.ok) {
         const data = await res.json();
         setComments(prev => [...prev, data.comment]);
         setNewComment("");
       }
-    } finally { setIsPosting(false); }
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   return (
-    <div className="mt-3 border-t border-[#5a2d8c] pt-3">
-      <button onClick={handleToggle}
-        className="w-full py-2.5 bg-[#5a2d8c]/50 hover:bg-[#5a2d8c] text-white font-medium rounded-lg transition-colors text-sm">
-        {isOpen ? "Hide Comments" : "💬 Leave a Comment"}
+    <div className="mt-4 border-t border-white/10 pt-4">
+      <button
+        onClick={handleToggle}
+        className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-medium text-white transition hover:bg-[#4A1E8A]"
+      >
+        {isOpen ? "Hide Comments" : "Leave a Comment"}
       </button>
+
       {isOpen && (
-        <div className="mt-3 space-y-3">
-          {isLoading ? <p className="text-gray-400 text-sm text-center py-2">Loading...</p>
-            : comments.length === 0 ? <p className="text-gray-400 text-sm text-center py-2">No comments yet. Be the first!</p>
-            : comments.map(comment => (
+        <div className="mt-4 space-y-3">
+          {isLoading ? (
+            <p className="py-2 text-center text-sm text-[#C4B0E0]">Loading...</p>
+          ) : comments.length === 0 ? (
+            <p className="py-2 text-center text-sm text-[#C4B0E0]">No comments yet. Be the first.</p>
+          ) : (
+            comments.map(comment => (
               <div key={comment.id} className="flex gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FDD023] to-[#FFE34A] flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  {comment.user.profile_picture
-                    ? <img src={comment.user.profile_picture} alt="" className="w-full h-full object-cover" />
-                    : <span className="text-black font-bold text-xs">{getInitials(comment.user.full_name)}</span>
-                  }
-                </div>
-                <div className="flex-1 bg-[#2a0d44] rounded-xl px-3 py-2">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-white text-xs font-semibold">{comment.user.full_name}</span>
-                    <span className="text-gray-500 text-xs">{timeAgo(comment.created_at)}</span>
+                <Avatar user={comment.user} size="sm" />
+                <div className="flex-1 rounded-2xl bg-[#2A0F5A] px-3 py-2">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="text-xs font-semibold text-white">{comment.user.full_name}</span>
+                    <span className="text-xs text-[#8B72BE]">{timeAgo(comment.created_at)}</span>
                   </div>
-                  <p className="text-gray-200 text-sm">{comment.content}</p>
+                  <p className="text-sm text-[#E9DFFF]">{comment.content}</p>
                 </div>
               </div>
             ))
-          }
+          )}
+
           <div className="flex gap-2">
-            <input ref={inputRef} type="text" value={newComment} onChange={e => setNewComment(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="Write a comment..."
-              className="flex-1 bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm px-3 py-2 rounded-xl placeholder-gray-500 focus:outline-none focus:border-[#FDD023]" />
-            <button onClick={handleSubmit} disabled={isPosting || !newComment.trim()}
-              className="px-4 py-2 bg-[#FDD023] text-black font-bold text-sm rounded-xl hover:bg-[#FFE34A] disabled:opacity-50 transition-colors">
+            <input
+              ref={inputRef}
+              type="text"
+              value={newComment}
+              onChange={e => setNewComment(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleSubmit()}
+              placeholder="Write a comment..."
+              className="flex-1 rounded-2xl border border-white/10 bg-[#2A0F5A] px-3 py-2 text-sm text-white outline-none placeholder:text-[#8B72BE] focus:border-[#F5A623]"
+            />
+            <button
+              onClick={handleSubmit}
+              disabled={isPosting || !newComment.trim()}
+              className="rounded-2xl bg-[#F5A623] px-4 py-2 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166] disabled:opacity-50"
+            >
               {isPosting ? "..." : "Post"}
             </button>
           </div>
@@ -342,91 +494,199 @@ function CommentSection({ item }: { item: FeedItem }) {
   );
 }
 
-// ── Feed Card ────────────────────────────────────────────────────────────────
-
 function FeedCard({ item }: { item: FeedItem }) {
   const displayText = item.content || item.description || "";
   const displayTitle = item.title || "";
 
   return (
-    <div className="bg-[#3a1364] rounded-xl border border-[#5a2d8c] hover:border-[#7a4dac] transition-colors p-4">
-      <div className="flex items-start gap-3 mb-3">
-        <Avatar user={item.user} size="md" />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-white font-semibold text-sm">{item.user.full_name}</span>
-            {item.lost_found_type && (
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${item.lost_found_type === "LOST" ? "bg-red-500/20 text-red-300 border border-red-500/30" : "bg-green-500/20 text-green-300 border border-green-500/30"}`}>
-                {item.lost_found_type}
-              </span>
-            )}
-            {item.category && (
-              <span className="text-xs text-gray-400 bg-[#2a0d44] px-2 py-0.5 rounded-full">{item.category}</span>
-            )}
-          </div>
-          {displayTitle && (
-            <div className="flex items-center gap-2 mt-0.5">
-              <p className="text-gray-200 text-sm font-medium">{displayTitle}</p>
-              {item.price !== undefined && (
-                <p className={`text-sm font-bold ${item.price === 0 ? "text-green-400" : "text-[#FDD023]"}`}>{formatPrice(item.price)}</p>
-              )}
-            </div>
-          )}
-          {displayText && displayText !== displayTitle && (
-            <p className="text-gray-300 text-sm mt-1 line-clamp-3 leading-relaxed">{displayText}</p>
-          )}
-          {item.location && <p className="text-gray-500 text-xs mt-1">📍 {item.location}</p>}
-        </div>
-        <span className="text-gray-500 text-xs whitespace-nowrap flex-shrink-0">{timeAgo(item.created_at)}</span>
-      </div>
-
+    <article className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] shadow-[0_4px_24px_rgba(0,0,0,0.35)] transition hover:-translate-y-1">
       {item.images && item.images.length > 0 && (
-        <div className={`grid gap-2 mb-3 ${item.images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-          {item.images.slice(0, 2).map((img, i) => (
-            <div key={i} className="aspect-video bg-[#2a0d44] rounded-lg overflow-hidden">
-              <img src={img} alt="" className="w-full h-full object-cover"
-                onError={e => { e.currentTarget.parentElement!.style.display = "none"; }} />
+        <div className={`grid gap-px bg-white/10 ${item.images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+          {item.images.slice(0, 2).map((img, index) => (
+            <div key={index} className="aspect-video overflow-hidden bg-[#2A0F5A]">
+              <img
+                src={img}
+                alt="feed image"
+                className="h-full w-full object-cover"
+                onError={e => {
+                  e.currentTarget.parentElement!.style.display = "none";
+                }}
+              />
             </div>
           ))}
         </div>
       )}
 
-      {item.type === "listing" && (
-        <Link href={`/product-detail?id=${item.id}`} className="inline-block text-xs text-[#FDD023] hover:underline mb-3">View full listing →</Link>
-      )}
-      {item.type === "lost_found" && (
-        <Link href="/lost-found" className="inline-block text-xs text-[#FDD023] hover:underline mb-3">View on Lost & Found →</Link>
-      )}
+      <div className="p-5">
+        <div className="mb-4 flex items-start gap-3">
+          <Avatar user={item.user} size="md" />
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-white">{item.user.full_name}</span>
+              <span className="text-xs text-[#8B72BE]">{timeAgo(item.created_at)}</span>
+              {item.lost_found_type && (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                    item.lost_found_type === "LOST"
+                      ? "border border-red-500/30 bg-red-500/15 text-red-300"
+                      : "border border-green-500/30 bg-green-500/15 text-green-300"
+                  }`}
+                >
+                  {item.lost_found_type}
+                </span>
+              )}
+              {item.category && (
+                <span className="rounded-full bg-white/5 px-2 py-0.5 text-[11px] text-[#C4B0E0]">
+                  {item.category}
+                </span>
+              )}
+            </div>
 
-      <CommentSection item={item} />
-    </div>
+            {displayTitle && (
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-semibold text-white">{displayTitle}</h3>
+                {item.price !== undefined && (
+                  <span className={`text-sm font-bold ${item.price === 0 ? "text-green-400" : "text-[#F5A623]"}`}>
+                    {formatPrice(item.price)}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {displayText && displayText !== displayTitle && (
+              <p className="mt-2 line-clamp-3 text-sm leading-6 text-[#E9DFFF]">{displayText}</p>
+            )}
+
+            {item.location && <p className="mt-2 text-xs text-[#C4B0E0]">📍 {item.location}</p>}
+          </div>
+        </div>
+
+        {item.type === "listing" && (
+          <Link href={`/product-detail?id=${item.id}`} className="mb-4 inline-block text-xs font-bold text-[#F5A623] hover:text-[#FFD166]">
+            View full listing →
+          </Link>
+        )}
+
+        {item.type === "lost_found" && (
+          <Link href="/lost-found" className="mb-4 inline-block text-xs font-bold text-[#F5A623] hover:text-[#FFD166]">
+            View on Lost & Found →
+          </Link>
+        )}
+
+        <CommentSection item={item} />
+      </div>
+    </article>
   );
 }
 
-// ── Main Page ────────────────────────────────────────────────────────────────
+function RightPanel({
+  currentUser,
+  totalItems,
+  activeFilters,
+}: {
+  currentUser: { id: string; full_name: string; profile_picture?: string };
+  totalItems: number;
+  activeFilters: string[];
+}) {
+  return (
+    <aside className="hidden xl:flex xl:w-[280px] xl:flex-col xl:gap-4">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470]">
+        <div className="h-20 bg-[linear-gradient(135deg,#5B28A8_0%,#3D1A78_60%,#F5A623_100%)]" />
+        <div className="-mt-8 px-5 pb-5">
+          <div className="mb-3 flex justify-center">
+            <Avatar user={currentUser} size="lg" />
+          </div>
+          <div className="text-center">
+            <h3 className="font-semibold text-white">{currentUser.full_name || "User"}</h3>
+            <p className="mt-1 text-xs text-[#C4B0E0]">LSUS Connect member</p>
+          </div>
+          <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 text-center">
+            <div className="border-r border-white/10 p-3">
+              <div className="text-lg font-bold text-[#F5A623]">{totalItems}</div>
+              <div className="text-[11px] text-[#C4B0E0]">Feed Items</div>
+            </div>
+            <div className="p-3">
+              <div className="text-lg font-bold text-[#F5A623]">{activeFilters.length}</div>
+              <div className="text-[11px] text-[#C4B0E0]">Active Filters</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-[#351470] p-4">
+        <h4 className="mb-3 text-sm font-extrabold uppercase tracking-[0.15em] text-[#F5A623]">Quick Links</h4>
+        <div className="space-y-2 text-sm">
+          <Link href="/marketplace" className="block rounded-xl px-3 py-2 text-[#C4B0E0] transition hover:bg-white/5 hover:text-white">Marketplace</Link>
+          <Link href="/housing" className="block rounded-xl px-3 py-2 text-[#C4B0E0] transition hover:bg-white/5 hover:text-white">Housing</Link>
+          <Link href="/lost-found" className="block rounded-xl px-3 py-2 text-[#C4B0E0] transition hover:bg-white/5 hover:text-white">Lost & Found</Link>
+          <Link href="/contact-team" className="block rounded-xl px-3 py-2 text-[#C4B0E0] transition hover:bg-white/5 hover:text-white">Contact Team</Link>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-[#351470] p-4">
+        <h4 className="mb-3 text-sm font-extrabold uppercase tracking-[0.15em] text-[#F5A623]">Trending</h4>
+        <div className="space-y-3">
+          {[
+            ["Campus Marketplace", "124 posts"],
+            ["Apartment Search", "77 discussions"],
+            ["Book Swaps", "54 updates"],
+          ].map(([title, meta], index) => (
+            <div key={title} className="flex items-center gap-3">
+              <div className="min-w-[24px] text-xl font-black text-white/10">{index + 1}</div>
+              <div>
+                <div className="text-sm font-semibold text-white">{title}</div>
+                <div className="text-xs text-[#C4B0E0]">{meta}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </aside>
+  );
+}
 
 export default function HomeFeedPage() {
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{ id: string; full_name: string; profile_picture?: string }>({ id: "", full_name: "User" });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{
+    id: string;
+    full_name: string;
+    profile_picture?: string;
+  }>({ id: "", full_name: "User" });
 
   useEffect(() => {
     try {
       const token = localStorage.getItem("token");
       if (token) {
         const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-        const payload = JSON.parse(decodeURIComponent(atob(base64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")));
-        setCurrentUser({ id: payload.userId || "", full_name: payload.name || payload.email?.split("@")[0] || "User" });
+        const payload = JSON.parse(
+          decodeURIComponent(
+            atob(base64)
+              .split("")
+              .map(c => `%${("00" + c.charCodeAt(0).toString(16)).slice(-2)}`)
+              .join("")
+          )
+        );
+
+        setCurrentUser({
+          id: payload.userId || "",
+          full_name: payload.name || payload.email?.split("@")[0] || "User",
+        });
       }
-    } catch {}
-    fetchFeed();
+    } catch {
+      // Ignore malformed token parsing and continue.
+    }
+
+    void fetchFeed();
   }, []);
 
   const fetchFeed = async () => {
-    setIsLoading(true); setError("");
+    setIsLoading(true);
+    setError("");
+
     try {
       const [listingsRes, postsRes, lostFoundRes] = await Promise.all([
         fetch("/api/listings?limit=20", { credentials: "include" }),
@@ -438,160 +698,255 @@ export default function HomeFeedPage() {
 
       if (listingsRes.ok) {
         const data = await listingsRes.json();
-        (data.listings || data.items || []).forEach((l: any) => {
-          const owner = Array.isArray(l.user) ? l.user[0] : l.user;
+        (data.listings || data.items || []).forEach((listing: any) => {
+          const owner = Array.isArray(listing.user) ? listing.user[0] : listing.user;
           if (!owner) return;
-          combined.push({ id: l.id, type: "listing", user: owner, title: l.title, description: l.description, price: l.price, images: l.images || [], location: l.location, category: l.category, created_at: l.created_at });
+          combined.push({
+            id: listing.id,
+            type: "listing",
+            user: owner,
+            title: listing.title,
+            description: listing.description,
+            price: listing.price,
+            images: listing.images || [],
+            location: listing.location,
+            category: listing.category,
+            created_at: listing.created_at,
+          });
         });
       }
 
       if (postsRes.ok) {
         const data = await postsRes.json();
-        (data.posts || []).forEach((p: any) => {
-          const owner = Array.isArray(p.user) ? p.user[0] : p.user;
+        (data.posts || []).forEach((post: any) => {
+          const owner = Array.isArray(post.user) ? post.user[0] : post.user;
           if (!owner) return;
-          combined.push({ id: p.id, type: "social", user: owner, content: p.content, location: p.location, images: p.images || [], created_at: p.created_at });
+          combined.push({
+            id: post.id,
+            type: "social",
+            user: owner,
+            content: post.content,
+            location: post.location,
+            images: post.images || [],
+            created_at: post.created_at,
+          });
         });
       }
 
       if (lostFoundRes.ok) {
         const data = await lostFoundRes.json();
-        (data.items || []).forEach((lf: any) => {
-          const owner = Array.isArray(lf.user) ? lf.user[0] : lf.user;
+        (data.items || []).forEach((lostFound: any) => {
+          const owner = Array.isArray(lostFound.user) ? lostFound.user[0] : lostFound.user;
           if (!owner) return;
-          combined.push({ id: lf.id, type: "lost_found", user: owner, title: lf.title, description: lf.description, images: lf.images || [], location: lf.location, category: lf.category, lost_found_type: lf.type, created_at: lf.created_at });
+          combined.push({
+            id: lostFound.id,
+            type: "lost_found",
+            user: owner,
+            title: lostFound.title,
+            description: lostFound.description,
+            images: lostFound.images || [],
+            location: lostFound.location,
+            category: lostFound.category,
+            lost_found_type: lostFound.type,
+            created_at: lostFound.created_at,
+          });
         });
       }
 
-      combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      combined.sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
       setFeedItems(combined);
-    } catch { setError("Failed to load feed. Please try again."); }
-    finally { setIsLoading(false); }
+    } catch {
+      setError("Failed to load feed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const toggleFilter = (cat: string) => {
-    setActiveFilters(prev => prev.includes(cat) ? prev.filter(f => f !== cat) : [...prev, cat]);
+  const toggleFilter = (filter: string) => {
+    setActiveFilters(prev =>
+      prev.includes(filter) ? prev.filter(item => item !== filter) : [...prev, filter]
+    );
   };
 
-  const filteredItems = activeFilters.length === 0 ? feedItems : feedItems.filter(item => {
-    if (activeFilters.includes("Lost & Found") && item.type === "lost_found") return true;
-    if (activeFilters.includes("Social") && item.type === "social") return true;
-    if (item.category && activeFilters.includes(item.category)) return true;
-    return false;
-  });
+  const filteredItems = useMemo(() => {
+    if (activeFilters.length === 0) return feedItems;
+    return feedItems.filter(item => {
+      if (activeFilters.includes("Lost & Found") && item.type === "lost_found") return true;
+      if (activeFilters.includes("Social") && item.type === "social") return true;
+      if (item.category && activeFilters.includes(item.category)) return true;
+      return false;
+    });
+  }, [activeFilters, feedItems]);
+
+  const socialCount = feedItems.filter(item => item.type === "social").length;
+  const marketplaceCount = feedItems.filter(item => item.type === "listing").length;
 
   return (
-    <div className="min-h-screen bg-[#461D7C]">
-      <header className="bg-[#3a1364] border-b border-[#5a2d8c] py-4 sticky top-0 z-50">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="lg:hidden p-2 text-white hover:text-[#FDD023] transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {isMobileMenuOpen
-                    ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  }
-                </svg>
-              </button>
-              <Link href="/home" className="text-2xl sm:text-3xl font-bold flex items-center gap-1">
-                <span className="text-[#FDD023]">LSUS</span>
-                <span className="text-white">CONNECT</span>
-              </Link>
+    <div className="min-h-screen bg-[#1E0A42] text-white">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
+        <div className="mx-auto flex h-[60px] max-w-[1600px] items-center gap-4 px-4 lg:px-6">
+          <div className="flex min-w-[220px] items-center gap-3">
+            <button
+              onClick={() => setIsSidebarOpen(prev => !prev)}
+              className="rounded-lg p-2 transition hover:bg-white/5 lg:hidden"
+            >
+              ☰
+            </button>
+            <Link href="/home" className="text-xl font-extrabold tracking-tight">
+              <span className="text-white">LSUS</span>
+              <span className="text-[#F5A623]"> Connect</span>
+            </Link>
+          </div>
+
+          <div className="hidden max-w-[480px] flex-1 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 md:flex">
+            <span className="text-[#C4B0E0]">🔍</span>
+            <input
+              type="text"
+              placeholder="Search LSUS Connect"
+              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-[#8B72BE]"
+            />
+          </div>
+
+          <div className="ml-auto flex items-center gap-3">
+            <div className="hidden items-center gap-2 md:flex">
+              <button className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#C4B0E0] transition hover:bg-[#4A1E8A] hover:text-white">🔔</button>
+              <button className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#C4B0E0] transition hover:bg-[#4A1E8A] hover:text-white">✉️</button>
             </div>
-            <nav className="hidden lg:flex items-center gap-5">
-              {NAV_LINKS.map(link => (
-                <Link key={link.href} href={link.href} className={`text-sm transition-colors ${link.active ? "text-[#FDD023] font-semibold border-b-2 border-[#FDD023] pb-0.5" : "text-white hover:text-[#FDD023]"}`}>
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
             <UserDropdown />
           </div>
-          {isMobileMenuOpen && (
-            <nav className="lg:hidden mt-4 pt-4 border-t border-[#5a2d8c] flex flex-col gap-1">
-              {NAV_LINKS.map(link => (
-                <Link key={link.href} href={link.href} onClick={() => setIsMobileMenuOpen(false)}
-                  className={`py-2 px-3 rounded transition-colors ${link.active ? "text-[#FDD023]" : "text-white hover:text-[#FDD023] hover:bg-[#461D7C]"}`}>
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          )}
         </div>
       </header>
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+      <div className="mx-auto flex max-w-[1600px]">
+        <aside
+          className={`fixed left-0 top-[60px] z-40 h-[calc(100vh-60px)] w-[220px] border-r border-white/10 bg-[#2E1065] p-4 transition-transform lg:sticky lg:translate-x-0 ${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <nav className="space-y-2">
+            {LEFT_NAV.map(link => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                  link.active
+                    ? "bg-[linear-gradient(135deg,#5B28A8,#4A1E8A)] text-white"
+                    : "text-[#C4B0E0] hover:bg-white/5 hover:text-white"
+                }`}
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <span>{link.icon}</span>
+                <span>{link.label}</span>
+              </Link>
+            ))}
+          </nav>
 
-        {/* Sidebar */}
-        <aside className="space-y-4">
-          <div className="bg-[#3a1364] rounded-xl border border-[#5a2d8c] p-5">
-            <h3 className="text-white font-bold text-base mb-4">Filters</h3>
-            <div className="space-y-3">
-              {CATEGORIES.map(cat => (
-                <label key={cat} className="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" checked={activeFilters.includes(cat)} onChange={() => toggleFilter(cat)} className="w-4 h-4 accent-[#FDD023] cursor-pointer" />
-                  <span className="text-gray-300 text-sm group-hover:text-white transition-colors">{cat}</span>
+          <div className="my-4 h-px bg-white/10" />
+
+          <div>
+            <p className="mb-3 px-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#8B72BE]">
+              Feed Filters
+            </p>
+            <div className="space-y-2">
+              {FILTERS.map(filter => (
+                <label key={filter} className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm text-[#C4B0E0] transition hover:bg-white/5 hover:text-white">
+                  <input
+                    type="checkbox"
+                    checked={activeFilters.includes(filter)}
+                    onChange={() => toggleFilter(filter)}
+                    className="h-4 w-4 accent-[#F5A623]"
+                  />
+                  <span>{filter}</span>
                 </label>
               ))}
             </div>
             {activeFilters.length > 0 && (
-              <button onClick={() => setActiveFilters([])} className="mt-4 w-full py-2 bg-[#FDD023] text-black font-bold text-sm rounded-lg hover:bg-[#FFE34A] transition-colors">
+              <button
+                onClick={() => setActiveFilters([])}
+                className="mt-4 w-full rounded-full bg-[#F5A623] px-4 py-2 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]"
+              >
                 Clear Filters
               </button>
             )}
           </div>
-
-          <div className="bg-[#3a1364] rounded-xl border border-[#5a2d8c] p-5">
-            <h3 className="text-white font-bold text-base mb-3">Quick Links</h3>
-            <div className="space-y-2">
-              {[
-                { href: "/marketplace", label: "🛍️ Marketplace" },
-                { href: "/housing", label: "🏠 Housing" },
-                { href: "/lost-found", label: "🔍 Lost & Found" },
-                { href: "/post-listing", label: "➕ Post a Listing" },
-                { href: "/contact-team", label: "📧 Contact Team" },
-              ].map(link => (
-                <Link key={link.href} href={link.href} className="block text-gray-300 hover:text-[#FDD023] text-sm py-1 transition-colors">
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </div>
         </aside>
 
-        {/* Feed */}
-        <main>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white font-bold text-xl">
-              {activeFilters.length > 0 ? `Filtered Feed (${filteredItems.length})` : "All Posts"}
-            </h2>
-            <button onClick={fetchFeed} className="text-[#FDD023] text-sm hover:underline">Refresh</button>
-          </div>
+        <main className="min-w-0 flex-1 px-4 py-6 lg:ml-0 lg:px-7">
+          <section className="mb-6 overflow-hidden rounded-2xl border border-[#F5A623]/20 bg-[linear-gradient(135deg,#4A1E8A_0%,#2A0F5A_60%,#1E0A42_100%)] p-6">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div>
+                <p className="mb-1 text-sm text-[#C4B0E0]">Welcome back</p>
+                <h1 className="text-3xl font-extrabold tracking-tight">{currentUser.full_name || "LSUS User"}</h1>
+                <p className="mt-2 text-sm text-[#C4B0E0]">
+                  Your campus hub for social posts, listings, housing, and lost and found updates.
+                </p>
+              </div>
 
-          {/* Inline compose box */}
-          {currentUser.id && <ComposeBox currentUser={currentUser} onPost={item => setFeedItems(prev => [item, ...prev])} />}
+              <div className="flex flex-wrap gap-3">
+                <div className="min-w-[130px] rounded-xl border border-white/10 bg-white/10 px-4 py-3">
+                  <div className="text-2xl font-extrabold text-white">{feedItems.length}</div>
+                  <div className="text-xs text-[#C4B0E0]">Total Feed Items</div>
+                </div>
+                <div className="min-w-[130px] rounded-xl border border-white/10 bg-white/10 px-4 py-3">
+                  <div className="text-2xl font-extrabold text-white">{socialCount}</div>
+                  <div className="text-xs text-[#C4B0E0]">Social Posts</div>
+                </div>
+                <div className="min-w-[130px] rounded-xl border border-white/10 bg-white/10 px-4 py-3">
+                  <div className="text-2xl font-extrabold text-white">{marketplaceCount}</div>
+                  <div className="text-xs text-[#C4B0E0]">Listings</div>
+                </div>
+              </div>
+            </div>
+          </section>
 
-          {isLoading && (
-            <div className="text-center py-20">
-              <div className="inline-block w-12 h-12 border-4 border-[#FDD023] border-t-transparent rounded-full animate-spin" />
-              <p className="text-white mt-4">Loading feed...</p>
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
+            <div className="min-w-0">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-bold text-white">
+                    {activeFilters.length > 0 ? `Filtered Feed (${filteredItems.length})` : "Campus Feed"}
+                  </h2>
+                  <p className="text-sm text-[#C4B0E0]">Fresh activity from the LSUS Connect community</p>
+                </div>
+                <button onClick={fetchFeed} className="rounded-full border border-[#F5A623] px-4 py-2 text-sm font-bold text-[#F5A623] transition hover:bg-[#F5A623] hover:text-[#1E0A42]">
+                  Refresh
+                </button>
+              </div>
+
+              {currentUser.id && <ComposeBox currentUser={currentUser} onPost={item => setFeedItems(prev => [item, ...prev])} />}
+
+              {isLoading && (
+                <div className="py-20 text-center">
+                  <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
+                  <p className="mt-4 text-white">Loading feed...</p>
+                </div>
+              )}
+
+              {error && !isLoading && (
+                <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-300">
+                  {error}
+                  <button onClick={fetchFeed} className="ml-3 underline">
+                    Retry
+                  </button>
+                </div>
+              )}
+
+              {!isLoading && !error && filteredItems.length === 0 && (
+                <div className="py-20 text-center">
+                  <p className="text-lg text-[#C4B0E0]">
+                    {activeFilters.length > 0 ? "No posts match your filters." : "The feed is empty."}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {!isLoading && !error && filteredItems.map(item => <FeedCard key={`${item.type}-${item.id}`} item={item} />)}
+              </div>
             </div>
-          )}
-          {error && !isLoading && (
-            <div className="bg-red-500/20 border border-red-500/30 text-red-300 rounded-lg p-4 mb-4">
-              {error} <button onClick={fetchFeed} className="ml-4 underline">Retry</button>
-            </div>
-          )}
-          {!isLoading && !error && filteredItems.length === 0 && (
-            <div className="text-center py-20">
-              <p className="text-gray-400 text-lg">{activeFilters.length > 0 ? "No posts match your filters." : "The feed is empty."}</p>
-            </div>
-          )}
-          <div className="space-y-4">
-            {!isLoading && !error && filteredItems.map(item => (
-              <FeedCard key={`${item.type}-${item.id}`} item={item} />
-            ))}
+
+            <RightPanel currentUser={currentUser} totalItems={feedItems.length} activeFilters={activeFilters} />
           </div>
         </main>
       </div>
