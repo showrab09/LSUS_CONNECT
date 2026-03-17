@@ -89,7 +89,7 @@ export default function AdminDashboardPage() {
       `}>
         {/* Logo & Close Button */}
         <div className="p-4 sm:p-6 border-b border-[#5a2d8c] flex items-center justify-between">
-          <Link href="/marketplace" className="text-lg sm:text-xl font-bold text-white">
+          <Link href="/home" className="text-lg sm:text-xl font-bold text-white">
             <span className="text-[#FDD023]">LSUS</span> CONNECT
           </Link>
           <button

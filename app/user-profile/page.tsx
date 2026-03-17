@@ -148,6 +148,7 @@ export default function UserProfilePage() {
         credentials: "include",
         body: JSON.stringify({
           ...editFormData,
+          location: editFormData.location.replace(/,\s*-/g, ", ").trim(),
           // Only send profile_picture if it changed from what's in the DB
           profile_picture: picturePreview !== (user?.profile_picture || "")
             ? picturePreview
@@ -238,7 +239,7 @@ export default function UserProfilePage() {
                 <div className="mb-1">
                   <h1 className="text-2xl font-bold text-white sm:text-3xl">{user.full_name}</h1>
                   <p className="text-sm text-[#C4B0E0]">{user.email}</p>
-                  {user.location && <p className="mt-0.5 text-sm text-[#C4B0E0]">📍 {user.location}</p>}
+                  {user.location && <p className="mt-0.5 text-sm text-[#C4B0E0]">📍 {user.location.replace(/,\s*-/g, ", ")}</p>}
                   {user.bio && <p className="mt-2 max-w-2xl text-sm text-[#E9DFFF]">{user.bio}</p>}
                   <p className="mt-1 text-xs text-[#8B72BE]">Member since {formatDate(user.created_at)}</p>
                 </div>
@@ -293,7 +294,7 @@ export default function UserProfilePage() {
               <div key={listing.id}
                 className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] transition hover:-translate-y-1 hover:border-[#F5A623]/40 shadow-[0_4px_24px_rgba(0,0,0,0.35)]">
                 <Link href={`/product-detail?id=${listing.id}`} className="block">
-                  <div className="relative aspect-square bg-[#2A0F5A]">
+                  <div className="relative h-48 bg-[#2A0F5A]">
                     {listing.images && listing.images.length > 0 ? (
                       <img src={listing.images[0]} alt={listing.title} className="h-full w-full object-cover" />
                     ) : (

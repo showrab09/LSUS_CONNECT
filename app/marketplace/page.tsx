@@ -289,7 +289,7 @@ export default function MarketplacePage() {
                           className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] shadow-[0_4px_24px_rgba(0,0,0,0.35)] transition hover:-translate-y-1 hover:border-[#F5A623]/40">
                           {/* Image */}
                           <Link href={`/product-detail?id=${listing.id}`} className="block">
-                            <div className="relative aspect-square bg-[#2A0F5A]">
+                            <div className="relative h-52 bg-[#2A0F5A]">
                               {listing.images && listing.images.length > 0 ? (
                                 <img
                                   src={listing.images[0]}

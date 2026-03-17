@@ -303,7 +303,7 @@ export default function PostListingPage() {
       <header className="bg-[#3a1364] border-b border-[#5a2d8c] sticky top-0 z-50">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <Link href="/marketplace" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+            <Link href="/home" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
               <span className="text-[#FDD023]">LSUS</span>
               <span>CONNECT</span>
             </Link>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface SocialPost {
   id: string;
@@ -348,13 +349,9 @@ function PostCard({ post, onDelete, currentUserId }: { post: SocialPost; onDelet
   return (
     <article className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] shadow-[0_4px_24px_rgba(0,0,0,0.35)] transition hover:-translate-y-1">
       {post.images && post.images.length > 0 && (
-        <div className={`grid gap-px bg-white/10 ${post.images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-          {post.images.slice(0, 4).map((img, i) => (
-            <div key={i} className="aspect-video overflow-hidden bg-[#2A0F5A]">
-              <img src={img} alt="" className="h-full w-full object-cover"
-                onError={e => { e.currentTarget.parentElement!.style.display = "none"; }} />
-            </div>
-          ))}
+        <div className="h-52 overflow-hidden bg-[#2A0F5A]">
+          <img src={post.images[0]} alt="" className="h-full w-full object-cover"
+            onError={e => { e.currentTarget.parentElement!.style.display = "none"; }} />
         </div>
       )}
 
@@ -391,22 +388,11 @@ export default function SocialPage() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currentUserId, setCurrentUserId] = useState("");
-  const [currentUser, setCurrentUser] = useState<{ id: string; full_name: string; profile_picture?: string }>({ id: "", full_name: "User" });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { currentUser } = useCurrentUser();
+  const currentUserId = currentUser.id;
 
   useEffect(() => {
-    try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-        const payload = JSON.parse(decodeURIComponent(atob(base64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")));
-        const id = payload.userId || "";
-        const name = payload.name || payload.email?.split("@")[0] || "User";
-        setCurrentUserId(id);
-        setCurrentUser({ id, full_name: name });
-      }
-    } catch {}
     fetchPosts();
   }, []);
 

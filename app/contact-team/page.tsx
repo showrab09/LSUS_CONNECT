@@ -103,7 +103,7 @@ export default function ContactPage() {
       <header className="bg-[#461D7C] border-b border-[#5a2d8c] py-3 sm:py-4 sticky top-0 z-50">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between">
-            <Link href="/marketplace" className="text-2xl sm:text-3xl font-bold text-white">
+            <Link href="/home" className="text-2xl sm:text-3xl font-bold text-white">
               <span className="text-[#FDD023]">LSUS</span> CONNECT
             </Link>
 

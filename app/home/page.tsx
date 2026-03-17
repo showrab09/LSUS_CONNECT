@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 type FeedItemType = "listing" | "social" | "lost_found";
 
@@ -498,29 +499,71 @@ function FeedCard({ item }: { item: FeedItem }) {
   const displayText = item.content || item.description || "";
   const displayTitle = item.title || "";
 
+  // Listings and lost+found: horizontal card with small thumbnail
+  // Social posts: small fixed-height banner image
+  const isCardType = item.type === "listing" || item.type === "lost_found";
+  const hasThumbnail = isCardType && item.images && item.images.length > 0;
+
   return (
     <article className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] shadow-[0_4px_24px_rgba(0,0,0,0.35)] transition hover:-translate-y-1">
-      {item.images && item.images.length > 0 && (
-        <div className={`grid gap-px bg-white/10 ${item.images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-          {item.images.slice(0, 2).map((img, index) => (
-            <div key={index} className="aspect-video overflow-hidden bg-[#2A0F5A]">
-              <img
-                src={img}
-                alt="feed image"
-                className="h-full w-full object-cover"
-                onError={e => {
-                  e.currentTarget.parentElement!.style.display = "none";
-                }}
-              />
-            </div>
-          ))}
+
+      {/* Social posts: small fixed-height banner */}
+      {item.type === "social" && item.images && item.images.length > 0 && (
+        <div className="h-48 overflow-hidden bg-[#2A0F5A]">
+          <img src={item.images[0]} alt="post image" className="h-full w-full object-cover"
+            onError={e => { e.currentTarget.parentElement!.style.display = "none"; }} />
         </div>
       )}
 
-      <div className="p-5">
-        <div className="mb-4 flex items-start gap-3">
-          <Avatar user={item.user} size="md" />
-          <div className="min-w-0 flex-1">
+      <div className="p-4">
+        {hasThumbnail ? (
+          /* Listing / lost+found: small thumbnail left, content right */
+          <div className="flex gap-3">
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-[#2A0F5A]">
+              <img src={item.images[0]} alt={displayTitle} className="h-full w-full object-cover"
+                onError={e => { e.currentTarget.parentElement!.style.display = "none"; }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <Avatar user={item.user} size="sm" />
+                <span className="text-sm font-semibold text-white">{item.user.full_name}</span>
+                <span className="text-xs text-[#8B72BE]">{timeAgo(item.created_at)}</span>
+                {item.lost_found_type && (
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${item.lost_found_type === "LOST" ? "border border-red-500/30 bg-red-500/15 text-red-300" : "border border-green-500/30 bg-green-500/15 text-green-300"}`}>
+                    {item.lost_found_type}
+                  </span>
+                )}
+                {item.category && (
+                  <span className="rounded-full bg-white/5 px-2 py-0.5 text-[11px] text-[#C4B0E0]">{item.category}</span>
+                )}
+              </div>
+              {displayTitle && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="font-semibold text-white">{displayTitle}</h3>
+                  {item.price !== undefined && (
+                    <span className={`text-sm font-bold ${item.price === 0 ? "text-green-400" : "text-[#F5A623]"}`}>
+                      {formatPrice(item.price)}
+                    </span>
+                  )}
+                </div>
+              )}
+              {displayText && displayText !== displayTitle && (
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#C4B0E0]">{displayText}</p>
+              )}
+              {item.location && <p className="mt-1 text-xs text-[#8B72BE]">📍 {item.location}</p>}
+              {item.type === "listing" && (
+                <a href={`/product-detail?id=${item.id}`} className="mt-1 inline-block text-xs font-bold text-[#F5A623] hover:text-[#FFD166]">View listing →</a>
+              )}
+              {item.type === "lost_found" && (
+                <a href="/lost-found" className="mt-1 inline-block text-xs font-bold text-[#F5A623] hover:text-[#FFD166]">View on Lost & Found →</a>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Social posts / no image: avatar left, content right */
+          <div className="flex items-start gap-3">
+            <Avatar user={item.user} size="md" />
+            <div className="min-w-0 flex-1">
             <div className="mb-1 flex flex-wrap items-center gap-2">
               <span className="text-sm font-semibold text-white">{item.user.full_name}</span>
               <span className="text-xs text-[#8B72BE]">{timeAgo(item.created_at)}</span>
@@ -558,19 +601,8 @@ function FeedCard({ item }: { item: FeedItem }) {
             )}
 
             {item.location && <p className="mt-2 text-xs text-[#C4B0E0]">📍 {item.location}</p>}
+            </div>
           </div>
-        </div>
-
-        {item.type === "listing" && (
-          <Link href={`/product-detail?id=${item.id}`} className="mb-4 inline-block text-xs font-bold text-[#F5A623] hover:text-[#FFD166]">
-            View full listing →
-          </Link>
-        )}
-
-        {item.type === "lost_found" && (
-          <Link href="/lost-found" className="mb-4 inline-block text-xs font-bold text-[#F5A623] hover:text-[#FFD166]">
-            View on Lost & Found →
-          </Link>
         )}
 
         <CommentSection item={item} />
@@ -583,10 +615,12 @@ function RightPanel({
   currentUser,
   totalItems,
   activeFilters,
+  userLoading,
 }: {
   currentUser: { id: string; full_name: string; profile_picture?: string };
   totalItems: number;
   activeFilters: string[];
+  userLoading: boolean;
 }) {
   return (
     <aside className="hidden xl:flex xl:w-[280px] xl:flex-col xl:gap-4">
@@ -651,35 +685,9 @@ export default function HomeFeedPage() {
   const [error, setError] = useState("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{
-    id: string;
-    full_name: string;
-    profile_picture?: string;
-  }>({ id: "", full_name: "User" });
+  const { currentUser, isLoading: userLoading } = useCurrentUser();
 
   useEffect(() => {
-    try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-        const payload = JSON.parse(
-          decodeURIComponent(
-            atob(base64)
-              .split("")
-              .map(c => `%${("00" + c.charCodeAt(0).toString(16)).slice(-2)}`)
-              .join("")
-          )
-        );
-
-        setCurrentUser({
-          id: payload.userId || "",
-          full_name: payload.name || payload.email?.split("@")[0] || "User",
-        });
-      }
-    } catch {
-      // Ignore malformed token parsing and continue.
-    }
-
     void fetchFeed();
   }, []);
 
@@ -821,7 +829,7 @@ export default function HomeFeedPage() {
 
       <div className="mx-auto flex max-w-[1600px]">
         <aside
-          className={`fixed left-0 top-[60px] z-40 h-[calc(100vh-60px)] w-[220px] border-r border-white/10 bg-[#2E1065] p-4 transition-transform lg:sticky lg:translate-x-0 ${
+          className={`fixed left-0 top-[60px] z-40 h-[calc(100vh-60px)] w-[220px] overflow-y-auto border-r border-white/10 bg-[#2E1065] p-4 transition-transform lg:sticky lg:top-[60px] lg:h-[calc(100vh-60px)] lg:translate-x-0 ${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
@@ -915,7 +923,7 @@ export default function HomeFeedPage() {
                 </button>
               </div>
 
-              {currentUser.id && <ComposeBox currentUser={currentUser} onPost={item => setFeedItems(prev => [item, ...prev])} />}
+              {!userLoading && <ComposeBox currentUser={currentUser} onPost={item => setFeedItems(prev => [item, ...prev])} />}
 
               {isLoading && (
                 <div className="py-20 text-center">
@@ -946,7 +954,7 @@ export default function HomeFeedPage() {
               </div>
             </div>
 
-            <RightPanel currentUser={currentUser} totalItems={feedItems.length} activeFilters={activeFilters} />
+            <RightPanel currentUser={currentUser} totalItems={feedItems.length} activeFilters={activeFilters} userLoading={userLoading} />
           </div>
         </main>
       </div>
