@@ -941,7 +941,7 @@ export default function HomeFeedPage() {
                 </div>
               )}
 
-              <div className="space-y-4">
+              <div className="mt-6 space-y-6">
                 {!isLoading && !error && filteredItems.map(item => <FeedCard key={`${item.type}-${item.id}`} item={item} />)}
               </div>
             </div>

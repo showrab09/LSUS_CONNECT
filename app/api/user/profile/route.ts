@@ -72,13 +72,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { full_name, bio, location } = body;
+    const { full_name, bio, location, profile_picture } = body;
 
     // Prepare update data (only include fields that were provided)
     const updateData: any = {};
     if (full_name !== undefined) updateData.full_name = full_name;
     if (bio !== undefined) updateData.bio = bio;
     if (location !== undefined) updateData.location = location;
+    if (profile_picture !== undefined) updateData.profile_picture = profile_picture;
 
     // Update user profile
     const { data: updatedUser, error: updateError } = await supabase

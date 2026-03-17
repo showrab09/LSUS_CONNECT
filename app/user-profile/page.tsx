@@ -7,7 +7,7 @@ import SaveButton from "@/components/SaveButton";
 import EditListingModal from "@/components/EditListingModal";
 
 /**
- * LSUS Connect - User Profile Page (WITH EDIT/DELETE LISTINGS)
+ * LSUS Connect - User Profile Page
  */
 
 interface User {
@@ -41,6 +41,20 @@ interface SavedListing {
   listing: Listing;
 }
 
+function getInitials(name: string) {
+  return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+}
+
+function formatPrice(listing: Listing) {
+  if (listing.price_type === "FREE") return "Free";
+  if (listing.price_type === "SWAP") return "Trade/Swap";
+  return `$${listing.price.toFixed(2)}`;
+}
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
 export default function UserProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [userListings, setUserListings] = useState<Listing[]>([]);
@@ -50,61 +64,49 @@ export default function UserProfilePage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditListingModalOpen, setIsEditListingModalOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
-  const [editFormData, setEditFormData] = useState({
-    full_name: "",
-    bio: "",
-    location: "",
-  });
-  const [profilePicture, setProfilePicture] = useState<string>("");
-  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Edit form state
+  const [editFormData, setEditFormData] = useState({ full_name: "", bio: "", location: "" });
+  // profile_picture preview (base64 or existing URL)
+  const [picturePreview, setPicturePreview] = useState<string>("");
 
   useEffect(() => {
     fetchUserProfile();
     fetchUserListings();
     fetchSavedListings();
-    
-    // Load profile picture from localStorage
-    const storedEdits = localStorage.getItem('userProfileEdits');
-    if (storedEdits) {
-      const edits = JSON.parse(storedEdits);
-      if (edits.profilePicture) {
-        setProfilePicture(edits.profilePicture);
-      }
-    }
   }, []);
 
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch('/api/user/profile', {
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
+      const res = await fetch("/api/user/profile", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
         setUser(data.user);
         setEditFormData({
           full_name: data.user.full_name || "",
           bio: data.user.bio || "",
           location: data.user.location || "",
         });
+        // Seed preview from DB — no localStorage
+        setPicturePreview(data.user.profile_picture || "");
       }
-    } catch (error) {
-      console.error("Error fetching profile:", error);
+    } catch (err) {
+      console.error("Error fetching profile:", err);
     }
   };
 
   const fetchUserListings = async () => {
     try {
-      const response = await fetch('/api/user/listings', {
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
+      const res = await fetch("/api/user/listings", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
         setUserListings(data.listings || []);
       }
-    } catch (error) {
-      console.error("Error fetching listings:", error);
+    } catch (err) {
+      console.error("Error fetching listings:", err);
     } finally {
       setIsLoading(false);
     }
@@ -112,58 +114,62 @@ export default function UserProfilePage() {
 
   const fetchSavedListings = async () => {
     try {
-      const response = await fetch('/api/saved-listings', {
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
+      const res = await fetch("/api/saved-listings", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
         setSavedListings(data.savedListings || []);
       }
-    } catch (error) {
-      console.error("Error fetching saved listings:", error);
+    } catch (err) {
+      console.error("Error fetching saved listings:", err);
     }
   };
 
   const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setProfilePictureFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setProfilePicture(base64);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    // Max 2MB guard (base64 inflates ~33%)
+    if (file.size > 2 * 1024 * 1024) {
+      setSaveError("Image must be under 2MB.");
+      return;
     }
-  };
-
-  const removeProfilePicture = () => {
-    setProfilePicture("");
-    setProfilePictureFile(null);
+    const reader = new FileReader();
+    reader.onloadend = () => setPicturePreview(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   const handleSaveProfile = async () => {
+    setIsSaving(true);
+    setSaveError("");
+    setSaveSuccess(false);
     try {
-      // Update text fields
-      const response = await fetch('/api/user/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(editFormData),
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          ...editFormData,
+          // Only send profile_picture if it changed from what's in the DB
+          profile_picture: picturePreview !== (user?.profile_picture || "")
+            ? picturePreview
+            : undefined,
+        }),
       });
 
-      if (response.ok) {
-        // Save profile picture to localStorage (temporary until backend ready)
-        const edits = JSON.parse(localStorage.getItem('userProfileEdits') || '{}');
-        edits.profilePicture = profilePicture;
-        localStorage.setItem('userProfileEdits', JSON.stringify(edits));
-        
+      if (res.ok) {
         await fetchUserProfile();
-        setIsEditModalOpen(false);
+        setSaveSuccess(true);
+        setTimeout(() => {
+          setIsEditModalOpen(false);
+          setSaveSuccess(false);
+        }, 800);
+      } else {
+        const data = await res.json();
+        setSaveError(data.error || "Failed to save profile.");
       }
-    } catch (error) {
-      console.error("Error updating profile:", error);
+    } catch {
+      setSaveError("Something went wrong. Try again.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -173,378 +179,252 @@ export default function UserProfilePage() {
   };
 
   const handleDeleteListing = async (listingId: string) => {
-    if (!confirm("Are you sure you want to delete this listing? This action cannot be undone.")) {
-      return;
-    }
-
+    if (!confirm("Are you sure you want to delete this listing? This cannot be undone.")) return;
     try {
-      const response = await fetch(`/api/listings/${listingId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        // Refresh listings
+      const res = await fetch(`/api/listings/${listingId}`, { method: "DELETE", credentials: "include" });
+      if (res.ok) {
         await fetchUserListings();
       } else {
-        const data = await response.json();
+        const data = await res.json();
         alert(data.error || "Failed to delete listing");
       }
-    } catch (error) {
-      console.error("Error deleting listing:", error);
+    } catch {
       alert("Failed to delete listing");
     }
   };
 
-  const formatPrice = (listing: Listing) => {
-    if (listing.price_type === "FREE") return "Free";
-    if (listing.price_type === "SWAP") return "Trade/Swap";
-    return `$${listing.price.toFixed(2)}`;
-  };
-
-  const getInitials = (name: string) => {
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      year: 'numeric'
-    });
-  };
-
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#461D7C] flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[#1E0A42]">
         <div className="text-center">
-          <div className="inline-block w-16 h-16 border-4 border-[#FDD023] border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-white text-lg">Loading profile...</p>
+          <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
+          <p className="text-lg text-white">Loading profile...</p>
         </div>
       </div>
     );
   }
 
   const displayListings = activeTab === "listings" ? userListings : savedListings.map(s => s.listing);
-  const displayProfilePicture = profilePicture || user.profile_picture;
+  const displayPicture = user.profile_picture;
 
   return (
-    <div className="min-h-screen bg-[#461D7C]">
+    <div className="min-h-screen bg-[#1E0A42] text-white">
       {/* Header */}
-      <header className="bg-[#3a1364] border-b border-[#5a2d8c] sticky top-0 z-50">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/marketplace" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-[#FDD023]">LSUS</span>
-              <span>CONNECT</span>
-            </Link>
-            <div className="flex items-center gap-4">
-              <UserDropdown />
-            </div>
-          </div>
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
+        <div className="mx-auto flex h-[60px] max-w-[1920px] items-center justify-between gap-4 px-4 sm:px-6">
+          <Link href="/home" className="text-xl font-extrabold tracking-tight">
+            <span className="text-white">LSUS</span>
+            <span className="text-[#F5A623]"> Connect</span>
+          </Link>
+          <UserDropdown />
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* Profile Header */}
-        <div className="bg-[#3a1364] rounded-lg p-6 sm:p-8 border border-[#5a2d8c] mb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            {/* Profile Picture */}
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-[#FDD023] to-[#FFE34A] flex items-center justify-center border-4 border-[#FDD023] flex-shrink-0">
-              {displayProfilePicture ? (
-                <img
-                  src={displayProfilePicture}
-                  alt={user.full_name}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-black font-bold text-4xl sm:text-5xl">
-                  {getInitials(user.full_name)}
-                </span>
-              )}
-            </div>
-
-            {/* Profile Info */}
-            <div className="flex-1">
-              <h1 className="text-white text-2xl sm:text-3xl font-bold mb-2">
-                {user.full_name}
-              </h1>
-              <p className="text-gray-300 mb-1">{user.email}</p>
-              {user.location && (
-                <p className="text-gray-400 text-sm mb-3">📍 {user.location}</p>
-              )}
-              {user.bio && (
-                <p className="text-gray-300 text-sm mb-4 max-w-2xl">{user.bio}</p>
-              )}
-              <div className="flex items-center gap-4 text-sm text-gray-400">
-                <span>Member since {formatDate(user.created_at)}</span>
+      <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
+        {/* Profile Header Card */}
+        <div className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-[#351470] shadow-[0_4px_24px_rgba(0,0,0,0.35)]">
+          <div className="h-24 bg-[linear-gradient(135deg,#5B28A8_0%,#3D1A78_60%,#F5A623_100%)]" />
+          <div className="-mt-12 px-6 pb-6 sm:px-8 sm:pb-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex items-end gap-5">
+                {/* Avatar */}
+                <div className="h-24 w-24 flex shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-[#1E0A42] bg-gradient-to-br from-[#FFD166] to-[#F5A623] shadow-lg sm:h-28 sm:w-28">
+                  {displayPicture ? (
+                    <img src={displayPicture} alt={user.full_name} className="h-full w-full rounded-full object-cover" />
+                  ) : (
+                    <span className="text-4xl font-bold text-[#1E0A42] sm:text-5xl">{getInitials(user.full_name)}</span>
+                  )}
+                </div>
+                <div className="mb-1">
+                  <h1 className="text-2xl font-bold text-white sm:text-3xl">{user.full_name}</h1>
+                  <p className="text-sm text-[#C4B0E0]">{user.email}</p>
+                  {user.location && <p className="mt-0.5 text-sm text-[#C4B0E0]">📍 {user.location}</p>}
+                  {user.bio && <p className="mt-2 max-w-2xl text-sm text-[#E9DFFF]">{user.bio}</p>}
+                  <p className="mt-1 text-xs text-[#8B72BE]">Member since {formatDate(user.created_at)}</p>
+                </div>
               </div>
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="self-end rounded-full bg-[#F5A623] px-6 py-2.5 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]"
+              >
+                Edit Profile
+              </button>
             </div>
-
-            {/* Edit Button */}
-            <button
-              onClick={() => setIsEditModalOpen(true)}
-              className="px-6 py-2.5 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
-            >
-              Edit Profile
-            </button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-4 mb-6 border-b border-[#5a2d8c]">
-          <button
-            onClick={() => setActiveTab("listings")}
-            className={`pb-3 px-4 font-semibold transition-colors ${
-              activeTab === "listings"
-                ? "text-[#FDD023] border-b-2 border-[#FDD023]"
-                : "text-gray-400 hover:text-white"
-            }`}
-          >
-            My Listings ({userListings.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("saved")}
-            className={`pb-3 px-4 font-semibold transition-colors ${
-              activeTab === "saved"
-                ? "text-[#FDD023] border-b-2 border-[#FDD023]"
-                : "text-gray-400 hover:text-white"
-            }`}
-          >
-            Saved Items ({savedListings.length})
-          </button>
+        <div className="mb-6 flex gap-1 border-b border-white/10">
+          {(["listings", "saved"] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              className={`px-5 pb-3 pt-1 text-sm font-semibold transition ${activeTab === tab
+                ? "border-b-2 border-[#F5A623] text-[#F5A623]"
+                : "text-[#C4B0E0] hover:text-white"}`}>
+              {tab === "listings" ? `My Listings (${userListings.length})` : `Saved Items (${savedListings.length})`}
+            </button>
+          ))}
         </div>
 
-        {/* Listings Grid */}
+        {/* Content */}
         {isLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-block w-12 h-12 border-4 border-[#FDD023] border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-white mt-4">Loading...</p>
+          <div className="py-20 text-center">
+            <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
+            <p className="mt-4 text-white">Loading...</p>
           </div>
         ) : displayListings.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#3a1364] flex items-center justify-center">
-              {activeTab === "listings" ? (
-                <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                </svg>
-              ) : (
-                <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-              )}
+          <div className="py-20 text-center">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#351470] text-4xl">
+              {activeTab === "listings" ? "📦" : "❤️"}
             </div>
-            <h3 className="text-white text-xl font-bold mb-2">
+            <h3 className="mb-2 text-xl font-bold text-white">
               {activeTab === "listings" ? "No listings yet" : "No saved items yet"}
             </h3>
-            <p className="text-gray-300 mb-6">
-              {activeTab === "listings" 
-                ? "Start selling by creating your first listing!" 
-                : "Save items from the marketplace to view them here!"}
+            <p className="mb-6 text-[#C4B0E0]">
+              {activeTab === "listings" ? "Start selling by creating your first listing!" : "Save items from the marketplace to view them here!"}
             </p>
-            <Link
-              href={activeTab === "listings" ? "/post-listing" : "/marketplace"}
-              className="inline-block px-8 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
-            >
+            <Link href={activeTab === "listings" ? "/post-listing" : "/marketplace"}
+              className="inline-block rounded-full bg-[#F5A623] px-8 py-3 font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
               {activeTab === "listings" ? "Create Listing" : "Browse Marketplace"}
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayListings.map((listing) => {
-              const isOwnListing = activeTab === "listings";
-              return (
-                <div key={listing.id} className="bg-[#3a1364] rounded-lg overflow-hidden border border-[#5a2d8c] hover:border-[#FDD023] transition-all">
-                  {/* Image */}
-                  <Link href={`/product-detail?id=${listing.id}`} className="block">
-                    <div className="aspect-square bg-[#2a0d44] relative">
-                      {listing.images && listing.images.length > 0 ? (
-                        <img
-                          src={listing.images[0]}
-                          alt={listing.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-500">
-                          No image
-                        </div>
-                      )}
-                      <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                        {listing.condition}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {displayListings.map((listing) => (
+              <div key={listing.id}
+                className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] transition hover:-translate-y-1 hover:border-[#F5A623]/40 shadow-[0_4px_24px_rgba(0,0,0,0.35)]">
+                <Link href={`/product-detail?id=${listing.id}`} className="block">
+                  <div className="relative aspect-square bg-[#2A0F5A]">
+                    {listing.images && listing.images.length > 0 ? (
+                      <img src={listing.images[0]} alt={listing.title} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[#8B72BE]">No image</div>
+                    )}
+                    <div className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-1 text-xs text-white">
+                      {listing.condition}
+                    </div>
+                    {activeTab === "saved" && (
+                      <div className="absolute left-2 top-2">
+                        <SaveButton listingId={listing.id} size="md" />
                       </div>
-                      {activeTab === "saved" && (
-                        <div className="absolute top-2 left-2">
-                          <SaveButton listingId={listing.id} size="md" />
-                        </div>
-                      )}
-                      {listing.status !== "ACTIVE" && (
-                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                          <span className="text-white font-bold text-lg">
-                            {listing.status}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-
-                  {/* Content */}
-                  <div className="p-4">
-                    <Link href={`/product-detail?id=${listing.id}`}>
-                      <h3 className="text-white font-bold text-lg mb-2 line-clamp-2 hover:text-[#FDD023]">
-                        {listing.title}
-                      </h3>
-                    </Link>
-                    <p className="text-[#FDD023] font-bold text-xl mb-2">
-                      {formatPrice(listing)}
-                    </p>
-                    <p className="text-gray-300 text-sm mb-3 line-clamp-2">
-                      {listing.description}
-                    </p>
-                    <div className="flex items-center justify-between text-xs mb-3">
-                      <span className="text-gray-400">{listing.location}</span>
-                      <span className="text-gray-400">{listing.category}</span>
-                    </div>
-
-                    {/* Edit/Delete Buttons (only for own listings) */}
-                    {isOwnListing && (
-                      <div className="flex gap-2 pt-3 border-t border-[#5a2d8c]">
-                        <button
-                          onClick={() => handleEditListing(listing)}
-                          className="flex-1 px-4 py-2 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors text-sm"
-                        >
-                          ✏️ Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteListing(listing.id)}
-                          className="flex-1 px-4 py-2 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition-colors text-sm"
-                        >
-                          🗑️ Delete
-                        </button>
+                    )}
+                    {listing.status !== "ACTIVE" && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                        <span className="text-lg font-bold text-white">{listing.status}</span>
                       </div>
                     )}
                   </div>
+                </Link>
+
+                <div className="p-4">
+                  <Link href={`/product-detail?id=${listing.id}`}>
+                    <h3 className="mb-2 line-clamp-2 text-lg font-bold text-white hover:text-[#F5A623]">{listing.title}</h3>
+                  </Link>
+                  <p className="mb-2 text-xl font-bold text-[#F5A623]">{formatPrice(listing)}</p>
+                  <p className="mb-3 line-clamp-2 text-sm text-[#C4B0E0]">{listing.description}</p>
+                  <div className="mb-3 flex items-center justify-between text-xs text-[#8B72BE]">
+                    <span>📍 {listing.location}</span>
+                    <span>{listing.category}</span>
+                  </div>
+
+                  {activeTab === "listings" && (
+                    <div className="flex gap-2 border-t border-white/10 pt-3">
+                      <button onClick={() => handleEditListing(listing)}
+                        className="flex-1 rounded-xl bg-[#F5A623] py-2 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
+                        ✏️ Edit
+                      </button>
+                      <button onClick={() => handleDeleteListing(listing.id)}
+                        className="flex-1 rounded-xl bg-red-500/80 py-2 text-sm font-bold text-white transition hover:bg-red-500">
+                        🗑️ Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
       </div>
 
       {/* Edit Profile Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#3a1364] rounded-lg max-w-md w-full p-6 border border-[#5a2d8c] max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-white text-2xl font-bold">Edit Profile</h2>
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="text-gray-400 hover:text-white"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#2E1065] p-6 shadow-2xl">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white">Edit Profile</h2>
+              <button onClick={() => { setIsEditModalOpen(false); setSaveError(""); }}
+                className="text-[#8B72BE] transition hover:text-white">✕</button>
             </div>
 
-            <div className="space-y-4">
-              {/* Profile Picture Upload */}
+            <div className="space-y-5">
+              {/* Profile Picture */}
               <div>
-                <label className="block text-white text-sm font-semibold mb-2">
-                  Profile Picture
-                </label>
+                <label className="mb-2 block text-sm font-semibold text-white">Profile Picture</label>
                 <div className="flex items-center gap-4">
-                  {/* Preview */}
-                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#FDD023] to-[#FFE34A] flex items-center justify-center border-4 border-[#FDD023] flex-shrink-0">
-                    {profilePicture ? (
-                      <img
-                        src={profilePicture}
-                        alt="Preview"
-                        className="w-full h-full rounded-full object-cover"
-                      />
+                  <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border-2 border-[#F5A623] bg-gradient-to-br from-[#FFD166] to-[#F5A623]">
+                    {picturePreview ? (
+                      <img src={picturePreview} alt="Preview" className="h-full w-full object-cover" />
                     ) : (
-                      <span className="text-black font-bold text-4xl">
+                      <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[#1E0A42]">
                         {getInitials(editFormData.full_name || user.full_name)}
-                      </span>
+                      </div>
                     )}
                   </div>
-
-                  {/* Upload/Remove Buttons */}
                   <div className="flex flex-col gap-2">
-                    <label className="px-4 py-2 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors cursor-pointer text-center text-sm">
+                    <label className="cursor-pointer rounded-full bg-[#F5A623] px-4 py-2 text-center text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
                       Upload Photo
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/gif,image/webp"
-                        onChange={handleProfilePictureChange}
-                        className="hidden"
-                      />
+                      <input type="file" accept="image/jpeg,image/png,image/gif,image/webp"
+                        onChange={handleProfilePictureChange} className="hidden" />
                     </label>
-                    {profilePicture && (
-                      <button
-                        onClick={removeProfilePicture}
-                        className="px-4 py-2 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition-colors text-sm"
-                      >
+                    {picturePreview && (
+                      <button onClick={() => setPicturePreview("")}
+                        className="rounded-full bg-red-500/80 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-500">
                         Remove
                       </button>
                     )}
                   </div>
                 </div>
-                <p className="text-gray-400 text-xs mt-2">
-                  JPG, PNG, GIF or WebP. Max 5MB.
-                </p>
+                <p className="mt-2 text-xs text-[#8B72BE]">JPG, PNG, GIF or WebP. Max 2MB.</p>
               </div>
 
+              {/* Full Name */}
               <div>
-                <label className="block text-white text-sm font-semibold mb-2">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={editFormData.full_name}
-                  onChange={(e) => setEditFormData({ ...editFormData, full_name: e.target.value })}
-                  className="w-full h-12 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
-                />
+                <label className="mb-2 block text-sm font-semibold text-white">Full Name</label>
+                <input type="text" value={editFormData.full_name}
+                  onChange={e => setEditFormData({ ...editFormData, full_name: e.target.value })}
+                  className="h-12 w-full rounded-xl border border-white/10 bg-[#2A0F5A] px-4 text-white outline-none transition focus:border-[#F5A623]" />
               </div>
 
+              {/* Location */}
               <div>
-                <label className="block text-white text-sm font-semibold mb-2">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  value={editFormData.location}
-                  onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
+                <label className="mb-2 block text-sm font-semibold text-white">Location</label>
+                <input type="text" value={editFormData.location}
+                  onChange={e => setEditFormData({ ...editFormData, location: e.target.value })}
                   placeholder="e.g., Shreveport, LA"
-                  className="w-full h-12 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
-                />
+                  className="h-12 w-full rounded-xl border border-white/10 bg-[#2A0F5A] px-4 text-white outline-none transition focus:border-[#F5A623] placeholder:text-[#8B72BE]" />
               </div>
 
+              {/* Bio */}
               <div>
-                <label className="block text-white text-sm font-semibold mb-2">
-                  Bio
-                </label>
-                <textarea
-                  value={editFormData.bio}
-                  onChange={(e) => setEditFormData({ ...editFormData, bio: e.target.value })}
+                <label className="mb-2 block text-sm font-semibold text-white">Bio</label>
+                <textarea value={editFormData.bio}
+                  onChange={e => setEditFormData({ ...editFormData, bio: e.target.value })}
                   placeholder="Tell us about yourself..."
                   rows={4}
-                  className="w-full px-4 py-3 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20 resize-none"
-                />
+                  className="w-full resize-none rounded-xl border border-white/10 bg-[#2A0F5A] px-4 py-3 text-white outline-none transition focus:border-[#F5A623] placeholder:text-[#8B72BE]" />
               </div>
+
+              {saveError && <p className="text-sm text-red-400">{saveError}</p>}
+              {saveSuccess && <p className="text-sm text-green-400">Profile saved!</p>}
             </div>
 
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="flex-1 px-6 py-3 bg-[#2a0d44] text-white font-bold rounded-lg hover:bg-[#3a1364] transition-colors border border-[#5a2d8c]"
-              >
+            <div className="mt-6 flex gap-3">
+              <button onClick={() => { setIsEditModalOpen(false); setSaveError(""); }}
+                className="flex-1 rounded-full border border-white/10 bg-white/5 py-3 font-bold text-white transition hover:bg-white/10">
                 Cancel
               </button>
-              <button
-                onClick={handleSaveProfile}
-                className="flex-1 px-6 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
-              >
-                Save Changes
+              <button onClick={handleSaveProfile} disabled={isSaving}
+                className="flex-1 rounded-full bg-[#F5A623] py-3 font-bold text-[#1E0A42] transition hover:bg-[#FFD166] disabled:opacity-50">
+                {isSaving ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>
@@ -556,13 +436,8 @@ export default function UserProfilePage() {
         <EditListingModal
           listing={selectedListing}
           isOpen={isEditListingModalOpen}
-          onClose={() => {
-            setIsEditListingModalOpen(false);
-            setSelectedListing(null);
-          }}
-          onSuccess={() => {
-            fetchUserListings();
-          }}
+          onClose={() => { setIsEditListingModalOpen(false); setSelectedListing(null); }}
+          onSuccess={() => { fetchUserListings(); }}
         />
       )}
     </div>

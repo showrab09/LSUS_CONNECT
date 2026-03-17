@@ -59,18 +59,18 @@ function timeAgo(dateString: string) {
 }
 
 function Avatar({ user, size = "md" }: { user: { full_name: string; profile_picture?: string }; size?: "sm" | "md" | "lg" }) {
-  const cls = size === "lg" ? "w-11 h-11" : size === "sm" ? "w-8 h-8" : "w-10 h-10";
+  const cls = size === "lg" ? "h-12 w-12" : size === "sm" ? "h-8 w-8" : "h-10 w-10";
   return (
-    <div className={`${cls} rounded-full bg-gradient-to-br from-[#FDD023] to-[#FFE34A] flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-[#FDD023]`}>
+    <div className={`${cls} flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#F5A623] bg-gradient-to-br from-[#FFD166] to-[#F5A623]`}>
       {user.profile_picture
-        ? <img src={user.profile_picture} alt={user.full_name} className="w-full h-full object-cover" />
-        : <span className="text-black font-bold text-sm">{getInitials(user.full_name)}</span>
+        ? <img src={user.profile_picture} alt={user.full_name} className="h-full w-full object-cover" />
+        : <span className="text-sm font-bold text-[#1E0A42]">{getInitials(user.full_name)}</span>
       }
     </div>
   );
 }
 
-// ── Inline Compose Box ───────────────────────────────────────────────────────
+// ── Compose Box ──────────────────────────────────────────────────────────────
 
 function ComposeBox({ currentUser, onPost }: {
   currentUser: { id: string; full_name: string; profile_picture?: string };
@@ -124,8 +124,7 @@ function ComposeBox({ currentUser, onPost }: {
     const ta = textareaRef.current;
     if (ta) {
       const s = ta.selectionStart, e2 = ta.selectionEnd;
-      const next = content.slice(0, s) + emoji + content.slice(e2);
-      setContent(next);
+      setContent(content.slice(0, s) + emoji + content.slice(e2));
       setTimeout(() => { ta.selectionStart = ta.selectionEnd = s + emoji.length; ta.focus(); }, 0);
     } else {
       setContent(p => p + emoji);
@@ -154,8 +153,8 @@ function ComposeBox({ currentUser, onPost }: {
   };
 
   return (
-    <div className="bg-[#3a1364] rounded-xl border border-[#5a2d8c] p-4 mb-5">
-      <div className="flex gap-3">
+    <div className="rounded-2xl border border-white/10 bg-[#351470] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.35)] mb-6">
+      <div className="mb-4 flex items-start gap-3">
         <Avatar user={currentUser} size="lg" />
         <div className="flex-1">
           <textarea
@@ -165,90 +164,77 @@ function ComposeBox({ currentUser, onPost }: {
             placeholder={`What's on your mind, ${currentUser.full_name.split(" ")[0]}?`}
             maxLength={1000}
             rows={2}
-            className="w-full bg-[#2a0d44] text-white text-sm px-4 py-3 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FDD023]/30 resize-none border border-[#5a2d8c] focus:border-[#FDD023] transition-colors min-h-[56px]"
+            className="min-h-[72px] w-full resize-none rounded-2xl border border-white/10 bg-[#2A0F5A] px-4 py-3 text-sm text-white outline-none transition focus:border-[#F5A623]"
           />
         </div>
       </div>
 
-      {/* Image previews */}
       {previews.length > 0 && (
-        <div className={`mt-3 ml-13 grid gap-2 ${previews.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+        <div className={`mb-4 grid gap-2 ${previews.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
           {previews.map((src, i) => (
-            <div key={i} className="relative aspect-video bg-[#2a0d44] rounded-lg overflow-hidden">
-              <img src={src} alt="" className="w-full h-full object-cover" />
+            <div key={i} className="relative aspect-video overflow-hidden rounded-xl bg-[#2A0F5A]">
+              <img src={src} alt="" className="h-full w-full object-cover" />
               <button onClick={() => removePreview(i)}
-                className="absolute top-1 right-1 w-6 h-6 bg-black/70 hover:bg-red-500 text-white rounded-full flex items-center justify-center text-xs transition-colors">✕</button>
+                className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-xs text-white transition hover:bg-red-500">✕</button>
             </div>
           ))}
         </div>
       )}
 
-      {/* Location input */}
       {showLocation && (
-        <div className="mt-3 flex items-center gap-2">
-          <span className="text-base">📍</span>
+        <div className="mb-4 flex items-center gap-2 rounded-xl bg-[#2A0F5A] p-3">
+          <span>📍</span>
           <input type="text" value={location} onChange={e => setLocation(e.target.value)}
             placeholder="Add your location..."
-            className="flex-1 bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm px-3 py-2 rounded-lg placeholder-gray-500 focus:outline-none focus:border-[#FDD023]" />
-          <button onClick={() => { setShowLocation(false); setLocation(""); }} className="text-gray-500 hover:text-red-400 text-xs transition-colors">Remove</button>
+            className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-[#8B72BE]" />
+          <button onClick={() => { setShowLocation(false); setLocation(""); }}
+            className="text-xs text-[#C4B0E0] transition hover:text-red-400">Remove</button>
         </div>
       )}
 
-      {error && <p className="mt-2 text-red-400 text-xs">{error}</p>}
+      {error && <p className="mb-3 text-xs text-red-400">{error}</p>}
 
-      <div className="border-t border-[#5a2d8c] mt-3 pt-3 flex items-center justify-between">
-        <div className="flex items-center gap-1">
-
-          {/* Photo */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
+        <div className="flex flex-wrap items-center gap-2">
           <button onClick={() => fileInputRef.current?.click()} disabled={previews.length >= 4}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-[#2a0d44] disabled:opacity-40 transition-colors text-sm">
-            <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span className="hidden sm:inline">Photo</span>
+            className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#C4B0E0] transition hover:bg-[#4A1E8A] hover:text-white disabled:opacity-40">
+            Photo
           </button>
           <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoChange} />
 
-          {/* Emoji */}
           <div className="relative" ref={emojiRef}>
-            <button onClick={() => setShowEmojis(!showEmojis)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-[#2a0d44] transition-colors text-sm">
-              <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="hidden sm:inline">Emoji</span>
+            <button onClick={() => setShowEmojis(prev => !prev)}
+              className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#C4B0E0] transition hover:bg-[#4A1E8A] hover:text-white">
+              Emoji
             </button>
             {showEmojis && (
-              <div className="absolute left-0 bottom-11 z-50 bg-[#2a0d44] border border-[#5a2d8c] rounded-xl p-3 shadow-2xl w-72">
+              <div className="absolute bottom-12 left-0 z-50 w-72 rounded-2xl border border-white/10 bg-[#2A0F5A] p-3 shadow-2xl">
                 <div className="grid grid-cols-10 gap-1">
                   {EMOJI_LIST.map(emoji => (
                     <button key={emoji} onClick={() => insertEmoji(emoji)}
-                      className="text-xl hover:bg-[#3a1364] rounded-lg p-1 transition-colors leading-none">
-                      {emoji}
-                    </button>
+                      className="rounded-lg p-1 text-xl leading-none transition hover:bg-[#3A1870]">{emoji}</button>
                   ))}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Location */}
-          <button onClick={() => setShowLocation(!showLocation)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-sm ${showLocation ? "text-[#FDD023] bg-[#2a0d44]" : "text-gray-300 hover:text-white hover:bg-[#2a0d44]"}`}>
-            <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span className="hidden sm:inline">Location</span>
+          <button onClick={() => setShowLocation(prev => !prev)}
+            className={`rounded-full border px-3 py-2 text-sm transition ${showLocation
+              ? "border-[#F5A623] bg-[#4A1E8A] text-[#F5A623]"
+              : "border-white/10 bg-white/5 text-[#C4B0E0] hover:bg-[#4A1E8A] hover:text-white"}`}>
+            Location
           </button>
         </div>
 
         <div className="flex items-center gap-3">
           {content.length > 800 && (
-            <span className={`text-xs ${content.length >= 1000 ? "text-red-400" : "text-gray-400"}`}>{content.length}/1000</span>
+            <span className={`text-xs ${content.length >= 1000 ? "text-red-400" : "text-[#C4B0E0]"}`}>
+              {content.length}/1000
+            </span>
           )}
           <button onClick={handleSubmit} disabled={isPosting || !content.trim()}
-            className="px-6 py-2 bg-[#FDD023] text-black font-bold text-sm rounded-lg hover:bg-[#FFE34A] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            className="rounded-full bg-[#F5A623] px-6 py-2 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166] disabled:cursor-not-allowed disabled:opacity-40">
             {isPosting ? "Posting..." : "Post"}
           </button>
         </div>
@@ -301,39 +287,41 @@ function CommentSection({ postId }: { postId: string }) {
   };
 
   return (
-    <div className="mt-3 border-t border-[#5a2d8c] pt-3">
+    <div className="mt-4 border-t border-white/10 pt-4">
       <button onClick={handleToggle}
-        className="w-full py-2.5 bg-[#5a2d8c]/50 hover:bg-[#5a2d8c] text-white font-medium rounded-lg transition-colors text-sm">
+        className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-medium text-white transition hover:bg-[#4A1E8A]">
         {isOpen ? "Hide Comments" : "💬 Leave a Comment"}
       </button>
       {isOpen && (
-        <div className="mt-3 space-y-3">
-          {isLoading ? <p className="text-gray-400 text-sm text-center py-2">Loading...</p>
-            : comments.length === 0 ? <p className="text-gray-400 text-sm text-center py-2">No comments yet. Be the first!</p>
-            : comments.map(comment => (
-              <div key={comment.id} className="flex gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FDD023] to-[#FFE34A] flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  {comment.user.profile_picture
-                    ? <img src={comment.user.profile_picture} alt="" className="w-full h-full object-cover" />
-                    : <span className="text-black font-bold text-xs">{getInitials(comment.user.full_name)}</span>
-                  }
-                </div>
-                <div className="flex-1 bg-[#2a0d44] rounded-xl px-3 py-2">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-white text-xs font-semibold">{comment.user.full_name}</span>
-                    <span className="text-gray-500 text-xs">{timeAgo(comment.created_at)}</span>
+        <div className="mt-4 space-y-3">
+          {isLoading
+            ? <p className="py-2 text-center text-sm text-[#C4B0E0]">Loading...</p>
+            : comments.length === 0
+              ? <p className="py-2 text-center text-sm text-[#C4B0E0]">No comments yet. Be the first!</p>
+              : comments.map(comment => (
+                <div key={comment.id} className="flex gap-2">
+                  <div className="h-8 w-8 flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#F5A623] bg-gradient-to-br from-[#FFD166] to-[#F5A623]">
+                    {comment.user.profile_picture
+                      ? <img src={comment.user.profile_picture} alt="" className="h-full w-full object-cover" />
+                      : <span className="text-xs font-bold text-[#1E0A42]">{getInitials(comment.user.full_name)}</span>
+                    }
                   </div>
-                  <p className="text-gray-200 text-sm">{comment.content}</p>
+                  <div className="flex-1 rounded-2xl bg-[#2A0F5A] px-3 py-2">
+                    <div className="mb-1 flex items-center gap-2">
+                      <span className="text-xs font-semibold text-white">{comment.user.full_name}</span>
+                      <span className="text-xs text-[#8B72BE]">{timeAgo(comment.created_at)}</span>
+                    </div>
+                    <p className="text-sm text-[#E9DFFF]">{comment.content}</p>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))
           }
           <div className="flex gap-2">
             <input ref={inputRef} type="text" value={newComment} onChange={e => setNewComment(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="Write a comment..."
-              className="flex-1 bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm px-3 py-2 rounded-xl placeholder-gray-500 focus:outline-none focus:border-[#FDD023]" />
+              className="flex-1 rounded-2xl border border-white/10 bg-[#2A0F5A] px-3 py-2 text-sm text-white outline-none placeholder:text-[#8B72BE] focus:border-[#F5A623]" />
             <button onClick={handleSubmit} disabled={isPosting || !newComment.trim()}
-              className="px-4 py-2 bg-[#FDD023] text-black font-bold text-sm rounded-xl hover:bg-[#FFE34A] disabled:opacity-50 transition-colors">
+              className="rounded-2xl bg-[#F5A623] px-4 py-2 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166] disabled:opacity-50">
               {isPosting ? "..." : "Post"}
             </button>
           </div>
@@ -358,40 +346,42 @@ function PostCard({ post, onDelete, currentUserId }: { post: SocialPost; onDelet
   };
 
   return (
-    <div className="bg-[#3a1364] rounded-xl border border-[#5a2d8c] hover:border-[#7a4dac] transition-colors p-4">
-      <div className="flex items-start gap-3 mb-3">
-        <Avatar user={post.user} size="md" />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <span className="text-white font-semibold text-sm">{post.user.full_name}</span>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500 text-xs">{timeAgo(post.created_at)}</span>
-              {post.user.id === currentUserId && (
-                <button onClick={handleDelete} disabled={isDeleting}
-                  className="text-gray-500 hover:text-red-400 transition-colors text-xs">
-                  {isDeleting ? "..." : "✕"}
-                </button>
-              )}
-            </div>
-          </div>
-          {post.location && <p className="text-gray-500 text-xs mt-0.5">📍 {post.location}</p>}
-          <p className="text-gray-100 text-sm mt-1 leading-relaxed whitespace-pre-wrap">{post.content}</p>
-        </div>
-      </div>
-
+    <article className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] shadow-[0_4px_24px_rgba(0,0,0,0.35)] transition hover:-translate-y-1">
       {post.images && post.images.length > 0 && (
-        <div className={`grid gap-2 mb-3 ${post.images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+        <div className={`grid gap-px bg-white/10 ${post.images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
           {post.images.slice(0, 4).map((img, i) => (
-            <div key={i} className="aspect-video bg-[#2a0d44] rounded-lg overflow-hidden">
-              <img src={img} alt="" className="w-full h-full object-cover"
+            <div key={i} className="aspect-video overflow-hidden bg-[#2A0F5A]">
+              <img src={img} alt="" className="h-full w-full object-cover"
                 onError={e => { e.currentTarget.parentElement!.style.display = "none"; }} />
             </div>
           ))}
         </div>
       )}
 
-      <CommentSection postId={post.id} />
-    </div>
+      <div className="p-5">
+        <div className="mb-4 flex items-start gap-3">
+          <Avatar user={post.user} size="md" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-white">{post.user.full_name}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[#8B72BE]">{timeAgo(post.created_at)}</span>
+                {post.user.id === currentUserId && (
+                  <button onClick={handleDelete} disabled={isDeleting}
+                    className="text-xs text-[#8B72BE] transition hover:text-red-400">
+                    {isDeleting ? "..." : "✕"}
+                  </button>
+                )}
+              </div>
+            </div>
+            {post.location && <p className="mt-0.5 text-xs text-[#C4B0E0]">📍 {post.location}</p>}
+            <p className="mt-2 text-sm leading-relaxed text-[#E9DFFF] whitespace-pre-wrap">{post.content}</p>
+          </div>
+        </div>
+
+        <CommentSection postId={post.id} />
+      </div>
+    </article>
   );
 }
 
@@ -432,75 +422,85 @@ export default function SocialPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#461D7C]">
-      <header className="bg-[#3a1364] border-b border-[#5a2d8c] py-4 sticky top-0 z-50">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="lg:hidden p-2 text-white hover:text-[#FDD023] transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {isMobileMenuOpen
-                    ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  }
-                </svg>
-              </button>
-              <Link href="/home" className="text-2xl sm:text-3xl font-bold flex items-center gap-1">
-                <span className="text-[#FDD023]">LSUS</span>
-                <span className="text-white">CONNECT</span>
-              </Link>
-            </div>
-            <nav className="hidden lg:flex items-center gap-5">
-              {NAV_LINKS.map(link => (
-                <Link key={link.href} href={link.href} className={`text-sm transition-colors ${link.active ? "text-[#FDD023] font-semibold border-b-2 border-[#FDD023] pb-0.5" : "text-white hover:text-[#FDD023]"}`}>
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-            <UserDropdown />
+    <div className="min-h-screen bg-[#1E0A42] text-white">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
+        <div className="mx-auto flex h-[60px] max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="rounded-lg p-2 transition hover:bg-white/5 lg:hidden">
+              {isMobileMenuOpen ? "✕" : "☰"}
+            </button>
+            <Link href="/home" className="text-xl font-extrabold tracking-tight">
+              <span className="text-white">LSUS</span>
+              <span className="text-[#F5A623]"> Connect</span>
+            </Link>
           </div>
-          {isMobileMenuOpen && (
-            <nav className="lg:hidden mt-4 pt-4 border-t border-[#5a2d8c] flex flex-col gap-1">
-              {NAV_LINKS.map(link => (
-                <Link key={link.href} href={link.href} onClick={() => setIsMobileMenuOpen(false)}
-                  className={`py-2 px-3 rounded transition-colors ${link.active ? "text-[#FDD023]" : "text-white hover:text-[#FDD023] hover:bg-[#461D7C]"}`}>
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          )}
+
+          <nav className="hidden lg:flex items-center gap-5">
+            {NAV_LINKS.map(link => (
+              <Link key={link.href} href={link.href}
+                className={`text-sm transition ${link.active
+                  ? "font-semibold text-[#F5A623] border-b-2 border-[#F5A623] pb-0.5"
+                  : "text-[#C4B0E0] hover:text-white"}`}>
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <UserDropdown />
         </div>
+
+        {isMobileMenuOpen && (
+          <nav className="lg:hidden border-t border-white/10 bg-[#2E1065] px-4 pb-4 pt-3">
+            {NAV_LINKS.map(link => (
+              <Link key={link.href} href={link.href} onClick={() => setIsMobileMenuOpen(false)}
+                className={`block rounded-xl px-4 py-2.5 text-sm transition ${link.active
+                  ? "font-semibold text-[#F5A623]"
+                  : "text-[#C4B0E0] hover:bg-white/5 hover:text-white"}`}>
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        )}
       </header>
 
-      <div className="max-w-[680px] mx-auto px-4 sm:px-6 py-6">
-        <div className="flex items-center justify-between mb-5">
-          <h1 className="text-white font-bold text-2xl">Social Feed</h1>
-          <button onClick={fetchPosts} className="text-[#FDD023] text-sm hover:underline">Refresh</button>
+      <div className="mx-auto max-w-[680px] px-4 py-6 sm:px-6">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Social Feed</h1>
+            <p className="text-sm text-[#C4B0E0]">Share what's on your mind with the LSUS community</p>
+          </div>
+          <button onClick={fetchPosts}
+            className="rounded-full border border-[#F5A623] px-4 py-2 text-sm font-bold text-[#F5A623] transition hover:bg-[#F5A623] hover:text-[#1E0A42]">
+            Refresh
+          </button>
         </div>
 
         {currentUser.id && <ComposeBox currentUser={currentUser} onPost={post => setPosts(prev => [post, ...prev])} />}
 
         {isLoading && (
-          <div className="text-center py-16">
-            <div className="inline-block w-12 h-12 border-4 border-[#FDD023] border-t-transparent rounded-full animate-spin" />
-            <p className="text-white mt-4">Loading posts...</p>
+          <div className="py-20 text-center">
+            <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
+            <p className="mt-4 text-white">Loading posts...</p>
           </div>
         )}
         {error && !isLoading && (
-          <div className="bg-red-500/20 border border-red-500/30 text-red-300 rounded-lg p-4 mb-4">
-            {error} <button onClick={fetchPosts} className="ml-4 underline">Retry</button>
+          <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-300">
+            {error} <button onClick={fetchPosts} className="ml-3 underline">Retry</button>
           </div>
         )}
         {!isLoading && !error && posts.length === 0 && (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">💬</div>
-            <h3 className="text-white text-xl font-bold mb-2">No posts yet</h3>
-            <p className="text-gray-400">Be the first to share something with the LSUS community!</p>
+          <div className="py-20 text-center">
+            <div className="mb-4 text-6xl">💬</div>
+            <h3 className="mb-2 text-xl font-bold text-white">No posts yet</h3>
+            <p className="text-[#C4B0E0]">Be the first to share something with the LSUS community!</p>
           </div>
         )}
+
         <div className="space-y-4">
           {!isLoading && !error && posts.map(post => (
-            <PostCard key={post.id} post={post} onDelete={id => setPosts(prev => prev.filter(p => p.id !== id))} currentUserId={currentUserId} />
+            <PostCard key={post.id} post={post}
+              onDelete={id => setPosts(prev => prev.filter(p => p.id !== id))}
+              currentUserId={currentUserId} />
           ))}
         </div>
       </div>

@@ -57,64 +57,46 @@ export default function MarketplacePage() {
     { value: "SWAP", label: "Trade/Swap" },
   ];
 
-  // Get current user ID
   const getCurrentUserId = (): string => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) return "";
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
       const jsonPayload = decodeURIComponent(
-        atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+        atob(base64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")
       );
-      const decoded = JSON.parse(jsonPayload);
-      return decoded.userId || "";
-    } catch (e) {
-      return "";
-    }
+      return JSON.parse(jsonPayload).userId || "";
+    } catch { return ""; }
   };
 
   const currentUserId = getCurrentUserId();
 
-  useEffect(() => {
-    fetchListings();
-  }, []);
+  useEffect(() => { fetchListings(); }, []);
 
   const fetchListings = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/listings', {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch listings');
-      }
-
+      const response = await fetch("/api/listings", { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch listings");
       const data = await response.json();
       setListings(data.listings || []);
       setError("");
     } catch (err) {
       console.error("Error fetching listings:", err);
       setError("Failed to load listings. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    } finally { setIsLoading(false); }
   };
 
   const toggleCategory = (category: string) => {
     setSelectedCategories(prev =>
-      prev.includes(category)
-        ? prev.filter(item => item !== category)
-        : [...prev, category]
+      prev.includes(category) ? prev.filter(item => item !== category) : [...prev, category]
     );
   };
 
   const togglePriceType = (value: string) => {
     setSelectedPriceTypes(prev =>
-      prev.includes(value)
-        ? prev.filter(item => item !== value)
-        : [...prev, value]
+      prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]
     );
   };
 
@@ -130,17 +112,13 @@ export default function MarketplacePage() {
       listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       listing.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       listing.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (listing.tags && listing.tags.some(tag =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase())
-      ));
+      (listing.tags && listing.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())));
 
     const matchesCategory =
-      selectedCategories.length === 0 ||
-      selectedCategories.includes(listing.category);
+      selectedCategories.length === 0 || selectedCategories.includes(listing.category);
 
     const matchesPriceType =
-      selectedPriceTypes.length === 0 ||
-      selectedPriceTypes.includes(listing.price_type);
+      selectedPriceTypes.length === 0 || selectedPriceTypes.includes(listing.price_type);
 
     return matchesSearch && matchesCategory && matchesPriceType;
   });
@@ -151,58 +129,51 @@ export default function MarketplacePage() {
     return `$${listing.price.toFixed(2)}`;
   };
 
-  const getInitials = (name: string) => {
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-  };
+  const getInitials = (name: string) =>
+    name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-[#461D7C]">
+    <div className="min-h-screen bg-[#1E0A42] text-white">
       {/* Header */}
-      <header className="bg-[#3a1364] border-b border-[#5a2d8c] sticky top-0 z-50">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-center justify-between gap-4">
-            <Link href="/marketplace" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-[#FDD023]">LSUS</span>
-              <span>CONNECT</span>
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
+        <div className="mx-auto flex h-[60px] max-w-[1920px] items-center justify-between gap-4 px-4 sm:px-6">
+          <Link href="/home" className="text-xl font-extrabold tracking-tight">
+            <span className="text-white">LSUS</span>
+            <span className="text-[#F5A623]"> Connect</span>
+          </Link>
+
+          {/* Search Bar */}
+          <div className="flex max-w-2xl flex-1 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2">
+            <span className="text-[#C4B0E0]">🔍</span>
+            <input
+              type="text"
+              placeholder="Search listings..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-[#8B72BE]"
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Link href="/post-listing"
+              className="hidden sm:block rounded-full bg-[#F5A623] px-5 py-2 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
+              + Create Listing
             </Link>
-
-            {/* Search Bar */}
-            <div className="flex-1 max-w-2xl">
-              <input
-                type="text"
-                placeholder="Search listings..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-10 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
-              />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Link
-                href="/post-listing"
-                className="hidden sm:block px-6 py-2.5 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
-              >
-                + Create Listing
-              </Link>
-              <UserDropdown />
-            </div>
+            <UserDropdown />
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-6">
+      <div className="mx-auto max-w-[1920px] px-4 py-6 sm:px-6">
         <div className="flex gap-6">
           {/* Left Sidebar - Filters */}
-          <aside className="w-64 flex-shrink-0 hidden lg:block">
-            <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c] sticky top-24">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-white font-bold text-lg">Filters</h2>
+          <aside className="hidden w-64 flex-shrink-0 lg:block">
+            <div className="sticky top-24 rounded-2xl border border-white/10 bg-[#351470] p-6">
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-white">Filters</h2>
                 {(selectedCategories.length > 0 || selectedPriceTypes.length > 0 || searchQuery) && (
-                  <button
-                    onClick={clearFilters}
-                    className="text-[#FDD023] text-xs hover:underline"
-                  >
+                  <button onClick={clearFilters} className="text-xs text-[#F5A623] hover:underline">
                     Clear all
                   </button>
                 )}
@@ -210,18 +181,16 @@ export default function MarketplacePage() {
 
               {/* Categories */}
               <div className="mb-6">
-                <h3 className="text-white font-semibold mb-3 text-sm">Category</h3>
+                <h3 className="mb-3 text-sm font-semibold text-white">Category</h3>
                 <div className="space-y-2">
                   {CATEGORIES.map((category) => (
-                    <label
-                      key={category}
-                      className="flex items-center gap-2 text-white text-sm cursor-pointer hover:text-[#FDD023] transition-colors"
-                    >
+                    <label key={category}
+                      className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-sm text-[#C4B0E0] transition hover:bg-white/5 hover:text-white">
                       <input
                         type="checkbox"
                         checked={selectedCategories.includes(category)}
                         onChange={() => toggleCategory(category)}
-                        className="w-4 h-4 rounded border-[#5a2d8c] bg-[#2a0d44] text-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                        className="h-4 w-4 accent-[#F5A623]"
                       />
                       <span>{category}</span>
                     </label>
@@ -231,18 +200,16 @@ export default function MarketplacePage() {
 
               {/* Price Type */}
               <div>
-                <h3 className="text-white font-semibold mb-3 text-sm">Price Type</h3>
+                <h3 className="mb-3 text-sm font-semibold text-white">Price Type</h3>
                 <div className="space-y-2">
                   {priceTypes.map((type) => (
-                    <label
-                      key={type.value}
-                      className="flex items-center gap-2 text-white text-sm cursor-pointer hover:text-[#FDD023] transition-colors"
-                    >
+                    <label key={type.value}
+                      className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-sm text-[#C4B0E0] transition hover:bg-white/5 hover:text-white">
                       <input
                         type="checkbox"
                         checked={selectedPriceTypes.includes(type.value)}
                         onChange={() => togglePriceType(type.value)}
-                        className="w-4 h-4 rounded border-[#5a2d8c] bg-[#2a0d44] text-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                        className="h-4 w-4 accent-[#F5A623]"
                       />
                       <span>{type.label}</span>
                     </label>
@@ -253,40 +220,36 @@ export default function MarketplacePage() {
           </aside>
 
           {/* Main Content Area */}
-          <div className="flex-1">
-            {/* Results Count & Create Button */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="text-white text-sm">
+          <div className="min-w-0 flex-1">
+            {/* Results count + mobile create */}
+            <div className="mb-6 flex items-center justify-between">
+              <p className="text-sm text-[#C4B0E0]">
                 {!isLoading && (
                   <>
-                    {filteredListings.length} listing{filteredListings.length !== 1 ? 's' : ''}
+                    {filteredListings.length} listing{filteredListings.length !== 1 ? "s" : ""}
                     {searchQuery && ` for "${searchQuery}"`}
                   </>
                 )}
-              </div>
-              <Link
-                href="/post-listing"
-                className="sm:hidden px-6 py-2.5 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
-              >
+              </p>
+              <Link href="/post-listing"
+                className="sm:hidden rounded-full bg-[#F5A623] px-5 py-2 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
                 + Create
               </Link>
             </div>
 
-            {/* Loading State */}
+            {/* Loading */}
             {isLoading && (
-              <div className="text-center py-12">
-                <div className="inline-block w-12 h-12 border-4 border-[#FDD023] border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-white mt-4">Loading listings...</p>
+              <div className="py-20 text-center">
+                <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
+                <p className="mt-4 text-white">Loading listings...</p>
               </div>
             )}
 
-            {/* Error State */}
+            {/* Error */}
             {error && !isLoading && (
-              <div className="bg-red-500/20 border border-red-500/30 text-red-300 rounded-lg p-4 mb-6">
+              <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-300">
                 {error}
-                <button onClick={fetchListings} className="ml-4 underline hover:text-red-200">
-                  Retry
-                </button>
+                <button onClick={fetchListings} className="ml-4 underline hover:text-red-200">Retry</button>
               </div>
             )}
 
@@ -294,69 +257,59 @@ export default function MarketplacePage() {
             {!isLoading && !error && (
               <>
                 {filteredListings.length === 0 ? (
-                  <div className="text-center py-16">
-                    <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#3a1364] flex items-center justify-center text-4xl">
-                      📦
-                    </div>
-                    <h3 className="text-white text-xl font-bold mb-2">
+                  <div className="py-20 text-center">
+                    <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#351470] text-4xl">📦</div>
+                    <h3 className="mb-2 text-xl font-bold text-white">
                       {searchQuery ? `No results for "${searchQuery}"` : "No listings yet"}
                     </h3>
-                    <p className="text-gray-300 mb-6">
+                    <p className="mb-6 text-[#C4B0E0]">
                       {searchQuery ? "Try a different search term" : "Be the first to post a listing!"}
                     </p>
                     {searchQuery && (
-                      <button
-                        onClick={() => setSearchQuery("")}
-                        className="inline-block px-8 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors mr-4"
-                      >
+                      <button onClick={() => setSearchQuery("")}
+                        className="mr-4 inline-block rounded-full bg-[#F5A623] px-8 py-3 font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
                         Clear Search
                       </button>
                     )}
-                    <Link
-                      href="/post-listing"
-                      className="inline-block px-8 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
-                    >
+                    <Link href="/post-listing"
+                      className="inline-block rounded-full bg-[#F5A623] px-8 py-3 font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
                       Create Listing
                     </Link>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                     {filteredListings.map((listing) => {
-                      // Handle user data (Supabase returns as object or array)
                       const owner = Array.isArray(listing.user) ? listing.user[0] : listing.user;
-                      const ownerName = owner?.full_name || 'Unknown User';
+                      const ownerName = owner?.full_name || "Unknown User";
                       const ownerProfilePic = owner?.profile_picture;
                       const isOwnListing = owner?.id === currentUserId;
 
                       return (
-                        <div
-                          key={listing.id}
-                          className="bg-[#3a1364] rounded-lg overflow-hidden border border-[#5a2d8c] hover:border-[#FDD023] transition-all"
-                        >
+                        <div key={listing.id}
+                          className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] shadow-[0_4px_24px_rgba(0,0,0,0.35)] transition hover:-translate-y-1 hover:border-[#F5A623]/40">
                           {/* Image */}
                           <Link href={`/product-detail?id=${listing.id}`} className="block">
-                            <div className="aspect-square bg-[#2a0d44] relative">
+                            <div className="relative aspect-square bg-[#2A0F5A]">
                               {listing.images && listing.images.length > 0 ? (
                                 <img
                                   src={listing.images[0]}
                                   alt={listing.title}
-                                  className="w-full h-full object-cover"
+                                  className="h-full w-full object-cover"
                                   onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                    e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-500">Image unavailable</div>';
+                                    e.currentTarget.style.display = "none";
+                                    e.currentTarget.parentElement!.innerHTML =
+                                      '<div class="flex h-full w-full items-center justify-center text-[#8B72BE]">Image unavailable</div>';
                                   }}
                                 />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-500">
-                                  No image
-                                </div>
+                                <div className="flex h-full w-full items-center justify-center text-[#8B72BE]">No image</div>
                               )}
                               {/* Condition Badge */}
-                              <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                              <div className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-1 text-xs text-white">
                                 {listing.condition}
                               </div>
                               {/* Save Button */}
-                              <div className="absolute top-2 left-2">
+                              <div className="absolute left-2 top-2">
                                 <SaveButton listingId={listing.id} size="md" />
                               </div>
                             </div>
@@ -364,40 +317,27 @@ export default function MarketplacePage() {
 
                           {/* Content */}
                           <div className="p-4">
-                            {/* Title and Price */}
                             <Link href={`/product-detail?id=${listing.id}`}>
-                              <h3 className="text-white font-bold text-lg mb-2 line-clamp-2 hover:text-[#FDD023]">
+                              <h3 className="mb-2 line-clamp-2 text-lg font-bold text-white hover:text-[#F5A623]">
                                 {listing.title}
                               </h3>
                             </Link>
-                            <p className="text-[#FDD023] font-bold text-xl mb-2">
-                              {formatPrice(listing)}
-                            </p>
-                            <p className="text-gray-300 text-sm mb-3 line-clamp-2">
-                              {listing.description}
-                            </p>
+                            <p className="mb-2 text-xl font-bold text-[#F5A623]">{formatPrice(listing)}</p>
+                            <p className="mb-4 line-clamp-2 text-sm text-[#C4B0E0]">{listing.description}</p>
 
                             {/* Owner Info */}
-                            <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#5a2d8c]">
-                              {/* Owner Avatar */}
-                              <div className="w-8 h-8 rounded-full bg-[#FDD023] flex items-center justify-center flex-shrink-0">
+                            <div className="mb-4 flex items-center gap-2 border-b border-white/10 pb-4">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#F5A623] bg-gradient-to-br from-[#FFD166] to-[#F5A623]">
                                 {ownerProfilePic ? (
-                                  <img
-                                    src={ownerProfilePic}
-                                    alt={ownerName}
-                                    className="w-full h-full rounded-full object-cover"
-                                  />
+                                  <img src={ownerProfilePic} alt={ownerName} className="h-full w-full rounded-full object-cover" />
                                 ) : (
-                                  <span className="text-black font-bold text-xs">
-                                    {getInitials(ownerName)}
-                                  </span>
+                                  <span className="text-xs font-bold text-[#1E0A42]">{getInitials(ownerName)}</span>
                                 )}
                               </div>
-                              {/* Owner Name */}
-                              <span className="text-gray-300 text-sm">{ownerName}</span>
+                              <span className="text-sm text-[#C4B0E0]">{ownerName}</span>
                             </div>
 
-                            {/* Message Button (only if not own listing) */}
+                            {/* Message Button */}
                             {!isOwnListing && owner?.id && (
                               <MessageSellerButton
                                 listingId={listing.id}
@@ -406,17 +346,17 @@ export default function MarketplacePage() {
                               />
                             )}
 
-                            {/* Own Listing Indicator */}
+                            {/* Own Listing */}
                             {isOwnListing && (
-                              <div className="text-center py-2 px-4 bg-[#2a0d44] rounded-lg">
-                                <span className="text-gray-400 text-sm">Your listing</span>
+                              <div className="rounded-xl bg-[#2A0F5A] py-2 text-center">
+                                <span className="text-sm text-[#8B72BE]">Your listing</span>
                               </div>
                             )}
 
                             {/* Metadata */}
-                            <div className="flex items-center justify-between text-xs mt-3">
-                              <span className="text-gray-400">{listing.location}</span>
-                              <span className="text-gray-400">{listing.category}</span>
+                            <div className="mt-3 flex items-center justify-between text-xs text-[#8B72BE]">
+                              <span>📍 {listing.location}</span>
+                              <span>{listing.category}</span>
                             </div>
                           </div>
                         </div>

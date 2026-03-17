@@ -80,7 +80,6 @@ export async function POST(request: NextRequest) {
       description,
       category,
       location,
-      date_lost_found,
       images,
       contact_info,
     } = body;
@@ -111,7 +110,6 @@ export async function POST(request: NextRequest) {
           description,
           category: category || 'Other',
           location,
-          date_lost_found: date_lost_found || new Date().toISOString(),
           images: images || [],
           contact_info,
           status: 'ACTIVE',
