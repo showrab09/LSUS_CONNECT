@@ -274,8 +274,11 @@ We welcome contributions from LSUS students and developers!
 - **Showrab Bin Habib** - Lead Developer
   - GitHub: [@showrab09](https://github.com/showrab09)
   
-- **Team Member 2** - Frontend Developer
+- **Robert Lovelace** - Frontend Developer
   - GitHub: [@rphillips1977](https://github.com/rphillips1977)
+
+- **Abid Talukder** - QA Tester
+  - GitHub: [@talukderabid](https://github.com/talukderabid)
 
 ### Contributors
 
