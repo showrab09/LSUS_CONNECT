@@ -279,8 +279,7 @@ export default function PostListingPage() {
       console.log("Response data:", data);
 
       if (response.ok) {
-        console.log("SUCCESS! Redirecting to marketplace...");
-        router.push('/marketplace');
+        router.push('/home');
       } else {
         setError(data.error || "Failed to create listing");
         setIsSubmitting(false);
@@ -298,26 +297,26 @@ export default function PostListingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#461D7C]">
+    <div className="min-h-screen bg-[#1E0A42]">
       {/* Header - Responsive */}
-      <header className="bg-[#3a1364] border-b border-[#5a2d8c] sticky top-0 z-50">
+      <header className="bg-[#351470] border-b border-white/10 sticky top-0 z-50">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <Link href="/home" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-[#FDD023]">LSUS</span>
-              <span>CONNECT</span>
+              <span className="text-white">LSUS</span>
+              <span className="text-[#F5A623]"> Connect</span>
             </Link>
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-4 text-white text-sm">
-              <Link href="/marketplace" className="hover:text-[#FDD023] transition-colors">Marketplace</Link>
+              <Link href="/marketplace" className="hover:text-[#F5A623] transition-colors">Marketplace</Link>
               <UserDropdown />
             </div>
 
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-white hover:text-[#FDD023] transition-colors"
+              className="md:hidden p-2 text-white hover:text-[#F5A623] transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {isMobileMenuOpen ? (
@@ -336,9 +335,9 @@ export default function PostListingPage() {
 
           {/* Mobile Menu */}
           {isMobileMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 border-t border-[#5a2d8c] pt-4">
+            <div className="md:hidden mt-4 pb-4 border-t border-white/10 pt-4">
               <nav className="flex flex-col gap-3">
-                <Link href="/marketplace" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#461D7C]">Marketplace</Link>
+                <Link href="/marketplace" className="text-white hover:text-[#F5A623] transition-colors py-2 px-3 rounded hover:bg-[#1E0A42]">Marketplace</Link>
               </nav>
             </div>
           )}
@@ -356,18 +355,18 @@ export default function PostListingPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-500/20 border border-red-500/30 text-red-300 rounded-lg p-4">
+              <div className="bg-red-500/20 border border-red-500/30 text-red-300 rounded-xl p-4">
                 {error}
               </div>
             )}
 
             {/* Category Selection (Always shown first) */}
             <div>
-              <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Category *</label>
+              <label className="block text-[#F5A623] font-semibold mb-1 text-sm">Category *</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full h-10 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                className="w-full h-10 px-4 rounded-xl bg-[#2A0F5A] border border-white/10 text-white text-sm focus:outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20"
               >
                 <option value="">Select a category</option>
                 {categories.map((cat) => (
@@ -397,29 +396,29 @@ export default function PostListingPage() {
               <>
                 {/* Title */}
                 <div>
-                  <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Title *</label>
+                  <label className="block text-[#F5A623] font-semibold mb-1 text-sm">Title *</label>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="What are you selling?"
-                    className="w-full h-10 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                    className="w-full h-10 px-4 rounded-xl bg-[#2A0F5A] border border-white/10 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20"
                   />
                 </div>
 
                 {/* Price Type */}
                 <div>
-                  <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Price *</label>
+                  <label className="block text-[#F5A623] font-semibold mb-1 text-sm">Price *</label>
                   <div className="flex flex-wrap gap-2 mb-2">
                     {(["PAID", "FREE", "SWAP"] as PriceType[]).map((type) => (
                       <button
                         key={type}
                         type="button"
                         onClick={() => setPriceType(type)}
-                        className={`px-4 py-2 text-sm rounded-lg font-semibold transition-colors ${
+                        className={`px-4 py-2 text-sm rounded-xl font-semibold transition-colors ${
                           priceType === type
-                            ? "bg-[#FDD023] text-black"
-                            : "bg-[#2a0d44] text-white border border-[#5a2d8c] hover:border-[#FDD023]"
+                            ? "bg-[#F5A623] text-black"
+                            : "bg-[#2A0F5A] text-white border border-white/10 hover:border-[#F5A623]"
                         }`}
                       >
                         {type === "PAID" ? "For Sale" : type === "FREE" ? "Free" : "Trade/Swap"}
@@ -434,11 +433,11 @@ export default function PostListingPage() {
                         value={price}
                         onChange={handlePriceChange}
                         placeholder="0.00"
-                        className="w-full h-10 pl-8 pr-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                        className="w-full h-10 pl-8 pr-4 rounded-xl bg-[#2A0F5A] border border-white/10 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20"
                       />
                       {price && (
-                        <div className="mt-1 text-xs text-gray-300">
-                          Preview: <span className="text-[#FDD023] font-semibold">{formatCurrencyDisplay(price)}</span>
+                        <div className="mt-1 text-xs text-[#C4B0E0]">
+                          Preview: <span className="text-[#F5A623] font-semibold">{formatCurrencyDisplay(price)}</span>
                         </div>
                       )}
                     </div>
@@ -447,11 +446,11 @@ export default function PostListingPage() {
 
                 {/* Condition */}
                 <div>
-                  <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Condition *</label>
+                  <label className="block text-[#F5A623] font-semibold mb-1 text-sm">Condition *</label>
                   <select
                     value={condition}
                     onChange={(e) => setCondition(e.target.value)}
-                    className="w-full h-10 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                    className="w-full h-10 px-4 rounded-xl bg-[#2A0F5A] border border-white/10 text-white text-sm focus:outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20"
                   >
                     <option value="">Select condition</option>
                     {conditions.map((cond) => (
@@ -462,49 +461,49 @@ export default function PostListingPage() {
 
                 {/* Description */}
                 <div>
-                  <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Description *</label>
+                  <label className="block text-[#F5A623] font-semibold mb-1 text-sm">Description *</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Describe your item..."
                     rows={4}
-                    className="w-full px-4 py-2 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20 resize-none"
+                    className="w-full px-4 py-2 rounded-xl bg-[#2A0F5A] border border-white/10 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 resize-none"
                   />
                 </div>
 
                 {/* Location */}
                 <div>
-                  <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Location *</label>
+                  <label className="block text-[#F5A623] font-semibold mb-1 text-sm">Location *</label>
                   <input
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="e.g., On Campus, Near Student Union"
-                    className="w-full h-10 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                    className="w-full h-10 px-4 rounded-xl bg-[#2A0F5A] border border-white/10 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20"
                   />
                 </div>
 
                 {/* Tags */}
                 <div>
-                  <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Tags (comma separated)</label>
+                  <label className="block text-[#F5A623] font-semibold mb-1 text-sm">Tags (comma separated)</label>
                   <input
                     type="text"
                     value={tags}
                     onChange={(e) => setTags(e.target.value)}
                     placeholder="e.g., laptop, gaming, barely used"
-                    className="w-full h-10 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                    className="w-full h-10 px-4 rounded-xl bg-[#2A0F5A] border border-white/10 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20"
                   />
                 </div>
 
                 {/* Image Upload */}
                 <div>
-                  <label className="block text-[#FDD023] font-semibold mb-1 text-sm">Images</label>
+                  <label className="block text-[#F5A623] font-semibold mb-1 text-sm">Images</label>
                   <div
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
-                    className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
-                      isDragging ? "border-[#FDD023] bg-[#FDD023]/10" : "border-[#5a2d8c] bg-[#2a0d44]"
+                    className={`border-2 border-dashed rounded-xl p-4 text-center transition-colors ${
+                      isDragging ? "border-[#FDD023] bg-[#F5A623]/10" : "border-white/10 bg-[#2A0F5A]"
                     }`}
                   >
                     <input
@@ -517,11 +516,11 @@ export default function PostListingPage() {
                       disabled={isUploadingImages}
                     />
                     <label htmlFor="image-upload" className={`cursor-pointer ${isUploadingImages ? 'opacity-50' : ''}`}>
-                      <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-[#FDD023]/20 flex items-center justify-center">
+                      <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-[#F5A623]/20 flex items-center justify-center">
                         {isUploadingImages ? (
-                          <div className="w-6 h-6 border-2 border-[#FDD023] border-t-transparent rounded-full animate-spin"></div>
+                          <div className="w-6 h-6 border-2 border-[#F5A623] border-t-transparent rounded-full animate-spin"></div>
                         ) : (
-                          <svg className="w-6 h-6 text-[#FDD023]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-6 h-6 text-[#F5A623]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                           </svg>
                         )}
@@ -529,7 +528,7 @@ export default function PostListingPage() {
                       <p className="text-white font-semibold text-sm mb-1">
                         {isUploadingImages ? "Uploading..." : "Click to upload or drag and drop"}
                       </p>
-                      <p className="text-gray-400 text-xs">PNG, JPG up to 10MB (Max 5 images)</p>
+                      <p className="text-[#8B72BE] text-xs">PNG, JPG up to 10MB (Max 5 images)</p>
                     </label>
                   </div>
 
@@ -537,7 +536,7 @@ export default function PostListingPage() {
                   {images.length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-3">
                       {images.map((img, idx) => (
-                        <div key={idx} className="relative aspect-square rounded-lg overflow-hidden bg-[#2a0d44] border border-[#5a2d8c]">
+                        <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-[#2A0F5A] border border-white/10">
                           <img 
                             src={img} 
                             alt={`Upload ${idx + 1}`}
@@ -567,7 +566,7 @@ export default function PostListingPage() {
               type="button"
               onClick={handleSaveDraft}
               disabled={isSubmitting}
-              className="flex-1 h-11 px-6 bg-[#2a0d44] text-white font-semibold text-sm rounded-lg border border-[#5a2d8c] hover:border-[#FDD023] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 h-11 px-6 bg-[#2A0F5A] text-white font-semibold text-sm rounded-xl border border-white/10 hover:border-[#F5A623] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Save Draft
             </button>
@@ -575,7 +574,7 @@ export default function PostListingPage() {
               type="button"
               onClick={handlePublish}
               disabled={isSubmitting || isUploadingImages}
-              className="flex-1 h-11 px-6 bg-[#FDD023] text-black font-bold text-sm rounded-lg hover:bg-[#FFE34A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 h-11 px-6 bg-[#F5A623] text-black font-bold text-sm rounded-xl hover:bg-[#FFD166] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Publishing..." : isUploadingImages ? "Processing Images..." : "Publish Listing"}
             </button>

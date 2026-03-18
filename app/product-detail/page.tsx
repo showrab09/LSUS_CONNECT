@@ -119,9 +119,9 @@ export default function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#461D7C] flex items-center justify-center">
+      <div className="min-h-screen bg-[#1E0A42] text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block w-16 h-16 border-4 border-[#FDD023] border-t-transparent rounded-full animate-spin mb-4"></div>
+          <div className="inline-block w-16 h-16 border-4 border-[#F5A623] border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="text-white text-lg">Loading listing...</p>
         </div>
       </div>
@@ -130,13 +130,13 @@ export default function ProductDetailPage() {
 
   if (error || !listing) {
     return (
-      <div className="min-h-screen bg-[#461D7C]">
-        <header className="bg-[#3a1364] border-b border-[#5a2d8c]">
+      <div className="min-h-screen bg-[#1E0A42] text-white">
+        <header className="bg-[#351470] border-b border-white/10">
           <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
             <div className="flex items-center justify-between">
               <Link href="/home" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-                <span className="text-[#FDD023]">LSUS</span>
-                <span>CONNECT</span>
+                <span className="text-white">LSUS</span>
+                <span className="text-[#F5A623]"> Connect</span>
               </Link>
               <UserDropdown />
             </div>
@@ -145,10 +145,10 @@ export default function ProductDetailPage() {
         <div className="flex items-center justify-center py-16">
           <div className="text-center">
             <h1 className="text-white text-2xl font-bold mb-4">Listing Not Found</h1>
-            <p className="text-gray-300 mb-6">This listing may have been removed or doesn't exist.</p>
+            <p className="text-[#C4B0E0] mb-6">This listing may have been removed or doesn't exist.</p>
             <Link
               href="/marketplace"
-              className="inline-block px-8 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+              className="inline-block rounded-full bg-[#F5A623] px-8 py-3 font-bold text-[#1E0A42] transition hover:bg-[#FFD166] hover:bg-[#FFD166] transition-colors"
             >
               Back to Marketplace
             </Link>
@@ -161,14 +161,14 @@ export default function ProductDetailPage() {
   const isOwnListing = currentUserId === listing.user_id;
 
   return (
-    <div className="min-h-screen bg-[#461D7C]">
+    <div className="min-h-screen bg-[#1E0A42] text-white">
       {/* Header */}
-      <header className="bg-[#3a1364] border-b border-[#5a2d8c] sticky top-0 z-50">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <Link href="/home" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-[#FDD023]">LSUS</span>
-              <span>CONNECT</span>
+              <span className="text-white">LSUS</span>
+              <span className="text-[#F5A623]"> Connect</span>
             </Link>
             <div className="flex items-center gap-4">
               <UserDropdown />
@@ -182,7 +182,7 @@ export default function ProductDetailPage() {
         {/* Back Button */}
         <Link
           href="/marketplace"
-          className="inline-flex items-center gap-2 text-[#FDD023] hover:text-[#FFE34A] mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-[#F5A623] hover:text-[#FFE34A] mb-6 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -194,8 +194,8 @@ export default function ProductDetailPage() {
           {/* Left Column - Images */}
           <div>
             {/* Main Image */}
-            <div className="bg-[#3a1364] rounded-lg overflow-hidden border border-[#5a2d8c] mb-4 relative">
-              <div className="aspect-square bg-[#2a0d44] relative">
+            <div className="rounded-2xl bg-[#351470] overflow-hidden border border-white/10 mb-4 relative">
+              <div className="aspect-square bg-[#2A0F5A] relative">
                 {listing.images && listing.images.length > 0 ? (
                   <>
                     <img
@@ -230,7 +230,7 @@ export default function ProductDetailPage() {
                     )}
                   </>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-500">
+                  <div className="w-full h-full flex items-center justify-center text-[#8B72BE]">
                     No image available
                   </div>
                 )}
@@ -246,8 +246,8 @@ export default function ProductDetailPage() {
                     onClick={() => setCurrentImageIndex(index)}
                     className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
                       currentImageIndex === index
-                        ? 'border-[#FDD023]'
-                        : 'border-[#5a2d8c] hover:border-[#FDD023]/50'
+                        ? 'border-[#F5A623]'
+                        : 'border-white/10 hover:border-[#F5A623]/50'
                     }`}
                   >
                     <img
@@ -263,31 +263,31 @@ export default function ProductDetailPage() {
 
           {/* Right Column - Details */}
           <div>
-            <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
+            <div className="rounded-2xl bg-[#351470] p-6 border border-white/10">
               {/* Title */}
               <h1 className="text-white text-3xl font-bold mb-4">{listing.title}</h1>
 
               {/* Price */}
               <div className="mb-6">
-                <p className="text-[#FDD023] text-4xl font-bold">{formatPrice()}</p>
+                <p className="text-[#F5A623] text-4xl font-bold">{formatPrice()}</p>
               </div>
 
               {/* Details Grid */}
-              <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-[#5a2d8c]">
+              <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-white/10">
                 <div>
-                  <p className="text-gray-400 text-sm mb-1">Category</p>
+                  <p className="text-[#8B72BE] text-sm mb-1">Category</p>
                   <p className="text-white font-semibold">{listing.category}</p>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm mb-1">Condition</p>
+                  <p className="text-[#8B72BE] text-sm mb-1">Condition</p>
                   <p className="text-white font-semibold">{listing.condition}</p>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm mb-1">Location</p>
+                  <p className="text-[#8B72BE] text-sm mb-1">Location</p>
                   <p className="text-white font-semibold">{listing.location}</p>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm mb-1">Posted</p>
+                  <p className="text-[#8B72BE] text-sm mb-1">Posted</p>
                   <p className="text-white font-semibold">{formatDate(listing.created_at)}</p>
                 </div>
               </div>
@@ -295,7 +295,7 @@ export default function ProductDetailPage() {
               {/* Description */}
               <div className="mb-6">
                 <h2 className="text-white text-xl font-bold mb-3">Description</h2>
-                <p className="text-gray-300 whitespace-pre-wrap">{listing.description}</p>
+                <p className="text-[#C4B0E0] whitespace-pre-wrap">{listing.description}</p>
               </div>
 
               {/* Tags */}
@@ -306,7 +306,7 @@ export default function ProductDetailPage() {
                     {listing.tags.map((tag, index) => (
                       <span
                         key={index}
-                        className="px-3 py-1 bg-[#2a0d44] text-[#FDD023] rounded-full text-sm"
+                        className="px-3 py-1 bg-[#2A0F5A] text-[#F5A623] rounded-full text-sm"
                       >
                         #{tag}
                       </span>
@@ -317,10 +317,10 @@ export default function ProductDetailPage() {
 
               {/* Seller Info */}
               {listing.user && (
-                <div className="mb-6 pb-6 border-b border-[#5a2d8c]">
+                <div className="mb-6 pb-6 border-b border-white/10">
                   <h2 className="text-white text-xl font-bold mb-3">Seller</h2>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FDD023] to-[#FFE34A] flex items-center justify-center border-2 border-[#FDD023]">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FFD166] to-[#F5A623] flex items-center justify-center border-2 border-[#F5A623]">
                       {listing.user.profile_picture ? (
                         <img
                           src={listing.user.profile_picture}
@@ -335,7 +335,7 @@ export default function ProductDetailPage() {
                     </div>
                     <div>
                       <p className="text-white font-semibold">{listing.user.full_name}</p>
-                      <p className="text-gray-400 text-sm">Member</p>
+                      <p className="text-[#8B72BE] text-sm">Member</p>
                     </div>
                   </div>
                 </div>
@@ -350,8 +350,8 @@ export default function ProductDetailPage() {
                     listingTitle={listing.title}
                   />
                 ) : (
-                  <div className="bg-[#2a0d44] border border-[#5a2d8c] rounded-lg p-4 text-center">
-                    <p className="text-gray-400 text-sm">This is your listing</p>
+                  <div className="bg-[#2A0F5A] border border-white/10 rounded-lg p-4 text-center">
+                    <p className="text-[#8B72BE] text-sm">This is your listing</p>
                   </div>
                 )}
               </div>

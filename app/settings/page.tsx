@@ -153,9 +153,9 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#461D7C] flex items-center justify-center">
+      <div className="min-h-screen bg-[#1E0A42] flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block w-16 h-16 border-4 border-[#FDD023] border-t-transparent rounded-full animate-spin mb-4"></div>
+          <div className="inline-block w-16 h-16 border-4 border-[#F5A623] border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="text-white text-lg">Loading settings...</p>
         </div>
       </div>
@@ -167,14 +167,14 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#461D7C]">
+    <div className="min-h-screen bg-[#1E0A42]">
       {/* Header */}
-      <header className="bg-[#3a1364] border-b border-[#5a2d8c] sticky top-0 z-50">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <Link href="/home" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-[#FDD023]">LSUS</span>
-              <span>CONNECT</span>
+              <span className="text-white">LSUS</span>
+              <span className="text-[#F5A623]"> Connect</span>
             </Link>
             <div className="flex items-center gap-4">
               <UserDropdown />
@@ -188,20 +188,20 @@ export default function SettingsPage() {
         {/* Page Header */}
         <div className="mb-6">
           <h1 className="text-white text-3xl font-bold mb-2">Settings</h1>
-          <p className="text-gray-300">Manage your account settings and preferences</p>
+          <p className="text-[#C4B0E0]">Manage your account settings and preferences</p>
         </div>
 
         <div className="flex gap-6">
           {/* Left Sidebar - Navigation */}
           <aside className="w-64 flex-shrink-0">
-            <div className="bg-[#3a1364] rounded-lg p-4 border border-[#5a2d8c] sticky top-24">
+            <div className="rounded-2xl border border-white/10 bg-[#351470] p-4 sticky top-24">
               <nav className="space-y-2">
                 <button
                   onClick={() => setActiveTab("account")}
                   className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
                     activeTab === "account"
-                      ? "bg-[#FDD023] text-black font-bold"
-                      : "text-white hover:bg-[#461D7C]"
+                      ? "bg-[#F5A623] text-[#1E0A42] font-bold"
+                      : "text-white hover:bg-[#1E0A42]"
                   }`}
                 >
                   🔒 Account & Security
@@ -210,8 +210,8 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab("notifications")}
                   className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
                     activeTab === "notifications"
-                      ? "bg-[#FDD023] text-black font-bold"
-                      : "text-white hover:bg-[#461D7C]"
+                      ? "bg-[#F5A623] text-[#1E0A42] font-bold"
+                      : "text-white hover:bg-[#1E0A42]"
                   }`}
                 >
                   🔔 Notifications
@@ -220,8 +220,8 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab("privacy")}
                   className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
                     activeTab === "privacy"
-                      ? "bg-[#FDD023] text-black font-bold"
-                      : "text-white hover:bg-[#461D7C]"
+                      ? "bg-[#F5A623] text-[#1E0A42] font-bold"
+                      : "text-white hover:bg-[#1E0A42]"
                   }`}
                 >
                   🛡️ Privacy & Data
@@ -236,15 +236,15 @@ export default function SettingsPage() {
             {activeTab === "account" && (
               <div className="space-y-6">
                 {/* Account Info */}
-                <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
+                <div className="rounded-2xl border border-white/10 bg-[#351470] p-6">
                   <h2 className="text-white text-xl font-bold mb-4">Account Information</h2>
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-gray-400 text-sm mb-1">Full Name</label>
+                      <label className="block text-[#8B72BE] text-sm mb-1">Full Name</label>
                       <p className="text-white font-semibold">{user.full_name}</p>
                     </div>
                     <div>
-                      <label className="block text-gray-400 text-sm mb-1">Email</label>
+                      <label className="block text-[#8B72BE] text-sm mb-1">Email</label>
                       <p className="text-white font-semibold">{user.email}</p>
                     </div>
                     <div className="pt-3">
@@ -259,7 +259,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Change Password */}
-                <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
+                <div className="rounded-2xl border border-white/10 bg-[#351470] p-6">
                   <h2 className="text-white text-xl font-bold mb-4">Change Password</h2>
                   <form onSubmit={handleChangePassword} className="space-y-4">
                     <div>
@@ -271,7 +271,7 @@ export default function SettingsPage() {
                         value={passwordData.current_password}
                         onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
                         required
-                        className="w-full h-12 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                        className="w-full h-12 px-4 rounded-lg bg-[#2A0F5A] border border-white/10 text-white outline-none transition focus:border-[#F5A623]"
                       />
                     </div>
 
@@ -285,9 +285,9 @@ export default function SettingsPage() {
                         onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
                         required
                         minLength={8}
-                        className="w-full h-12 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                        className="w-full h-12 px-4 rounded-lg bg-[#2A0F5A] border border-white/10 text-white outline-none transition focus:border-[#F5A623]"
                       />
-                      <p className="text-gray-400 text-xs mt-1">At least 8 characters</p>
+                      <p className="text-[#8B72BE] text-xs mt-1">At least 8 characters</p>
                     </div>
 
                     <div>
@@ -299,7 +299,7 @@ export default function SettingsPage() {
                         value={passwordData.confirm_password}
                         onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
                         required
-                        className="w-full h-12 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                        className="w-full h-12 px-4 rounded-lg bg-[#2A0F5A] border border-white/10 text-white outline-none transition focus:border-[#F5A623]"
                       />
                     </div>
 
@@ -318,7 +318,7 @@ export default function SettingsPage() {
                     <button
                       type="submit"
                       disabled={isChangingPassword}
-                      className="px-6 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-6 py-3 bg-[#F5A623] text-[#1E0A42] font-bold rounded-lg hover:bg-[#FFE34A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isChangingPassword ? "Changing Password..." : "Change Password"}
                     </button>
@@ -329,9 +329,9 @@ export default function SettingsPage() {
 
             {/* Notifications Tab */}
             {activeTab === "notifications" && (
-              <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
+              <div className="rounded-2xl border border-white/10 bg-[#351470] p-6">
                 <h2 className="text-white text-xl font-bold mb-4">Notification Preferences</h2>
-                <p className="text-gray-300 text-sm mb-6">
+                <p className="text-[#C4B0E0] text-sm mb-6">
                   Choose how you want to be notified about activity on your account
                 </p>
 
@@ -340,42 +340,42 @@ export default function SettingsPage() {
                   <div>
                     <h3 className="text-white font-semibold mb-3">Email Notifications</h3>
                     <div className="space-y-3">
-                      <label className="flex items-center justify-between p-4 bg-[#2a0d44] rounded-lg cursor-pointer hover:bg-[#3a1364] transition-colors">
+                      <label className="flex items-center justify-between p-4 rounded-xl bg-[#2A0F5A] cursor-pointer hover:bg-[#351470] transition-colors">
                         <div>
                           <p className="text-white font-semibold">New Messages</p>
-                          <p className="text-gray-400 text-sm">Get notified when someone messages you</p>
+                          <p className="text-[#8B72BE] text-sm">Get notified when someone messages you</p>
                         </div>
                         <input
                           type="checkbox"
                           checked={notificationSettings.email_new_messages}
                           onChange={(e) => setNotificationSettings({ ...notificationSettings, email_new_messages: e.target.checked })}
-                          className="w-5 h-5 rounded border-[#5a2d8c] bg-[#2a0d44] text-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                          className="w-5 h-5 rounded accent-[#F5A623]"
                         />
                       </label>
 
-                      <label className="flex items-center justify-between p-4 bg-[#2a0d44] rounded-lg cursor-pointer hover:bg-[#3a1364] transition-colors">
+                      <label className="flex items-center justify-between p-4 rounded-xl bg-[#2A0F5A] cursor-pointer hover:bg-[#351470] transition-colors">
                         <div>
                           <p className="text-white font-semibold">Listing Updates</p>
-                          <p className="text-gray-400 text-sm">Updates about your listings and saved items</p>
+                          <p className="text-[#8B72BE] text-sm">Updates about your listings and saved items</p>
                         </div>
                         <input
                           type="checkbox"
                           checked={notificationSettings.email_listing_updates}
                           onChange={(e) => setNotificationSettings({ ...notificationSettings, email_listing_updates: e.target.checked })}
-                          className="w-5 h-5 rounded border-[#5a2d8c] bg-[#2a0d44] text-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                          className="w-5 h-5 rounded accent-[#F5A623]"
                         />
                       </label>
 
-                      <label className="flex items-center justify-between p-4 bg-[#2a0d44] rounded-lg cursor-pointer hover:bg-[#3a1364] transition-colors">
+                      <label className="flex items-center justify-between p-4 rounded-xl bg-[#2A0F5A] cursor-pointer hover:bg-[#351470] transition-colors">
                         <div>
                           <p className="text-white font-semibold">Marketing & Tips</p>
-                          <p className="text-gray-400 text-sm">News, updates, and tips from LSUS Connect</p>
+                          <p className="text-[#8B72BE] text-sm">News, updates, and tips from LSUS Connect</p>
                         </div>
                         <input
                           type="checkbox"
                           checked={notificationSettings.email_marketing}
                           onChange={(e) => setNotificationSettings({ ...notificationSettings, email_marketing: e.target.checked })}
-                          className="w-5 h-5 rounded border-[#5a2d8c] bg-[#2a0d44] text-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                          className="w-5 h-5 rounded accent-[#F5A623]"
                         />
                       </label>
                     </div>
@@ -385,29 +385,29 @@ export default function SettingsPage() {
                   <div>
                     <h3 className="text-white font-semibold mb-3">Push Notifications</h3>
                     <div className="space-y-3">
-                      <label className="flex items-center justify-between p-4 bg-[#2a0d44] rounded-lg cursor-pointer hover:bg-[#3a1364] transition-colors">
+                      <label className="flex items-center justify-between p-4 rounded-xl bg-[#2A0F5A] cursor-pointer hover:bg-[#351470] transition-colors">
                         <div>
                           <p className="text-white font-semibold">New Messages</p>
-                          <p className="text-gray-400 text-sm">Real-time alerts for new messages</p>
+                          <p className="text-[#8B72BE] text-sm">Real-time alerts for new messages</p>
                         </div>
                         <input
                           type="checkbox"
                           checked={notificationSettings.push_new_messages}
                           onChange={(e) => setNotificationSettings({ ...notificationSettings, push_new_messages: e.target.checked })}
-                          className="w-5 h-5 rounded border-[#5a2d8c] bg-[#2a0d44] text-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                          className="w-5 h-5 rounded accent-[#F5A623]"
                         />
                       </label>
 
-                      <label className="flex items-center justify-between p-4 bg-[#2a0d44] rounded-lg cursor-pointer hover:bg-[#3a1364] transition-colors">
+                      <label className="flex items-center justify-between p-4 rounded-xl bg-[#2A0F5A] cursor-pointer hover:bg-[#351470] transition-colors">
                         <div>
                           <p className="text-white font-semibold">Listing Activity</p>
-                          <p className="text-gray-400 text-sm">Updates about your listings</p>
+                          <p className="text-[#8B72BE] text-sm">Updates about your listings</p>
                         </div>
                         <input
                           type="checkbox"
                           checked={notificationSettings.push_listing_updates}
                           onChange={(e) => setNotificationSettings({ ...notificationSettings, push_listing_updates: e.target.checked })}
-                          className="w-5 h-5 rounded border-[#5a2d8c] bg-[#2a0d44] text-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                          className="w-5 h-5 rounded accent-[#F5A623]"
                         />
                       </label>
                     </div>
@@ -415,7 +415,7 @@ export default function SettingsPage() {
 
                   <div className="pt-4">
                     <button
-                      className="px-6 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+                      className="px-6 py-3 bg-[#F5A623] text-[#1E0A42] font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
                       onClick={() => alert("Notification preferences saved! (Backend needed)")}
                     >
                       Save Preferences
@@ -429,13 +429,13 @@ export default function SettingsPage() {
             {activeTab === "privacy" && (
               <div className="space-y-6">
                 {/* Data Export */}
-                <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
+                <div className="rounded-2xl border border-white/10 bg-[#351470] p-6">
                   <h2 className="text-white text-xl font-bold mb-4">Download Your Data</h2>
-                  <p className="text-gray-300 text-sm mb-4">
+                  <p className="text-[#C4B0E0] text-sm mb-4">
                     Request a copy of all your data including listings, messages, and account information.
                   </p>
                   <button
-                    className="px-6 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+                    className="px-6 py-3 bg-[#F5A623] text-[#1E0A42] font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
                     onClick={() => alert("Data export request submitted! (Backend needed)")}
                   >
                     Request Data Export
@@ -446,7 +446,7 @@ export default function SettingsPage() {
                 <div className="bg-red-500/10 border-2 border-red-500/30 rounded-lg p-6">
                   <h2 className="text-red-400 text-xl font-bold mb-4">⚠️ Danger Zone</h2>
                   <h3 className="text-white font-semibold mb-2">Delete Account</h3>
-                  <p className="text-gray-300 text-sm mb-4">
+                  <p className="text-[#C4B0E0] text-sm mb-4">
                     Permanently delete your account and all associated data. This action cannot be undone.
                   </p>
 
@@ -459,7 +459,7 @@ export default function SettingsPage() {
                       value={deleteConfirmation}
                       onChange={(e) => setDeleteConfirmation(e.target.value)}
                       placeholder="DELETE"
-                      className="w-full max-w-xs h-12 px-4 rounded-lg bg-[#2a0d44] border border-red-500/30 text-white placeholder-gray-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+                      className="w-full max-w-xs h-12 px-4 rounded-lg bg-[#2A0F5A] border border-red-500/30 text-white placeholder-gray-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
                     />
                   </div>
 

@@ -19,7 +19,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-[#461D7C] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#1E0A42] text-white flex items-center justify-center px-4">
       <div className="text-center max-w-2xl">
         {/* Error Illustration */}
         <div className="mb-8">
@@ -34,7 +34,7 @@ export default function Error({
         <h1 className="text-white text-4xl sm:text-5xl font-bold mb-4">
           Something Went Wrong
         </h1>
-        <p className="text-gray-300 text-lg mb-2">
+        <p className="text-[#C4B0E0] text-lg mb-2">
           We encountered an unexpected error. Don't worry, it's not your fault!
         </p>
         
@@ -51,21 +51,21 @@ export default function Error({
         <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
           <button
             onClick={reset}
-            className="px-8 py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors"
+            className="rounded-full bg-[#F5A623] px-8 py-3 font-bold text-[#1E0A42] transition hover:bg-[#FFD166] hover:bg-[#FFD166] transition-colors"
           >
             Try Again
           </button>
           <Link
             href="/marketplace"
-            className="px-8 py-3 bg-[#3a1364] text-white font-bold rounded-lg hover:bg-[#461D7C] transition-colors border border-[#5a2d8c]"
+            className="px-8 py-3 bg-[#351470] text-white font-bold rounded-lg hover:bg-[#1E0A42] transition-colors border border-white/10"
           >
             Go to Marketplace
           </Link>
         </div>
 
         {/* Support Info */}
-        <div className="mt-12 pt-8 border-t border-[#5a2d8c]">
-          <p className="text-gray-400 text-sm">
+        <div className="mt-12 pt-8 border-t border-white/10">
+          <p className="text-[#8B72BE] text-sm">
             If this problem persists, please contact support or try refreshing the page.
           </p>
         </div>

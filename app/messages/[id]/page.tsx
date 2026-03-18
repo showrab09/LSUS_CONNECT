@@ -180,9 +180,9 @@ export default function ChatPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#461D7C] flex items-center justify-center">
+      <div className="min-h-screen bg-[#1E0A42] text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block w-16 h-16 border-4 border-[#FDD023] border-t-transparent rounded-full animate-spin mb-4"></div>
+          <div className="inline-block w-16 h-16 border-4 border-[#F5A623] border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="text-white text-lg">Loading conversation...</p>
         </div>
       </div>
@@ -191,10 +191,10 @@ export default function ChatPage() {
 
   if (error && !conversation) {
     return (
-      <div className="min-h-screen bg-[#461D7C] flex items-center justify-center">
+      <div className="min-h-screen bg-[#1E0A42] text-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400 text-xl mb-4">{error}</p>
-          <Link href="/messages" className="text-[#FDD023] hover:underline">
+          <Link href="/messages" className="text-[#F5A623] hover:underline">
             Back to Messages
           </Link>
         </div>
@@ -204,10 +204,10 @@ export default function ChatPage() {
 
   if (!conversation) {
     return (
-      <div className="min-h-screen bg-[#461D7C] flex items-center justify-center">
+      <div className="min-h-screen bg-[#1E0A42] text-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-white text-xl mb-4">Conversation not found</p>
-          <Link href="/messages" className="text-[#FDD023] hover:underline">
+          <Link href="/messages" className="text-[#F5A623] hover:underline">
             Back to Messages
           </Link>
         </div>
@@ -218,15 +218,15 @@ export default function ChatPage() {
   const otherUser = getOtherUser();
 
   return (
-    <div className="min-h-screen bg-[#461D7C] flex flex-col">
+    <div className="min-h-screen bg-[#1E0A42] text-white flex flex-col">
       {/* Header */}
-      <header className="bg-[#3a1364] border-b border-[#5a2d8c] sticky top-0 z-50">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link
                 href="/messages"
-                className="text-white hover:text-[#FDD023] transition-colors"
+                className="text-white hover:text-[#F5A623] transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -234,7 +234,7 @@ export default function ChatPage() {
               </Link>
               <div>
                 <h1 className="text-white text-lg font-bold">{otherUser?.name}</h1>
-                <p className="text-gray-400 text-xs">Re: {conversation.listing.title}</p>
+                <p className="text-[#8B72BE] text-xs">Re: {conversation.listing.title}</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -247,9 +247,9 @@ export default function ChatPage() {
       {/* Chat Container */}
       <div className="flex-1 flex flex-col max-w-[1200px] w-full mx-auto">
         {/* Listing Info Card */}
-        <div className="bg-[#3a1364] border-b border-[#5a2d8c] p-4 mx-4 mt-4 rounded-lg">
+        <div className="bg-[#351470] border-b border-white/10 p-4 mx-4 mt-4 rounded-lg">
           <Link href={`/product-detail?id=${conversation.listing.id}`} className="flex gap-4 hover:opacity-80 transition-opacity">
-            <div className="w-20 h-20 rounded-lg bg-[#2a0d44] overflow-hidden flex-shrink-0">
+            <div className="w-20 h-20 rounded-lg bg-[#2A0F5A] overflow-hidden flex-shrink-0">
               {conversation.listing.images?.[0] ? (
                 <img
                   src={conversation.listing.images[0]}
@@ -257,15 +257,15 @@ export default function ChatPage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
+                <div className="w-full h-full flex items-center justify-center text-[#8B72BE] text-xs">
                   No image
                 </div>
               )}
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-white font-semibold mb-1 truncate">{conversation.listing.title}</h3>
-              <p className="text-[#FDD023] font-bold text-lg">{formatPrice()}</p>
-              <p className="text-gray-400 text-xs">Click to view listing</p>
+              <p className="text-[#F5A623] font-bold text-lg">{formatPrice()}</p>
+              <p className="text-[#8B72BE] text-xs">Click to view listing</p>
             </div>
           </Link>
         </div>
@@ -280,7 +280,7 @@ export default function ChatPage() {
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && (
-            <div className="text-center text-gray-400 text-sm py-8">
+            <div className="text-center text-[#8B72BE] text-sm py-8">
               No messages yet. Say hello!
             </div>
           )}
@@ -293,18 +293,18 @@ export default function ChatPage() {
               >
                 <div className={`max-w-[70%] ${isCurrentUser ? 'order-2' : 'order-1'}`}>
                   {!isCurrentUser && (
-                    <p className="text-gray-400 text-xs mb-1">{message.sender_name}</p>
+                    <p className="text-[#8B72BE] text-xs mb-1">{message.sender_name}</p>
                   )}
                   <div
                     className={`rounded-lg p-3 ${
                       isCurrentUser
-                        ? 'bg-[#FDD023] text-black'
-                        : 'bg-[#3a1364] text-white border border-[#5a2d8c]'
+                        ? 'bg-[#F5A623] text-black'
+                        : 'bg-[#351470] text-white border border-white/10'
                     }`}
                   >
                     <p className="text-sm whitespace-pre-wrap break-words">{message.message}</p>
                   </div>
-                  <p className="text-gray-500 text-xs mt-1">
+                  <p className="text-[#8B72BE] text-xs mt-1">
                     {formatTime(message.created_at)}
                   </p>
                 </div>
@@ -315,7 +315,7 @@ export default function ChatPage() {
         </div>
 
         {/* Message Input */}
-        <div className="bg-[#3a1364] border-t border-[#5a2d8c] p-4">
+        <div className="bg-[#351470] border-t border-white/10 p-4">
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <input
               type="text"
@@ -323,12 +323,12 @@ export default function ChatPage() {
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
               disabled={isSending}
-              className="flex-1 h-12 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20 disabled:opacity-50"
+              className="flex-1 h-12 px-4 rounded-lg bg-[#2A0F5A] border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 disabled:opacity-50"
             />
             <button
               type="submit"
               disabled={!newMessage.trim() || isSending}
-              className="px-6 h-12 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-6 h-12 bg-[#F5A623] text-black font-bold rounded-lg hover:bg-[#FFD166] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isSending ? (
                 <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />

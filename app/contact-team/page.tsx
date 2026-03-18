@@ -98,24 +98,24 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#461D7C]">
+    <div className="min-h-screen bg-[#1E0A42] text-white">
       {/* Header - Responsive */}
-      <header className="bg-[#461D7C] border-b border-[#5a2d8c] py-3 sm:py-4 sticky top-0 z-50">
+      <header className="bg-[#1E0A42] border-b border-white/10 py-3 sm:py-4 sticky top-0 z-50">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between">
             <Link href="/home" className="text-2xl sm:text-3xl font-bold text-white">
-              <span className="text-[#FDD023]">LSUS</span> CONNECT
+              <span className="text-[#F5A623]">LSUS</span> CONNECT
             </Link>
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-4 text-white text-sm">
-              <Link href="/marketplace" className="hover:text-[#FDD023] transition-colors">
+              <Link href="/marketplace" className="hover:text-[#F5A623] transition-colors">
                 Marketplace
               </Link>
-              <Link href="/user-profile" className="hover:text-[#FDD023] transition-colors">
+              <Link href="/user-profile" className="hover:text-[#F5A623] transition-colors">
                 Profile
               </Link>
-              <button onClick={handleLogout} className="hover:text-[#FDD023] transition-colors">
+              <button onClick={handleLogout} className="hover:text-[#F5A623] transition-colors">
                 Logout
               </button>
             </div>
@@ -123,7 +123,7 @@ export default function ContactPage() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-white hover:text-[#FDD023] transition-colors"
+              className="md:hidden p-2 text-white hover:text-[#F5A623] transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {isMobileMenuOpen ? (
@@ -137,15 +137,15 @@ export default function ContactPage() {
 
           {/* Mobile Menu */}
           {isMobileMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 border-t border-[#5a2d8c] pt-4">
+            <div className="md:hidden mt-4 pb-4 border-t border-white/10 pt-4">
               <nav className="flex flex-col gap-3">
-                <Link href="/marketplace" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
+                <Link href="/marketplace" className="text-white hover:text-[#F5A623] transition-colors py-2 px-3 rounded hover:bg-[#351470]">
                   Marketplace
                 </Link>
-                <Link href="/user-profile" className="text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
+                <Link href="/user-profile" className="text-white hover:text-[#F5A623] transition-colors py-2 px-3 rounded hover:bg-[#351470]">
                   Profile
                 </Link>
-                <button onClick={handleLogout} className="text-left text-white hover:text-[#FDD023] transition-colors py-2 px-3 rounded hover:bg-[#3a1364]">
+                <button onClick={handleLogout} className="text-left text-white hover:text-[#F5A623] transition-colors py-2 px-3 rounded hover:bg-[#351470]">
                   Logout
                 </button>
               </nav>
@@ -161,7 +161,7 @@ export default function ContactPage() {
           <h2 className="text-white text-3xl sm:text-4xl font-bold mb-3">
             Contact the LSUS Connect Team
           </h2>
-          <p className="text-gray-300 text-base sm:text-lg">
+          <p className="text-[#C4B0E0] text-base sm:text-lg">
             Questions, feedback, or report an issue — send us a message below.
           </p>
         </div>
@@ -169,8 +169,8 @@ export default function ContactPage() {
         {/* Two Column Layout - Responsive */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6 lg:gap-8">
           {/* Left Side - Contact Form */}
-          <div className="bg-[#3a1364] rounded-lg p-6 sm:p-8 border border-[#5a2d8c]">
-            <h3 className="text-[#FDD023] text-xl font-bold mb-6">
+          <div className="rounded-2xl bg-[#351470] p-6 sm:p-8 border border-white/10">
+            <h3 className="text-[#F5A623] text-xl font-bold mb-6">
               Send us a message
             </h3>
 
@@ -188,7 +188,7 @@ export default function ContactPage() {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                  className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2A0F5A] border border-white/10 text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20"
                 />
               </div>
 
@@ -205,7 +205,7 @@ export default function ContactPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                  className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2A0F5A] border border-white/10 text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20"
                 />
               </div>
 
@@ -221,7 +221,7 @@ export default function ContactPage() {
                   placeholder="Subject"
                   value={formData.subject}
                   onChange={handleChange}
-                  className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20"
+                  className="w-full h-12 sm:h-14 px-4 rounded-lg bg-[#2A0F5A] border border-white/10 text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20"
                 />
               </div>
 
@@ -238,7 +238,7 @@ export default function ContactPage() {
                   onChange={handleChange}
                   required
                   rows={6}
-                  className="w-full px-4 py-3 rounded-lg bg-[#2a0d44] border border-[#5a2d8c] text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#FDD023] focus:ring-2 focus:ring-[#FDD023]/20 resize-none"
+                  className="w-full px-4 py-3 rounded-lg bg-[#2A0F5A] border border-white/10 text-white text-base placeholder-gray-400 focus:outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 resize-none"
                 />
               </div>
 
@@ -246,7 +246,7 @@ export default function ContactPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full min-h-[48px] py-3 bg-[#FDD023] text-black font-bold rounded-lg hover:bg-[#FFE34A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full min-h-[48px] py-3 bg-[#F5A623] text-black font-bold rounded-lg hover:bg-[#FFD166] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? "Sending..." : "Send Message"}
               </button>
@@ -256,7 +256,7 @@ export default function ContactPage() {
                 <div
                   className={`p-3 sm:p-4 rounded-lg text-sm text-center ${
                     submitMessage.type === "success"
-                      ? "bg-[#FDD023]/20 text-[#FDD023] border border-[#FDD023]/30"
+                      ? "bg-[#F5A623]/20 text-[#F5A623] border border-[#F5A623]/30"
                       : "bg-red-500/20 text-red-400 border border-red-500/30"
                   }`}
                   role="status"
@@ -271,34 +271,34 @@ export default function ContactPage() {
           {/* Right Side - Team Info */}
           <div className="space-y-6">
             {/* Our Team */}
-            <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
-              <h3 className="text-[#FDD023] text-xl font-bold mb-6">Our Team</h3>
+            <div className="rounded-2xl bg-[#351470] p-6 border border-white/10">
+              <h3 className="text-[#F5A623] text-xl font-bold mb-6">Our Team</h3>
 
               <div className="space-y-4">
                 {teamMembers.map((member, index) => (
                   <div key={index} className="flex items-center gap-4">
                     {/* Avatar */}
                     <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-600 flex-shrink-0 overflow-hidden">
-                      <div className="w-full h-full bg-gradient-to-br from-[#461D7C] to-[#5a2d8c]"></div>
+                      <div className="w-full h-full bg-gradient-to-br from-[#2E1065] to-[#351470]"></div>
                     </div>
                     {/* Info */}
                     <div className="min-w-0 flex-1">
                       <p className="text-white font-semibold text-base truncate">
                         {member.name}
                       </p>
-                      <p className="text-gray-400 text-sm">{member.role}</p>
+                      <p className="text-[#8B72BE] text-sm">{member.role}</p>
                     </div>
                   </div>
                 ))}
               </div>
 
               {/* Email */}
-              <div className="mt-6 pt-6 border-t border-[#5a2d8c]">
-                <p className="text-gray-300 text-sm">
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <p className="text-[#C4B0E0] text-sm">
                   Email:{" "}
                   <a
                     href="mailto:support@lsusconnect.edu"
-                    className="text-[#FDD023] hover:text-[#FFE34A] transition-colors break-all"
+                    className="text-[#F5A623] hover:text-[#FFE34A] transition-colors break-all"
                   >
                     support@lsusconnect.edu
                   </a>
@@ -307,12 +307,12 @@ export default function ContactPage() {
             </div>
 
             {/* Follow & Contact */}
-            <div className="bg-[#3a1364] rounded-lg p-6 border border-[#5a2d8c]">
-              <h3 className="text-[#FDD023] text-xl font-bold mb-4">
+            <div className="rounded-2xl bg-[#351470] p-6 border border-white/10">
+              <h3 className="text-[#F5A623] text-xl font-bold mb-4">
                 Follow & Contact
               </h3>
 
-              <div className="space-y-3 text-sm text-gray-300">
+              <div className="space-y-3 text-sm text-[#C4B0E0]">
                 <p>
                   <span className="text-white font-semibold">LinkedIn</span> •{" "}
                   <span className="text-white font-semibold">Instagram</span> •{" "}
