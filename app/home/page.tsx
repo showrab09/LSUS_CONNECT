@@ -133,6 +133,9 @@ function ComposeBox({
   const [previews, setPreviews] = useState<string[]>([]);
   const [isPosting, setIsPosting] = useState(false);
   const [error, setError] = useState("");
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const locationRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
@@ -192,6 +195,29 @@ function ComposeBox({
       setContent(prev => prev + emoji);
     }
     setShowEmojis(false);
+  };
+
+  const searchLocation = async (query: string) => {
+    setLocation(query);
+    if (query.length < 3) { setLocationSuggestions([]); return; }
+    setLocationLoading(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5`,
+        { headers: { "Accept-Language": "en" } }
+      );
+      const data = await res.json();
+      setLocationSuggestions(data.map((r: any) => r.display_name));
+    } catch {
+      setLocationSuggestions([]);
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
+  const selectLocation = (suggestion: string) => {
+    setLocation(suggestion);
+    setLocationSuggestions([]);
   };
 
   const handleSubmit = async () => {
@@ -279,24 +305,37 @@ function ComposeBox({
       )}
 
       {showLocation && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl bg-[#2A0F5A] p-3">
-          <span>📍</span>
-          <input
-            type="text"
-            value={location}
-            onChange={e => setLocation(e.target.value)}
-            placeholder="Add your location..."
-            className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-[#8B72BE]"
-          />
-          <button
-            onClick={() => {
-              setShowLocation(false);
-              setLocation("");
-            }}
-            className="text-xs text-[#C4B0E0] transition hover:text-red-400"
-          >
-            Remove
-          </button>
+        <div className="relative mb-4" ref={locationRef}>
+          <div className="flex items-center gap-2 rounded-xl bg-[#2A0F5A] p-3">
+            <span>📍</span>
+            <input
+              type="text"
+              value={location}
+              onChange={e => searchLocation(e.target.value)}
+              placeholder="Search for a location..."
+              className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-[#8B72BE]"
+            />
+            {locationLoading && <span className="text-xs text-[#8B72BE]">...</span>}
+            <button
+              onClick={() => { setShowLocation(false); setLocation(""); setLocationSuggestions([]); }}
+              className="text-xs text-[#C4B0E0] transition hover:text-red-400"
+            >
+              Remove
+            </button>
+          </div>
+          {locationSuggestions.length > 0 && (
+            <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-white/10 bg-[#2A0F5A] shadow-2xl">
+              {locationSuggestions.map((suggestion, i) => (
+                <button
+                  key={i}
+                  onClick={() => selectLocation(suggestion)}
+                  className="w-full px-4 py-2.5 text-left text-xs text-[#E9DFFF] transition hover:bg-[#3A1870] hover:text-white"
+                >
+                  📍 {suggestion}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -893,18 +932,18 @@ export default function HomeFeedPage() {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <div className="min-w-[130px] rounded-xl border border-white/10 bg-white/10 px-4 py-3">
+                <Link href="/home" className="min-w-[130px] rounded-xl border border-white/10 bg-white/10 px-4 py-3 transition hover:border-[#F5A623]/50 hover:bg-white/20 cursor-pointer">
                   <div className="text-2xl font-extrabold text-white">{feedItems.length}</div>
                   <div className="text-xs text-[#C4B0E0]">Total Feed Items</div>
-                </div>
-                <div className="min-w-[130px] rounded-xl border border-white/10 bg-white/10 px-4 py-3">
+                </Link>
+                <Link href="/social" className="min-w-[130px] rounded-xl border border-white/10 bg-white/10 px-4 py-3 transition hover:border-[#F5A623]/50 hover:bg-white/20 cursor-pointer">
                   <div className="text-2xl font-extrabold text-white">{socialCount}</div>
                   <div className="text-xs text-[#C4B0E0]">Social Posts</div>
-                </div>
-                <div className="min-w-[130px] rounded-xl border border-white/10 bg-white/10 px-4 py-3">
+                </Link>
+                <Link href="/marketplace" className="min-w-[130px] rounded-xl border border-white/10 bg-white/10 px-4 py-3 transition hover:border-[#F5A623]/50 hover:bg-white/20 cursor-pointer">
                   <div className="text-2xl font-extrabold text-white">{marketplaceCount}</div>
                   <div className="text-xs text-[#C4B0E0]">Listings</div>
-                </div>
+                </Link>
               </div>
             </div>
           </section>

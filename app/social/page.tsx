@@ -332,6 +332,24 @@ function CommentSection({ postId }: { postId: string }) {
   );
 }
 
+// ── Message Author Button ────────────────────────────────────────────────────
+
+function MessageAuthorButton({ authorId, authorName }: { authorId: string; authorName: string }) {
+  return (
+    <div className="mb-4">
+      <Link
+        href={`/messages?user=${authorId}&name=${encodeURIComponent(authorName)}`}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#F5A623]/40 bg-[#F5A623]/10 py-2.5 text-sm font-bold text-[#F5A623] transition hover:bg-[#F5A623] hover:text-[#1E0A42]"
+      >
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+        Message {authorName.split(" ")[0]}
+      </Link>
+    </div>
+  );
+}
+
 // ── Post Card ────────────────────────────────────────────────────────────────
 
 function PostCard({ post, onDelete, currentUserId }: { post: SocialPost; onDelete: (id: string) => void; currentUserId: string }) {
@@ -349,9 +367,13 @@ function PostCard({ post, onDelete, currentUserId }: { post: SocialPost; onDelet
   return (
     <article className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] shadow-[0_4px_24px_rgba(0,0,0,0.35)] transition hover:-translate-y-1">
       {post.images && post.images.length > 0 && (
-        <div className="h-52 overflow-hidden bg-[#2A0F5A]">
-          <img src={post.images[0]} alt="" className="h-full w-full object-cover"
-            onError={e => { e.currentTarget.parentElement!.style.display = "none"; }} />
+        <div className={`overflow-hidden bg-[#2A0F5A] ${post.images.length === 1 ? "max-h-[480px]" : "grid grid-cols-2 gap-px"}`}>
+          {post.images.slice(0, 4).map((img, i) => (
+            <div key={i} className={`overflow-hidden bg-[#2A0F5A] ${post.images.length === 1 ? "" : "aspect-square"}`}>
+              <img src={img} alt="" className={`w-full ${post.images.length === 1 ? "object-contain max-h-[480px]" : "h-full object-cover"}`}
+                onError={e => { e.currentTarget.parentElement!.style.display = "none"; }} />
+            </div>
+          ))}
         </div>
       )}
 
@@ -375,6 +397,11 @@ function PostCard({ post, onDelete, currentUserId }: { post: SocialPost; onDelet
             <p className="mt-2 text-sm leading-relaxed text-[#E9DFFF] whitespace-pre-wrap">{post.content}</p>
           </div>
         </div>
+
+        {/* Message Author button - only show if not your own post */}
+        {post.user.id !== currentUserId && (
+          <MessageAuthorButton authorId={post.user.id} authorName={post.user.full_name} />
+        )}
 
         <CommentSection postId={post.id} />
       </div>

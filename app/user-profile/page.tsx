@@ -35,6 +35,14 @@ interface Listing {
   created_at: string;
 }
 
+interface SocialPost {
+  id: string;
+  content: string;
+  location?: string;
+  images: string[];
+  created_at: string;
+}
+
 interface SavedListing {
   id: string;
   created_at: string;
@@ -59,7 +67,8 @@ export default function UserProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [userListings, setUserListings] = useState<Listing[]>([]);
   const [savedListings, setSavedListings] = useState<SavedListing[]>([]);
-  const [activeTab, setActiveTab] = useState<"listings" | "saved">("listings");
+  const [activeTab, setActiveTab] = useState<"listings" | "posts" | "saved">("listings");
+  const [userPosts, setUserPosts] = useState<SocialPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditListingModalOpen, setIsEditListingModalOpen] = useState(false);
@@ -77,6 +86,7 @@ export default function UserProfilePage() {
     fetchUserProfile();
     fetchUserListings();
     fetchSavedListings();
+    fetchUserPosts();
   }, []);
 
   const fetchUserProfile = async () => {
@@ -121,6 +131,32 @@ export default function UserProfilePage() {
       }
     } catch (err) {
       console.error("Error fetching saved listings:", err);
+    }
+  };
+
+  const fetchUserPosts = async () => {
+    try {
+      // Get user id from token
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      const payload = JSON.parse(decodeURIComponent(atob(base64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")));
+      const userId = payload.userId;
+      if (!userId) return;
+
+      const res = await fetch(`/api/posts?user_id=${userId}&limit=50`, { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setUserPosts((data.posts || []).map((p: any) => ({
+          id: p.id,
+          content: p.content,
+          location: p.location,
+          images: p.images || [],
+          created_at: p.created_at,
+        })));
+      }
+    } catch (err) {
+      console.error("Error fetching posts:", err);
     }
   };
 
@@ -205,7 +241,7 @@ export default function UserProfilePage() {
     );
   }
 
-  const displayListings = activeTab === "listings" ? userListings : savedListings.map(s => s.listing);
+  const displayListings = activeTab === "saved" ? savedListings.map(s => s.listing) : userListings;
   const displayPicture = user.profile_picture;
 
   return (
@@ -256,23 +292,57 @@ export default function UserProfilePage() {
 
         {/* Tabs */}
         <div className="mb-6 flex gap-1 border-b border-white/10">
-          {(["listings", "saved"] as const).map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              className={`px-5 pb-3 pt-1 text-sm font-semibold transition ${activeTab === tab
-                ? "border-b-2 border-[#F5A623] text-[#F5A623]"
-                : "text-[#C4B0E0] hover:text-white"}`}>
-              {tab === "listings" ? `My Listings (${userListings.length})` : `Saved Items (${savedListings.length})`}
-            </button>
-          ))}
+          <button onClick={() => setActiveTab("listings")}
+            className={`px-5 pb-3 pt-1 text-sm font-semibold transition ${activeTab === "listings" ? "border-b-2 border-[#F5A623] text-[#F5A623]" : "text-[#C4B0E0] hover:text-white"}`}>
+            My Listings ({userListings.length})
+          </button>
+          <button onClick={() => setActiveTab("posts")}
+            className={`px-5 pb-3 pt-1 text-sm font-semibold transition ${activeTab === "posts" ? "border-b-2 border-[#F5A623] text-[#F5A623]" : "text-[#C4B0E0] hover:text-white"}`}>
+            My Posts ({userPosts.length})
+          </button>
+          <button onClick={() => setActiveTab("saved")}
+            className={`px-5 pb-3 pt-1 text-sm font-semibold transition ${activeTab === "saved" ? "border-b-2 border-[#F5A623] text-[#F5A623]" : "text-[#C4B0E0] hover:text-white"}`}>
+            Saved Items ({savedListings.length})
+          </button>
         </div>
 
         {/* Content */}
-        {isLoading ? (
+        {/* Posts Tab */}
+        {activeTab === "posts" && (
+          userPosts.length === 0 ? (
+            <div className="py-20 text-center">
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#351470] text-4xl">💬</div>
+              <h3 className="mb-2 text-xl font-bold text-white">No posts yet</h3>
+              <p className="mb-6 text-[#C4B0E0]">Share what&apos;s on your mind with the LSUS community!</p>
+              <Link href="/social" className="inline-block rounded-full bg-[#F5A623] px-8 py-3 font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
+                Go to Social Feed
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {userPosts.map(post => (
+                <div key={post.id} className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.35)]">
+                  {post.images && post.images.length > 0 && (
+                    <div className="mb-4 h-48 overflow-hidden rounded-xl bg-[#2A0F5A]">
+                      <img src={post.images[0]} alt="" className="h-full w-full object-cover" />
+                    </div>
+                  )}
+                  <p className="text-sm leading-relaxed text-[#E9DFFF] whitespace-pre-wrap">{post.content}</p>
+                  {post.location && <p className="mt-2 text-xs text-[#8B72BE]">📍 {post.location}</p>}
+                  <p className="mt-3 text-xs text-[#8B72BE]">{new Date(post.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {/* Listings & Saved Tabs */}
+        {activeTab !== "posts" && isLoading ? (
           <div className="py-20 text-center">
             <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
             <p className="mt-4 text-white">Loading...</p>
           </div>
-        ) : displayListings.length === 0 ? (
+        ) : activeTab !== "posts" && displayListings.length === 0 ? (
           <div className="py-20 text-center">
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#351470] text-4xl">
               {activeTab === "listings" ? "📦" : "❤️"}
@@ -288,7 +358,7 @@ export default function UserProfilePage() {
               {activeTab === "listings" ? "Create Listing" : "Browse Marketplace"}
             </Link>
           </div>
-        ) : (
+        ) : activeTab !== "posts" && (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {displayListings.map((listing) => (
               <div key={listing.id}
