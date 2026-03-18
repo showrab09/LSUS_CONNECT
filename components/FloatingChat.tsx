@@ -149,7 +149,7 @@ export default function FloatingChat() {
         credentials: 'include',
         body: JSON.stringify({
           conversation_id: conversationId,
-          content: text,
+          message: text,
         }),
       });
 
@@ -171,9 +171,10 @@ export default function FloatingChat() {
   }, [messages]);
 
   const getOtherUser = (conversation: any) => {
-    return conversation.buyer_id === currentUserId
-      ? conversation.seller
-      : conversation.buyer;
+    // API already resolves other_user for us
+    return conversation.other_user
+      ? { full_name: conversation.other_user.name, profile_picture: conversation.other_user.profile_picture }
+      : null;
   };
 
   // Don't render anything until client-side
@@ -256,7 +257,7 @@ export default function FloatingChat() {
                             {conv.listing?.title || 'No listing'}
                           </p>
                         </div>
-                        {conv.unread_count > 0 && (
+                        {(conv.unread_count || 0) > 0 && (
                           <span className="w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center flex-shrink-0">
                             {conv.unread_count}
                           </span>
@@ -332,7 +333,7 @@ export default function FloatingChat() {
                           : 'bg-[#3a1364] text-white'
                       }`}
                     >
-                      <p className="text-sm">{msg.content}</p>
+                      <p className="text-sm">{msg.message || msg.content}</p>
                     </div>
                   </div>
                 );

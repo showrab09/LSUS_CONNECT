@@ -3,6 +3,9 @@
  *
  * Loads the authenticated user's full profile (including profile_picture)
  * from the API rather than just decoding the JWT.
+ *
+ * SSR-safe: initial state is always empty so server and client render
+ * the same thing on first pass, avoiding hydration mismatches.
  */
 
 "use client";
@@ -24,7 +27,6 @@ interface UseCurrentUserResult {
   isLoading: boolean;
 }
 
-// Decode JWT to get name immediately (before API resolves)
 function getBasicUserFromToken(): { id: string; full_name: string; email: string } {
   try {
     const token = localStorage.getItem("token");
@@ -49,20 +51,19 @@ function getBasicUserFromToken(): { id: string; full_name: string; email: string
 }
 
 export function useCurrentUser(): UseCurrentUserResult {
-  // Seed immediately from JWT so name shows right away (no flash of "User")
-  const tokenUser = typeof window !== "undefined" ? getBasicUserFromToken() : { id: "", full_name: "", email: "" };
-
+  // IMPORTANT: Start with empty state so SSR and client first render match
+  // Never read localStorage or window at module/state init time
   const [currentUser, setCurrentUser] = useState<CurrentUser>({
-    id: tokenUser.id,
-    full_name: tokenUser.full_name || "User",
-    email: tokenUser.email,
+    id: "",
+    full_name: "",
+    email: "",
   });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get name from token immediately so UI shows it right away
+    // Step 1: Read token immediately for fast name display
     const basic = getBasicUserFromToken();
-    if (basic.full_name) {
+    if (basic.id) {
       setCurrentUser(prev => ({
         ...prev,
         id: basic.id,
@@ -76,7 +77,7 @@ export function useCurrentUser(): UseCurrentUserResult {
       return;
     }
 
-    // Then fetch full profile to get profile_picture and other fields
+    // Step 2: Fetch full profile for profile_picture and other fields
     fetch("/api/user/profile", { credentials: "include" })
       .then(res => (res.ok ? res.json() : null))
       .then(data => {

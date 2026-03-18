@@ -623,15 +623,17 @@ function RightPanel({
   userLoading: boolean;
 }) {
   return (
-    <aside className="hidden xl:flex xl:w-[280px] xl:flex-col xl:gap-4">
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470]">
+    <aside className="hidden xl:flex xl:w-[280px] xl:flex-shrink-0 xl:flex-col xl:gap-4 xl:overflow-y-auto xl:py-6 xl:pr-1">
+      <Link href="/user-profile" className="block overflow-hidden rounded-2xl border border-white/10 bg-[#351470] transition hover:border-[#F5A623]/40">
         <div className="h-20 bg-[linear-gradient(135deg,#5B28A8_0%,#3D1A78_60%,#F5A623_100%)]" />
         <div className="-mt-8 px-5 pb-5">
           <div className="mb-3 flex justify-center">
             <Avatar user={currentUser} size="lg" />
           </div>
           <div className="text-center">
-            <h3 className="font-semibold text-white">{currentUser.full_name || "User"}</h3>
+            <h3 className="font-semibold text-white">
+              {currentUser.full_name || <span className="inline-block h-4 w-24 animate-pulse rounded bg-white/10" />}
+            </h3>
             <p className="mt-1 text-xs text-[#C4B0E0]">LSUS Connect member</p>
           </div>
           <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 text-center">
@@ -645,7 +647,7 @@ function RightPanel({
             </div>
           </div>
         </div>
-      </div>
+      </Link>
 
       <div className="rounded-2xl border border-white/10 bg-[#351470] p-4">
         <h4 className="mb-3 text-sm font-extrabold uppercase tracking-[0.15em] text-[#F5A623]">Quick Links</h4>
@@ -823,89 +825,94 @@ export default function HomeFeedPage() {
         </div>
       </header>
 
-      <div className="mx-auto flex max-w-[1600px]">
+      <div className="mx-auto flex max-w-[1600px] h-[calc(100vh-60px)] overflow-hidden">
         <aside
-          className={`fixed left-0 top-[60px] z-40 h-[calc(100vh-60px)] w-[220px] overflow-y-auto border-r border-white/10 bg-[#2E1065] p-4 transition-transform lg:sticky lg:top-[60px] lg:h-[calc(100vh-60px)] lg:translate-x-0 ${
+          className={`fixed left-0 top-[60px] z-40 h-[calc(100vh-60px)] w-[220px] flex-shrink-0 border-r border-white/10 bg-[#2E1065] p-4 transition-transform lg:sticky lg:top-0 lg:h-full lg:translate-x-0 ${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <nav className="space-y-2">
-            {LEFT_NAV.map(link => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
-                  link.active
-                    ? "bg-[linear-gradient(135deg,#5B28A8,#4A1E8A)] text-white"
-                    : "text-[#C4B0E0] hover:bg-white/5 hover:text-white"
-                }`}
-                onClick={() => setIsSidebarOpen(false)}
-              >
-                <span>{link.icon}</span>
-                <span>{link.label}</span>
-              </Link>
-            ))}
-          </nav>
-
-          <div className="my-4 h-px bg-white/10" />
-
-          <div>
-            <p className="mb-3 px-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#8B72BE]">
-              Feed Filters
-            </p>
-            <div className="space-y-2">
-              {FILTERS.map(filter => (
-                <label key={filter} className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm text-[#C4B0E0] transition hover:bg-white/5 hover:text-white">
-                  <input
-                    type="checkbox"
-                    checked={activeFilters.includes(filter)}
-                    onChange={() => toggleFilter(filter)}
-                    className="h-4 w-4 accent-[#F5A623]"
-                  />
-                  <span>{filter}</span>
-                </label>
+          {/* Single card wrapping nav + filters */}
+          <div className="rounded-2xl border border-white/10 bg-[#2A0F5A] p-3">
+            <nav className="space-y-1">
+              {LEFT_NAV.map(link => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                    link.active
+                      ? "bg-[linear-gradient(135deg,#5B28A8,#4A1E8A)] text-white"
+                      : "text-[#C4B0E0] hover:bg-white/5 hover:text-white"
+                  }`}
+                  onClick={() => setIsSidebarOpen(false)}
+                >
+                  <span>{link.icon}</span>
+                  <span>{link.label}</span>
+                </Link>
               ))}
+            </nav>
+
+            <div className="my-3 h-px bg-white/10" />
+
+            <div>
+              <p className="mb-3 px-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#8B72BE]">
+                Feed Filters
+              </p>
+              <div className="space-y-1">
+                {FILTERS.map(filter => (
+                  <label key={filter} className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm text-[#C4B0E0] transition hover:bg-white/5 hover:text-white">
+                    <input
+                      type="checkbox"
+                      checked={activeFilters.includes(filter)}
+                      onChange={() => toggleFilter(filter)}
+                      className="h-4 w-4 accent-[#F5A623]"
+                    />
+                    <span>{filter}</span>
+                  </label>
+                ))}
+              </div>
+              {activeFilters.length > 0 && (
+                <button
+                  onClick={() => setActiveFilters([])}
+                  className="mt-4 w-full rounded-full bg-[#F5A623] px-4 py-2 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]"
+                >
+                  Clear Filters
+                </button>
+              )}
             </div>
-            {activeFilters.length > 0 && (
-              <button
-                onClick={() => setActiveFilters([])}
-                className="mt-4 w-full rounded-full bg-[#F5A623] px-4 py-2 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]"
-              >
-                Clear Filters
-              </button>
-            )}
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 px-4 py-6 lg:ml-0 lg:px-7">
-          <section className="mb-6 overflow-hidden rounded-2xl border border-[#F5A623]/20 bg-[linear-gradient(135deg,#4A1E8A_0%,#2A0F5A_60%,#1E0A42_100%)] p-6">
+        <main className="min-w-0 flex-1 overflow-y-auto px-4 py-6 lg:ml-0 lg:px-7">
+          <section className="mb-6 overflow-hidden rounded-2xl border border-[#F5A623]/20 bg-[linear-gradient(135deg,#5B28A8_0%,#3D1A78_50%,#7B4A1E_100%)] p-6">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div>
                 <p className="mb-1 text-sm text-[#C4B0E0]">Welcome back</p>
-                <h1 className="text-3xl font-extrabold tracking-tight">{currentUser.full_name || "LSUS User"}</h1>
+                <h1 className="text-3xl font-extrabold tracking-tight">
+                  {currentUser.full_name || <span className="inline-block h-8 w-48 animate-pulse rounded-lg bg-white/10" />}
+                </h1>
                 <p className="mt-2 text-sm text-[#C4B0E0]">
                   Your campus hub for social posts, listings, housing, and lost and found updates.
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <div className="min-w-[130px] rounded-xl border border-white/10 bg-white/10 px-4 py-3">
+                <Link href="/home" className="min-w-[130px] rounded-xl border border-white/20 bg-white/10 px-4 py-3 transition hover:bg-white/20">
                   <div className="text-2xl font-extrabold text-white">{feedItems.length}</div>
-                  <div className="text-xs text-[#C4B0E0]">Total Feed Items</div>
-                </div>
-                <div className="min-w-[130px] rounded-xl border border-white/10 bg-white/10 px-4 py-3">
+                  <div className="text-xs text-white/70">Total Feed Items</div>
+                </Link>
+                <Link href="/social" className="min-w-[130px] rounded-xl border border-white/20 bg-white/10 px-4 py-3 transition hover:bg-white/20">
                   <div className="text-2xl font-extrabold text-white">{socialCount}</div>
-                  <div className="text-xs text-[#C4B0E0]">Social Posts</div>
-                </div>
-                <div className="min-w-[130px] rounded-xl border border-white/10 bg-white/10 px-4 py-3">
+                  <div className="text-xs text-white/70">Social Posts</div>
+                </Link>
+                <Link href="/marketplace" className="min-w-[130px] rounded-xl border border-white/20 bg-white/10 px-4 py-3 transition hover:bg-white/20">
                   <div className="text-2xl font-extrabold text-white">{marketplaceCount}</div>
-                  <div className="text-xs text-[#C4B0E0]">Listings</div>
-                </div>
+                  <div className="text-xs text-white/70">Listings</div>
+                </Link>
               </div>
             </div>
           </section>
 
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start">
             <div className="min-w-0">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
