@@ -6,51 +6,67 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
 );
 
-// Pages that require authentication
+// All pages that require authentication
 const protectedRoutes = [
+  '/home',
   '/post-listing',
   '/marketplace',
+  '/housing',
+  '/social',
   '/lost-found',
   '/user-profile',
+  '/messages',
   '/admin-dashboard',
   '/product-detail',
   '/contact-team',
+  '/settings',
+  '/report-lost-found',
 ];
 
-// Pages that should redirect to marketplace if already logged in
+// Pages that should redirect to /home if already logged in
 const authRoutes = ['/signin', '/signup'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
+
   // Get token from cookie
   const token = request.cookies.get('token')?.value;
 
-  // Check if the route is protected
-  const isProtectedRoute = protectedRoutes.some(route => 
-    pathname.startsWith(route)
-  );
-  
-  // Check if it's an auth route
-  const isAuthRoute = authRoutes.some(route => 
+  const isProtectedRoute = protectedRoutes.some(route =>
     pathname.startsWith(route)
   );
 
-  // If accessing protected route without token, redirect to signin
+  const isAuthRoute = authRoutes.some(route =>
+    pathname.startsWith(route)
+  );
+
+  // Protected route with no token — redirect to signin
   if (isProtectedRoute && !token) {
     const url = new URL('/signin', request.url);
+    url.searchParams.set('redirect', pathname); // remember where they were going
     return NextResponse.redirect(url);
   }
 
-  // If accessing auth route with valid token, redirect to marketplace
+  // Protected route with token — verify it's valid
+  if (isProtectedRoute && token) {
+    try {
+      await jwtVerify(token, JWT_SECRET);
+    } catch {
+      // Token expired or invalid — clear it and redirect to signin
+      const url = new URL('/signin', request.url);
+      const response = NextResponse.redirect(url);
+      response.cookies.set('token', '', { maxAge: 0, path: '/' });
+      return response;
+    }
+  }
+
+  // Auth route with valid token — redirect to home
   if (isAuthRoute && token) {
     try {
-      // Verify token is valid
       await jwtVerify(token, JWT_SECRET);
-      const url = new URL('/marketplace', request.url);
-      return NextResponse.redirect(url);
-    } catch (error) {
-      // Token invalid, allow access to auth page
+      return NextResponse.redirect(new URL('/home', request.url));
+    } catch {
+      // Token invalid, allow access to signin/signup
       return NextResponse.next();
     }
   }
@@ -60,13 +76,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
