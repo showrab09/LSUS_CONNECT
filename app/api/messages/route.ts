@@ -33,6 +33,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { listing_id, message, conversation_id } = body;
 
+    // Validate inputs
+    const { validateMessage, sanitizeText } = await import('@/lib/validate');
+    const validation = validateMessage(body);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
     // --- Case 1: Sending a message to an existing conversation ---
     if (conversation_id) {
       if (!message?.trim()) {
@@ -103,13 +110,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!message?.trim()) {
-      return NextResponse.json(
-        { error: 'Message is required' },
-        { status: 400 }
-      );
-    }
-
     // Get listing to find the seller
     const { data: listing, error: listingError } = await supabase
       .from('listings')
@@ -169,38 +169,41 @@ export async function POST(request: NextRequest) {
       conversationIdToUse = newConv.id;
     }
 
-    // Send the message
-    const { data: newMessage, error: msgError } = await supabase
-      .from('messages')
-      .insert([{
-        conversation_id: conversationIdToUse,
-        sender_id: user.userId,
-        message: message.trim(),
-        is_read: false,
-      }])
-      .select()
-      .single();
+    // Only send a message if one was provided
+    if (message?.trim()) {
+      const { data: newMessage, error: msgError } = await supabase
+        .from('messages')
+        .insert([{
+          conversation_id: conversationIdToUse,
+          sender_id: user.userId,
+          message: message.trim(),
+          is_read: false,
+        }])
+        .select()
+        .single();
 
-    if (msgError) {
-      console.error('Error sending message:', msgError);
+      if (msgError) {
+        console.error('Error sending message:', msgError);
+        return NextResponse.json(
+          { error: 'Failed to send message' },
+          { status: 500 }
+        );
+      }
+
+      await supabase
+        .from('conversations')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', conversationIdToUse);
+
       return NextResponse.json(
-        { error: 'Failed to send message' },
-        { status: 500 }
+        { success: true, message: newMessage, conversation_id: conversationIdToUse },
+        { status: 201 }
       );
     }
 
-    // Update conversation updated_at
-    await supabase
-      .from('conversations')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', conversationIdToUse);
-
+    // No message - just return the conversation_id
     return NextResponse.json(
-      {
-        success: true,
-        message: newMessage,
-        conversation_id: conversationIdToUse,
-      },
+      { success: true, conversation_id: conversationIdToUse },
       { status: 201 }
     );
 

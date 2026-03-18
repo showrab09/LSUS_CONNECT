@@ -78,11 +78,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { content, post_id, listing_id, lost_found_id } = body;
 
-    if (!content?.trim()) {
-      return NextResponse.json(
-        { error: 'Comment content is required' },
-        { status: 400 }
-      );
+    // Validate inputs
+    const { validateComment, sanitizeText } = await import('@/lib/validate');
+    const validation = validateComment(body);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     if (!post_id && !listing_id && !lost_found_id) {

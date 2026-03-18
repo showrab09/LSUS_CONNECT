@@ -84,19 +84,19 @@ export async function POST(request: NextRequest) {
       contact_info,
     } = body;
 
-    // Validate required fields
-    if (!type || !title || !description || !location) {
-      return NextResponse.json(
-        { error: 'Type, title, description, and location are required' },
-        { status: 400 }
-      );
+    // Validate inputs
+    const { sanitizeText, sanitizeMultiline, validateImages, validateLength } = await import('@/lib/validate');
+    if (!type || (type !== 'LOST' && type !== 'FOUND')) {
+      return NextResponse.json({ error: 'Type must be LOST or FOUND.' }, { status: 400 });
     }
-
-    if (type !== 'LOST' && type !== 'FOUND') {
-      return NextResponse.json(
-        { error: 'Type must be either LOST or FOUND' },
-        { status: 400 }
-      );
+    const titleCheck = validateLength(title, 'Title', 150);
+    if (!titleCheck.valid) return NextResponse.json({ error: titleCheck.error }, { status: 400 });
+    const descCheck = validateLength(description, 'Description', 2000);
+    if (!descCheck.valid) return NextResponse.json({ error: descCheck.error }, { status: 400 });
+    if (!location) return NextResponse.json({ error: 'Location is required.' }, { status: 400 });
+    if (images) {
+      const imgCheck = validateImages(images);
+      if (!imgCheck.valid) return NextResponse.json({ error: imgCheck.error }, { status: 400 });
     }
 
     // Create lost/found item

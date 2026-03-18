@@ -7,7 +7,18 @@ import { sendVerificationEmail } from '@/lib/email/resend';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, fullName } = await request.json();
+    const body = await request.json();
+    const { email, password, fullName } = body;
+
+    // Validate inputs
+    const { validateSignup, sanitizeText } = await import('@/lib/validate');
+    const validation = validateSignup(body);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = sanitizeText(fullName.trim());
 
     // // Validate LSUS email
     // if (!email.endsWith('@lsus.edu')) {
@@ -42,8 +53,8 @@ export async function POST(request: NextRequest) {
       .from('users')
       .insert([
         {
-          email,
-          full_name: fullName,
+          email: cleanEmail,
+          full_name: cleanName,
           password_hash: passwordHash,
           verification_token: verificationToken,
           is_verified: false,

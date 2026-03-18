@@ -5,13 +5,47 @@ import { SignJWT } from 'jose';
 
 export const dynamic = 'force-dynamic';
 
+// Simple in-memory rate limiter — max 10 attempts per IP per 15 minutes
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): { allowed: boolean; error?: string } {
+  const now = Date.now();
+  const window = 15 * 60 * 1000; // 15 minutes
+  const maxAttempts = 10;
+  const record = loginAttempts.get(ip);
+  if (!record || now > record.resetAt) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + window });
+    return { allowed: true };
+  }
+  if (record.count >= maxAttempts) {
+    return { allowed: false, error: 'Too many login attempts. Please try again in 15 minutes.' };
+  }
+  record.count++;
+  return { allowed: true };
+}
+
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
 );
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const rateCheck = checkRateLimit(ip);
+    if (!rateCheck.allowed) {
+      return NextResponse.json({ error: rateCheck.error }, { status: 429 });
+    }
+
     const { email, password } = await request.json();
+    
+    // Basic input validation
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password are required.' }, { status: 400 });
+    }
+    if (typeof email !== 'string' || email.length > 255) {
+      return NextResponse.json({ error: 'Invalid email.' }, { status: 400 });
+    }
 
     // // Validate LSUS email
     // if (!email.endsWith('@lsus.edu')) {

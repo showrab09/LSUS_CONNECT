@@ -5,9 +5,33 @@ import { sendPasswordResetEmail } from '@/lib/email/resend';
 
 export const dynamic = 'force-dynamic';
 
+const forgotAttempts = new Map<string, { count: number; resetAt: number }>();
+function checkForgotRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const window = 60 * 60 * 1000; // 1 hour
+  const record = forgotAttempts.get(ip);
+  if (!record || now > record.resetAt) {
+    forgotAttempts.set(ip, { count: 1, resetAt: now + window });
+    return true;
+  }
+  if (record.count >= 5) return false;
+  record.count++;
+  return true;
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    if (!checkForgotRateLimit(ip)) {
+      return NextResponse.json(
+        { message: 'If an account exists with this email, you will receive a password reset link.' },
+        { status: 200 }
+      );
+    }
     const { email } = await request.json();
+    if (!email || typeof email !== 'string' || email.length > 255) {
+      return NextResponse.json({ error: 'Valid email is required.' }, { status: 400 });
+    }
 
     // // Validate LSUS email
     // if (!email.endsWith('@lsus.edu')) {

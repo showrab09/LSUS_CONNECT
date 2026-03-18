@@ -111,19 +111,21 @@ export async function POST(request: NextRequest) {
       quiet_hours,
     } = body;
 
-    // Validate required fields
-    if (!title || !description || !category) {
-      return NextResponse.json(
-        { error: 'Title, description, and category are required' },
-        { status: 400 }
-      );
+    // Validate inputs
+    const { validateListing, sanitizeText, sanitizeMultiline } = await import('@/lib/validate');
+    const validation = validateListing(body);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
+    // Sanitize text fields
+    const cleanTitle = sanitizeText(title);
+    const cleanDescription = sanitizeMultiline(description);
 
     // Create listing object
     const listingData: any = {
       user_id: user.userId,
-      title,
-      description,
+      title: cleanTitle,
+      description: cleanDescription,
       category,
       location,
       images: images || [],

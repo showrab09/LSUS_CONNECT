@@ -74,6 +74,23 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { full_name, bio, location, profile_picture } = body;
 
+    // Validate and sanitize inputs
+    const { sanitizeText, sanitizeMultiline, validateLength, validateImages } = await import('@/lib/validate');
+    if (full_name !== undefined) {
+      const nameCheck = validateLength(full_name, 'Full name', 100, 2);
+      if (!nameCheck.valid) return NextResponse.json({ error: nameCheck.error }, { status: 400 });
+    }
+    if (bio !== undefined && bio.length > 500) {
+      return NextResponse.json({ error: 'Bio must be under 500 characters.' }, { status: 400 });
+    }
+    if (location !== undefined && location.length > 200) {
+      return NextResponse.json({ error: 'Location must be under 200 characters.' }, { status: 400 });
+    }
+    if (profile_picture !== undefined && profile_picture !== null && profile_picture !== '') {
+      const imgCheck = validateImages([profile_picture]);
+      if (!imgCheck.valid) return NextResponse.json({ error: imgCheck.error }, { status: 400 });
+    }
+
     // Prepare update data (only include fields that were provided)
     const updateData: any = {};
     if (full_name !== undefined) updateData.full_name = full_name;
