@@ -118,7 +118,7 @@ export default function SigninPage() {
         });
 
         setTimeout(() => {
-          router.push("/marketplace");
+          router.push("/home");
         }, 1000);
       } else {
         // Check if it's an email verification error
