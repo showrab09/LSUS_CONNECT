@@ -1,5 +1,7 @@
 "use client";
 
+import AppLayout from "@/components/AppLayout";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -153,12 +155,12 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#1E0A42] flex items-center justify-center">
+      <AppLayout>
         <div className="text-center">
           <div className="inline-block w-16 h-16 border-4 border-[#F5A623] border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="text-white text-lg">Loading settings...</p>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
@@ -167,21 +169,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1E0A42]">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/home" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-white">LSUS</span>
-              <span className="text-[#F5A623]"> Connect</span>
-            </Link>
-            <div className="flex items-center gap-4">
-              <UserDropdown />
-            </div>
-          </div>
-        </div>
-      </header>
+    <AppLayout>
 
       {/* Main Content */}
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -193,42 +181,6 @@ export default function SettingsPage() {
 
         <div className="flex gap-6">
           {/* Left Sidebar - Navigation */}
-          <aside className="w-64 flex-shrink-0">
-            <div className="rounded-2xl border border-white/10 bg-[#351470] p-4 sticky top-24">
-              <nav className="space-y-2">
-                <button
-                  onClick={() => setActiveTab("account")}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === "account"
-                      ? "bg-[#F5A623] text-[#1E0A42] font-bold"
-                      : "text-white hover:bg-[#1E0A42]"
-                  }`}
-                >
-                  🔒 Account & Security
-                </button>
-                <button
-                  onClick={() => setActiveTab("notifications")}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === "notifications"
-                      ? "bg-[#F5A623] text-[#1E0A42] font-bold"
-                      : "text-white hover:bg-[#1E0A42]"
-                  }`}
-                >
-                  🔔 Notifications
-                </button>
-                <button
-                  onClick={() => setActiveTab("privacy")}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === "privacy"
-                      ? "bg-[#F5A623] text-[#1E0A42] font-bold"
-                      : "text-white hover:bg-[#1E0A42]"
-                  }`}
-                >
-                  🛡️ Privacy & Data
-                </button>
-              </nav>
-            </div>
-          </aside>
 
           {/* Main Content Area */}
           <div className="flex-1">
@@ -476,6 +428,6 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

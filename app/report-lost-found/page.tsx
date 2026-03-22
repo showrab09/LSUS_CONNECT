@@ -68,7 +68,6 @@ export default function ReportLostFoundPage() {
   };
 
   const handleSubmit = async () => {
-    console.log("=== SUBMIT CLICKED ===");
     
     // Validation
     if (!title.trim()) {
@@ -108,8 +107,6 @@ export default function ReportLostFoundPage() {
         status: "ACTIVE"
       };
 
-      console.log("Sending data:", itemData);
-
       // Try to post to lost-found endpoint
       const response = await fetch('/api/lost-found', {
         method: 'POST',
@@ -119,13 +116,9 @@ export default function ReportLostFoundPage() {
         credentials: 'include',
         body: JSON.stringify(itemData),
       });
-
-      console.log("Response status:", response.status);
       const data = await response.json();
-      console.log("Response data:", data);
 
       if (response.ok) {
-        console.log("SUCCESS! Redirecting to lost & found...");
         router.push('/lost-found');
       } else {
         setError(data.error || "Failed to report item");

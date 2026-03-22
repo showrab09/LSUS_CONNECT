@@ -6,6 +6,8 @@ import Link from "next/link";
 export default function FloatingChat() {
   const [isMounted, setIsMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const [conversations, setConversations] = useState<any[]>([]);
   const [openChats, setOpenChats] = useState<string[]>([]);
   const [messages, setMessages] = useState<{ [key: string]: any[] }>({});
@@ -18,6 +20,29 @@ export default function FloatingChat() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        popupRef.current && !popupRef.current.contains(e.target as Node) &&
+        buttonRef.current && !buttonRef.current.contains(e.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isOpen]);
+
+  // Close on page navigation
+  useEffect(() => {
+    if (!isMounted) return;
+    const handleRouteChange = () => setIsOpen(false);
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, [isMounted]);
 
   // Get current user ID
   useEffect(() => {
@@ -187,6 +212,7 @@ export default function FloatingChat() {
       {/* Floating Chat Icon */}
       <div className="fixed bottom-6 right-6 z-50">
         <button
+          ref={buttonRef}
           onClick={() => setIsOpen(!isOpen)}
           className="relative w-14 h-14 bg-[#FDD023] rounded-full shadow-lg hover:bg-[#FFE34A] transition-all flex items-center justify-center"
         >
@@ -202,7 +228,7 @@ export default function FloatingChat() {
 
         {/* Mini Inbox Popup */}
         {isOpen && (
-          <div className="absolute bottom-16 right-0 w-80 bg-[#3a1364] rounded-lg shadow-xl border border-[#5a2d8c] overflow-hidden">
+          <div ref={popupRef} className="absolute bottom-16 right-0 w-80 bg-[#3a1364] rounded-lg shadow-xl border border-[#5a2d8c] overflow-hidden">
             {/* Header */}
             <div className="bg-[#2a0d44] p-4 border-b border-[#5a2d8c] flex items-center justify-between">
               <h3 className="text-white font-bold">Messages</h3>

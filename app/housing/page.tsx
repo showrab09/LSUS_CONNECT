@@ -1,5 +1,7 @@
 "use client";
 
+import AppLayout from "@/components/AppLayout";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
@@ -121,97 +123,12 @@ export default function HousingPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#1E0A42] text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
-        <div className="mx-auto flex h-[60px] max-w-[1920px] items-center justify-between gap-4 px-4 sm:px-6">
-          <Link href="/home" className="text-xl font-extrabold tracking-tight">
-            <span className="text-white">LSUS</span>
-            <span className="text-[#F5A623]"> Connect</span>
-          </Link>
-
-          {/* Search */}
-          <div className="flex max-w-xl flex-1 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2">
-            <span className="text-[#C4B0E0]">🔍</span>
-            <input
-              type="text"
-              placeholder="Search housing near campus..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-[#8B72BE]"
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link href="/post-listing"
-              className="hidden sm:block rounded-full bg-[#F5A623] px-5 py-2 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
-              + Post Housing
-            </Link>
-            <UserDropdown />
-          </div>
-        </div>
-      </header>
+    <AppLayout>
 
       <div className="mx-auto max-w-[1920px] px-4 py-6 sm:px-6">
         <div className="flex gap-6">
 
           {/* Sidebar Filters */}
-          <aside className="hidden w-64 flex-shrink-0 lg:block">
-            <div className="sticky top-24 rounded-2xl border border-white/10 bg-[#351470] p-6">
-              <h2 className="mb-6 text-lg font-bold text-white">Filters</h2>
-
-              {/* Listing Type */}
-              <div className="mb-6">
-                <h3 className="mb-3 text-sm font-semibold text-white">Type</h3>
-                <div className="space-y-2">
-                  {LISTING_TYPES.map(type => (
-                    <label key={type} className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-sm text-[#C4B0E0] transition hover:bg-white/5 hover:text-white">
-                      <input type="radio" name="type" checked={selectedType === type}
-                        onChange={() => setSelectedType(type)} className="accent-[#F5A623]" />
-                      <span>{type}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Price Range */}
-              <div className="mb-6">
-                <h3 className="mb-3 text-sm font-semibold text-white">Monthly Rent</h3>
-                <div className="space-y-2">
-                  {PRICE_RANGES.map((range, i) => (
-                    <label key={range.label} className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-sm text-[#C4B0E0] transition hover:bg-white/5 hover:text-white">
-                      <input type="radio" name="price" checked={selectedPriceRange === i}
-                        onChange={() => setSelectedPriceRange(i)} className="accent-[#F5A623]" />
-                      <span>{range.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Bedrooms */}
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-white">Bedrooms</h3>
-                <div className="flex flex-wrap gap-2">
-                  {[null, 1, 2, 3, 4].map(n => (
-                    <button key={String(n)} onClick={() => setBedroomsFilter(n)}
-                      className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${bedroomsFilter === n
-                        ? "bg-[#F5A623] text-[#1E0A42]"
-                        : "border border-white/10 bg-white/5 text-[#C4B0E0] hover:bg-white/10"}`}>
-                      {n === null ? "Any" : n === 4 ? "4+" : `${n} BR`}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Clear filters */}
-              {(selectedType !== "All" || selectedPriceRange !== 0 || bedroomsFilter !== null || searchQuery) && (
-                <button onClick={() => { setSelectedType("All"); setSelectedPriceRange(0); setBedroomsFilter(null); setSearchQuery(""); }}
-                  className="mt-6 w-full rounded-full bg-white/10 py-2 text-sm font-bold text-[#C4B0E0] transition hover:bg-white/20">
-                  Clear All Filters
-                </button>
-              )}
-            </div>
-          </aside>
 
           {/* Main Content */}
           <div className="min-w-0 flex-1">
@@ -374,6 +291,6 @@ export default function HousingPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

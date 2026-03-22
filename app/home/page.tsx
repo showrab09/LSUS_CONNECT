@@ -1,5 +1,6 @@
 "use client";
 
+import AppLayout from "@/components/AppLayout";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
@@ -685,282 +686,166 @@ export default function HomeFeedPage() {
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { currentUser, isLoading: userLoading } = useCurrentUser();
 
-  useEffect(() => {
-    void fetchFeed();
-  }, []);
+  useEffect(() => { void fetchFeed(); }, []);
 
   const fetchFeed = async () => {
-    setIsLoading(true);
-    setError("");
-
+    setIsLoading(true); setError("");
     try {
       const [listingsRes, postsRes, lostFoundRes] = await Promise.all([
         fetch("/api/listings?limit=20", { credentials: "include" }),
         fetch("/api/posts?limit=20", { credentials: "include" }),
         fetch("/api/lost-found", { credentials: "include" }),
       ]);
-
       const combined: FeedItem[] = [];
-
       if (listingsRes.ok) {
         const data = await listingsRes.json();
-        (data.listings || data.items || []).forEach((listing: any) => {
-          const owner = Array.isArray(listing.user) ? listing.user[0] : listing.user;
+        (data.listings || []).forEach((item: any) => {
+          const owner = Array.isArray(item.user) ? item.user[0] : item.user;
           if (!owner) return;
-          combined.push({
-            id: listing.id,
-            type: "listing",
-            user: owner,
-            title: listing.title,
-            description: listing.description,
-            price: listing.price,
-            images: listing.images || [],
-            location: listing.location,
-            category: listing.category,
-            created_at: listing.created_at,
-          });
+          combined.push({ id: item.id, type: "listing", user: owner, title: item.title, description: item.description, price: item.price, images: item.images || [], location: item.location, category: item.category, created_at: item.created_at });
         });
       }
-
       if (postsRes.ok) {
         const data = await postsRes.json();
-        (data.posts || []).forEach((post: any) => {
-          const owner = Array.isArray(post.user) ? post.user[0] : post.user;
+        (data.posts || []).forEach((item: any) => {
+          const owner = Array.isArray(item.user) ? item.user[0] : item.user;
           if (!owner) return;
-          combined.push({
-            id: post.id,
-            type: "social",
-            user: owner,
-            content: post.content,
-            location: post.location,
-            images: post.images || [],
-            created_at: post.created_at,
-          });
+          combined.push({ id: item.id, type: "social", user: owner, content: item.content, location: item.location, images: item.images || [], created_at: item.created_at });
         });
       }
-
       if (lostFoundRes.ok) {
         const data = await lostFoundRes.json();
-        (data.items || []).forEach((lostFound: any) => {
-          const owner = Array.isArray(lostFound.user) ? lostFound.user[0] : lostFound.user;
+        (data.items || []).forEach((item: any) => {
+          const owner = Array.isArray(item.user) ? item.user[0] : item.user;
           if (!owner) return;
-          combined.push({
-            id: lostFound.id,
-            type: "lost_found",
-            user: owner,
-            title: lostFound.title,
-            description: lostFound.description,
-            images: lostFound.images || [],
-            location: lostFound.location,
-            category: lostFound.category,
-            lost_found_type: lostFound.type,
-            created_at: lostFound.created_at,
-          });
+          combined.push({ id: item.id, type: "lost_found", user: owner, title: item.title, description: item.description, images: item.images || [], location: item.location, category: item.category, lost_found_type: item.type, created_at: item.created_at });
         });
       }
-
-      combined.sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setFeedItems(combined);
-    } catch {
-      setError("Failed to load feed. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { setError("Failed to load feed. Please try again."); }
+    finally { setIsLoading(false); }
   };
 
-  const toggleFilter = (filter: string) => {
-    setActiveFilters(prev =>
-      prev.includes(filter) ? prev.filter(item => item !== filter) : [...prev, filter]
-    );
-  };
-
-  const filteredItems = useMemo(() => {
-    if (activeFilters.length === 0) return feedItems;
-    return feedItems.filter(item => {
-      if (activeFilters.includes("Lost & Found") && item.type === "lost_found") return true;
-      if (activeFilters.includes("Social") && item.type === "social") return true;
-      if (item.category && activeFilters.includes(item.category)) return true;
-      return false;
-    });
-  }, [activeFilters, feedItems]);
-
-  const socialCount = feedItems.filter(item => item.type === "social").length;
-  const marketplaceCount = feedItems.filter(item => item.type === "listing").length;
+  const socialItems    = feedItems.filter(i => i.type === "social");
+  const listingItems   = feedItems.filter(i => i.type === "listing" && i.category !== "Housing");
+  const housingItems   = feedItems.filter(i => i.type === "listing" && i.category === "Housing");
+  const lostFoundItems = feedItems.filter(i => i.type === "lost_found");
 
   return (
-    <div className="min-h-screen bg-[#1E0A42] text-white">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
-        <div className="mx-auto flex h-[60px] max-w-[1600px] items-center gap-4 px-4 lg:px-6">
-          <div className="flex min-w-[220px] items-center gap-3">
-            <button
-              onClick={() => setIsSidebarOpen(prev => !prev)}
-              className="rounded-lg p-2 transition hover:bg-white/5 lg:hidden"
-            >
-              ☰
-            </button>
-            <Link href="/home" className="text-xl font-extrabold tracking-tight">
-              <span className="text-white">LSUS</span>
-              <span className="text-[#F5A623]"> Connect</span>
+    <AppLayout>
+      {/* Welcome Banner */}
+      <section className="mb-8 overflow-hidden rounded-2xl border border-[#F5A623]/20 bg-[linear-gradient(135deg,#5B28A8_0%,#3D1A78_50%,#7B4A1E_100%)] p-6">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <p className="mb-1 text-sm text-[#C4B0E0]">Welcome back</p>
+            <h1 className="text-3xl font-extrabold tracking-tight">
+              {currentUser.full_name || <span className="inline-block h-8 w-48 animate-pulse rounded-lg bg-white/10" />}
+            </h1>
+            <p className="mt-2 text-sm text-[#C4B0E0]">Your campus hub for social posts, listings, housing, and lost and found updates.</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/social"      className="min-w-[120px] rounded-xl border border-white/20 bg-white/10 px-4 py-3 transition hover:bg-white/20">
+              <div className="text-2xl font-extrabold text-white">{socialItems.length}</div>
+              <div className="text-xs text-white/70">Social Posts</div>
+            </Link>
+            <Link href="/marketplace" className="min-w-[120px] rounded-xl border border-white/20 bg-white/10 px-4 py-3 transition hover:bg-white/20">
+              <div className="text-2xl font-extrabold text-white">{listingItems.length}</div>
+              <div className="text-xs text-white/70">Listings</div>
+            </Link>
+            <Link href="/housing"     className="min-w-[120px] rounded-xl border border-white/20 bg-white/10 px-4 py-3 transition hover:bg-white/20">
+              <div className="text-2xl font-extrabold text-white">{housingItems.length}</div>
+              <div className="text-xs text-white/70">Housing</div>
             </Link>
           </div>
-
-          <div className="hidden max-w-[480px] flex-1 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 md:flex">
-            <span className="text-[#C4B0E0]">🔍</span>
-            <input
-              type="text"
-              placeholder="Search LSUS Connect"
-              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-[#8B72BE]"
-            />
-          </div>
-
-          <div className="ml-auto flex items-center gap-3">
-            <UserDropdown />
-          </div>
         </div>
-      </header>
+      </section>
 
-      <div className="mx-auto flex max-w-[1600px] h-[calc(100vh-60px)] overflow-hidden">
-        <aside
-          className={`fixed left-0 top-[60px] z-40 h-[calc(100vh-60px)] w-[220px] flex-shrink-0 border-r border-white/10 bg-[#2E1065] p-4 transition-transform lg:sticky lg:top-0 lg:h-full lg:translate-x-0 ${
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          {/* Single card wrapping nav + filters */}
-          <div className="rounded-2xl border border-white/10 bg-[#2A0F5A] p-3">
-            <nav className="space-y-1">
-              {LEFT_NAV.map(link => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
-                    link.active
-                      ? "bg-[linear-gradient(135deg,#5B28A8,#4A1E8A)] text-white"
-                      : "text-[#C4B0E0] hover:bg-white/5 hover:text-white"
-                  }`}
-                  onClick={() => setIsSidebarOpen(false)}
-                >
-                  <span>{link.icon}</span>
-                  <span>{link.label}</span>
-                </Link>
-              ))}
-            </nav>
+      {isLoading && (
+        <div className="py-20 text-center">
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
+          <p className="mt-4 text-white">Loading feed...</p>
+        </div>
+      )}
 
-            <div className="my-3 h-px bg-white/10" />
+      {error && !isLoading && (
+        <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-300">
+          {error} <button onClick={fetchFeed} className="ml-3 underline">Retry</button>
+        </div>
+      )}
 
-            <div>
-              <p className="mb-3 px-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#8B72BE]">
-                Feed Filters
-              </p>
-              <div className="space-y-1">
-                {FILTERS.map(filter => (
-                  <label key={filter} className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm text-[#C4B0E0] transition hover:bg-white/5 hover:text-white">
-                    <input
-                      type="checkbox"
-                      checked={activeFilters.includes(filter)}
-                      onChange={() => toggleFilter(filter)}
-                      className="h-4 w-4 accent-[#F5A623]"
-                    />
-                    <span>{filter}</span>
-                  </label>
-                ))}
-              </div>
-              {activeFilters.length > 0 && (
-                <button
-                  onClick={() => setActiveFilters([])}
-                  className="mt-4 w-full rounded-full bg-[#F5A623] px-4 py-2 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]"
-                >
-                  Clear Filters
-                </button>
-              )}
+      {!isLoading && !error && (
+        <>
+          {/* Compose Box */}
+          {!userLoading && (
+            <div className="mb-8">
+              <ComposeBox currentUser={currentUser} onPost={item => setFeedItems(prev => [item, ...prev])} />
             </div>
-          </div>
-        </aside>
+          )}
 
-        <main className="min-w-0 flex-1 overflow-y-auto px-4 py-6 lg:ml-0 lg:px-7">
-          <section className="mb-6 overflow-hidden rounded-2xl border border-[#F5A623]/20 bg-[linear-gradient(135deg,#5B28A8_0%,#3D1A78_50%,#7B4A1E_100%)] p-6">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-              <div>
-                <p className="mb-1 text-sm text-[#C4B0E0]">Welcome back</p>
-                <h1 className="text-3xl font-extrabold tracking-tight">
-                  {currentUser.full_name || <span className="inline-block h-8 w-48 animate-pulse rounded-lg bg-white/10" />}
-                </h1>
-                <p className="mt-2 text-sm text-[#C4B0E0]">
-                  Your campus hub for social posts, listings, housing, and lost and found updates.
-                </p>
+          {/* ── Social Feed Section ── */}
+          <section data-section="social" className="mb-10">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">👥</span>
+                <h2 className="text-xl font-bold text-white">Social Feed</h2>
               </div>
-
-              <div className="flex flex-wrap gap-3">
-                <Link href="/home" className="min-w-[130px] rounded-xl border border-white/20 bg-white/10 px-4 py-3 transition hover:bg-white/20">
-                  <div className="text-2xl font-extrabold text-white">{feedItems.length}</div>
-                  <div className="text-xs text-white/70">Total Feed Items</div>
-                </Link>
-                <Link href="/social" className="min-w-[130px] rounded-xl border border-white/20 bg-white/10 px-4 py-3 transition hover:bg-white/20">
-                  <div className="text-2xl font-extrabold text-white">{socialCount}</div>
-                  <div className="text-xs text-white/70">Social Posts</div>
-                </Link>
-                <Link href="/marketplace" className="min-w-[130px] rounded-xl border border-white/20 bg-white/10 px-4 py-3 transition hover:bg-white/20">
-                  <div className="text-2xl font-extrabold text-white">{marketplaceCount}</div>
-                  <div className="text-xs text-white/70">Listings</div>
-                </Link>
-              </div>
+              <Link href="/social" className="text-sm font-bold text-[#F5A623] transition hover:underline">See All →</Link>
             </div>
+            {socialItems.length === 0
+              ? <p className="rounded-2xl border border-white/10 bg-[#351470] p-8 text-center text-[#C4B0E0]">No social posts yet. Be the first to share something!</p>
+              : <div className="space-y-4">{socialItems.slice(0, 4).map(item => <FeedCard key={`social-${item.id}`} item={item} />)}</div>
+            }
           </section>
 
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start">
-            <div className="min-w-0">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-xl font-bold text-white">
-                    {activeFilters.length > 0 ? `Filtered Feed (${filteredItems.length})` : "Campus Feed"}
-                  </h2>
-                  <p className="text-sm text-[#C4B0E0]">Fresh activity from the LSUS Connect community</p>
-                </div>
-                <button onClick={fetchFeed} className="rounded-full border border-[#F5A623] px-4 py-2 text-sm font-bold text-[#F5A623] transition hover:bg-[#F5A623] hover:text-[#1E0A42]">
-                  Refresh
-                </button>
+          {/* ── Marketplace Section ── */}
+          <section data-section="marketplace" className="mb-10">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🛍️</span>
+                <h2 className="text-xl font-bold text-white">Marketplace</h2>
               </div>
-
-              {!userLoading && <ComposeBox currentUser={currentUser} onPost={item => setFeedItems(prev => [item, ...prev])} />}
-
-              {isLoading && (
-                <div className="py-20 text-center">
-                  <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
-                  <p className="mt-4 text-white">Loading feed...</p>
-                </div>
-              )}
-
-              {error && !isLoading && (
-                <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-300">
-                  {error}
-                  <button onClick={fetchFeed} className="ml-3 underline">
-                    Retry
-                  </button>
-                </div>
-              )}
-
-              {!isLoading && !error && filteredItems.length === 0 && (
-                <div className="py-20 text-center">
-                  <p className="text-lg text-[#C4B0E0]">
-                    {activeFilters.length > 0 ? "No posts match your filters." : "The feed is empty."}
-                  </p>
-                </div>
-              )}
-
-              <div className="mt-6 space-y-6">
-                {!isLoading && !error && filteredItems.map(item => <FeedCard key={`${item.type}-${item.id}`} item={item} />)}
-              </div>
+              <Link href="/marketplace" className="text-sm font-bold text-[#F5A623] transition hover:underline">See All →</Link>
             </div>
+            {listingItems.length === 0
+              ? <p className="rounded-2xl border border-white/10 bg-[#351470] p-8 text-center text-[#C4B0E0]">No listings yet.</p>
+              : <div className="space-y-4">{listingItems.slice(0, 4).map(item => <FeedCard key={`listing-${item.id}`} item={item} />)}</div>
+            }
+          </section>
 
-            <RightPanel currentUser={currentUser} totalItems={feedItems.length} activeFilters={activeFilters} userLoading={userLoading} />
-          </div>
-        </main>
-      </div>
-    </div>
+          {/* ── Housing Section ── */}
+          <section data-section="housing" className="mb-10">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🏘️</span>
+                <h2 className="text-xl font-bold text-white">Housing Near Campus</h2>
+              </div>
+              <Link href="/housing" className="text-sm font-bold text-[#F5A623] transition hover:underline">See All →</Link>
+            </div>
+            {housingItems.length === 0
+              ? <p className="rounded-2xl border border-white/10 bg-[#351470] p-8 text-center text-[#C4B0E0]">No housing listings yet.</p>
+              : <div className="space-y-4">{housingItems.slice(0, 3).map(item => <FeedCard key={`housing-${item.id}`} item={item} />)}</div>
+            }
+          </section>
+
+          {/* ── Lost & Found Section ── */}
+          <section data-section="lost-found" className="mb-10">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🔎</span>
+                <h2 className="text-xl font-bold text-white">Lost &amp; Found</h2>
+              </div>
+              <Link href="/lost-found" className="text-sm font-bold text-[#F5A623] transition hover:underline">See All →</Link>
+            </div>
+            {lostFoundItems.length === 0
+              ? <p className="rounded-2xl border border-white/10 bg-[#351470] p-8 text-center text-[#C4B0E0]">No lost &amp; found items.</p>
+              : <div className="space-y-4">{lostFoundItems.slice(0, 3).map(item => <FeedCard key={`lf-${item.id}`} item={item} />)}</div>
+            }
+          </section>
+        </>
+      )}
+    </AppLayout>
   );
 }

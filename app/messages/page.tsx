@@ -1,5 +1,7 @@
 "use client";
 
+import AppLayout from "@/components/AppLayout";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -83,21 +85,7 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1E0A42] text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/home" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-white">LSUS</span>
-              <span className="text-[#F5A623]"> Connect</span>
-            </Link>
-            <div className="flex items-center gap-4">
-              <UserDropdown />
-            </div>
-          </div>
-        </div>
-      </header>
+    <AppLayout>
 
       {/* Main Content */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -222,6 +210,6 @@ export default function MessagesPage() {
           </>
         )}
       </div>
-    </div>
+    </AppLayout>
   );
 }

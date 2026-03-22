@@ -1,5 +1,7 @@
 "use client";
 
+import AppLayout from "@/components/AppLayout";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
@@ -232,12 +234,12 @@ export default function UserProfilePage() {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#1E0A42]">
+      <AppLayout>
         <div className="text-center">
           <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
           <p className="text-lg text-white">Loading profile...</p>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
@@ -245,17 +247,7 @@ export default function UserProfilePage() {
   const displayPicture = user.profile_picture;
 
   return (
-    <div className="min-h-screen bg-[#1E0A42] text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
-        <div className="mx-auto flex h-[60px] max-w-[1920px] items-center justify-between gap-4 px-4 sm:px-6">
-          <Link href="/home" className="text-xl font-extrabold tracking-tight">
-            <span className="text-white">LSUS</span>
-            <span className="text-[#F5A623]"> Connect</span>
-          </Link>
-          <UserDropdown />
-        </div>
-      </header>
+    <AppLayout>
 
       <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
         {/* Profile Header Card */}
@@ -511,6 +503,6 @@ export default function UserProfilePage() {
           onSuccess={() => { fetchUserListings(); }}
         />
       )}
-    </div>
+    </AppLayout>
   );
 }

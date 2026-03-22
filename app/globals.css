@@ -21,3 +21,12 @@ body {
   color: var(--foreground);
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
 }
+
+/* Scrollable columns — no visible scrollbar, scroll works on hover */
+.app-scrollable {
+  scrollbar-width: none;       /* Firefox */
+  -ms-overflow-style: none;    /* IE/Edge */
+}
+.app-scrollable::-webkit-scrollbar {
+  display: none;               /* Chrome/Safari */
+}

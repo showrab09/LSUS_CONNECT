@@ -1,9 +1,10 @@
 "use client";
 
+import AppLayout from "@/components/AppLayout";
+
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import UserDropdown from "@/components/UserDropdown";
 
 interface Message {
   id: string;
@@ -180,69 +181,45 @@ export default function ChatPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#1E0A42] text-white flex items-center justify-center">
+      <AppLayout>
         <div className="text-center">
           <div className="inline-block w-16 h-16 border-4 border-[#F5A623] border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="text-white text-lg">Loading conversation...</p>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   if (error && !conversation) {
     return (
-      <div className="min-h-screen bg-[#1E0A42] text-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-400 text-xl mb-4">{error}</p>
-          <Link href="/messages" className="text-[#F5A623] hover:underline">
-            Back to Messages
-          </Link>
+      <AppLayout>
+        <div className="flex items-center justify-center py-20 text-center">
+          <div>
+            <p className="text-red-400 text-xl mb-4">{error}</p>
+            <Link href="/messages" className="text-[#F5A623] hover:underline">Back to Messages</Link>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   if (!conversation) {
     return (
-      <div className="min-h-screen bg-[#1E0A42] text-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-white text-xl mb-4">Conversation not found</p>
-          <Link href="/messages" className="text-[#F5A623] hover:underline">
-            Back to Messages
-          </Link>
+      <AppLayout>
+        <div className="flex items-center justify-center py-20 text-center">
+          <div>
+            <p className="text-white text-xl mb-4">Conversation not found</p>
+            <Link href="/messages" className="text-[#F5A623] hover:underline">Back to Messages</Link>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   const otherUser = getOtherUser();
 
   return (
-    <div className="min-h-screen bg-[#1E0A42] text-white flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/messages"
-                className="text-white hover:text-[#F5A623] transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </Link>
-              <div>
-                <h1 className="text-white text-lg font-bold">{otherUser?.name}</h1>
-                <p className="text-[#8B72BE] text-xs">Re: {conversation.listing.title}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <UserDropdown />
-            </div>
-          </div>
-        </div>
-      </header>
+    <AppLayout>
 
       {/* Chat Container */}
       <div className="flex-1 flex flex-col max-w-[1200px] w-full mx-auto">
@@ -344,6 +321,6 @@ export default function ChatPage() {
           </form>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

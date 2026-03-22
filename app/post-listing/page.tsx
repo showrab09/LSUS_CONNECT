@@ -1,5 +1,7 @@
 "use client";
 
+import AppLayout from "@/components/AppLayout";
+
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -297,52 +299,7 @@ export default function PostListingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1E0A42]">
-      {/* Header - Responsive */}
-      <header className="bg-[#351470] border-b border-white/10 sticky top-0 z-50">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/home" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-white">LSUS</span>
-              <span className="text-[#F5A623]"> Connect</span>
-            </Link>
-
-            {/* Desktop Nav */}
-            <div className="hidden md:flex items-center gap-4 text-white text-sm">
-              <Link href="/marketplace" className="hover:text-[#F5A623] transition-colors">Marketplace</Link>
-              <UserDropdown />
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-white hover:text-[#F5A623] transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {isMobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
-
-            {/* Mobile Profile Dropdown */}
-            <div className="md:hidden">
-              <UserDropdown />
-            </div>
-          </div>
-
-          {/* Mobile Menu */}
-          {isMobileMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 border-t border-white/10 pt-4">
-              <nav className="flex flex-col gap-3">
-                <Link href="/marketplace" className="text-white hover:text-[#F5A623] transition-colors py-2 px-3 rounded hover:bg-[#1E0A42]">Marketplace</Link>
-              </nav>
-            </div>
-          )}
-        </div>
-      </header>
+    <AppLayout>
 
       {/* Main Content - Responsive Grid */}
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -581,6 +538,6 @@ export default function PostListingPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

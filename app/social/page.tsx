@@ -1,5 +1,7 @@
 "use client";
 
+import AppLayout from "@/components/AppLayout";
+
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
@@ -435,47 +437,7 @@ export default function SocialPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1E0A42] text-white">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
-        <div className="mx-auto flex h-[60px] max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="rounded-lg p-2 transition hover:bg-white/5 lg:hidden">
-              {isMobileMenuOpen ? "✕" : "☰"}
-            </button>
-            <Link href="/home" className="text-xl font-extrabold tracking-tight">
-              <span className="text-white">LSUS</span>
-              <span className="text-[#F5A623]"> Connect</span>
-            </Link>
-          </div>
-
-          <nav className="hidden lg:flex items-center gap-5">
-            {NAV_LINKS.map(link => (
-              <Link key={link.href} href={link.href}
-                className={`text-sm transition ${link.active
-                  ? "font-semibold text-[#F5A623] border-b-2 border-[#F5A623] pb-0.5"
-                  : "text-[#C4B0E0] hover:text-white"}`}>
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          <UserDropdown />
-        </div>
-
-        {isMobileMenuOpen && (
-          <nav className="lg:hidden border-t border-white/10 bg-[#2E1065] px-4 pb-4 pt-3">
-            {NAV_LINKS.map(link => (
-              <Link key={link.href} href={link.href} onClick={() => setIsMobileMenuOpen(false)}
-                className={`block rounded-xl px-4 py-2.5 text-sm transition ${link.active
-                  ? "font-semibold text-[#F5A623]"
-                  : "text-[#C4B0E0] hover:bg-white/5 hover:text-white"}`}>
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        )}
-      </header>
-
+    <AppLayout>
       <div className="mx-auto max-w-[680px] px-4 py-6 sm:px-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -517,6 +479,6 @@ export default function SocialPage() {
           ))}
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

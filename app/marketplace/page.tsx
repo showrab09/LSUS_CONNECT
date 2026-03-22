@@ -1,5 +1,7 @@
 "use client";
 
+import AppLayout from "@/components/AppLayout";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
@@ -133,91 +135,12 @@ export default function MarketplacePage() {
     name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-[#1E0A42] text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
-        <div className="mx-auto flex h-[60px] max-w-[1920px] items-center justify-between gap-4 px-4 sm:px-6">
-          <Link href="/home" className="text-xl font-extrabold tracking-tight">
-            <span className="text-white">LSUS</span>
-            <span className="text-[#F5A623]"> Connect</span>
-          </Link>
-
-          {/* Search Bar */}
-          <div className="flex max-w-2xl flex-1 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2">
-            <span className="text-[#C4B0E0]">🔍</span>
-            <input
-              type="text"
-              placeholder="Search listings..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-[#8B72BE]"
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link href="/post-listing"
-              className="hidden sm:block rounded-full bg-[#F5A623] px-5 py-2 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
-              + Create Listing
-            </Link>
-            <UserDropdown />
-          </div>
-        </div>
-      </header>
+    <AppLayout>
 
       {/* Main Content */}
       <div className="mx-auto max-w-[1920px] px-4 py-6 sm:px-6">
         <div className="flex gap-6">
           {/* Left Sidebar - Filters */}
-          <aside className="hidden w-64 flex-shrink-0 lg:block">
-            <div className="sticky top-24 rounded-2xl border border-white/10 bg-[#351470] p-6">
-              <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white">Filters</h2>
-                {(selectedCategories.length > 0 || selectedPriceTypes.length > 0 || searchQuery) && (
-                  <button onClick={clearFilters} className="text-xs text-[#F5A623] hover:underline">
-                    Clear all
-                  </button>
-                )}
-              </div>
-
-              {/* Categories */}
-              <div className="mb-6">
-                <h3 className="mb-3 text-sm font-semibold text-white">Category</h3>
-                <div className="space-y-2">
-                  {CATEGORIES.map((category) => (
-                    <label key={category}
-                      className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-sm text-[#C4B0E0] transition hover:bg-white/5 hover:text-white">
-                      <input
-                        type="checkbox"
-                        checked={selectedCategories.includes(category)}
-                        onChange={() => toggleCategory(category)}
-                        className="h-4 w-4 accent-[#F5A623]"
-                      />
-                      <span>{category}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Price Type */}
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-white">Price Type</h3>
-                <div className="space-y-2">
-                  {priceTypes.map((type) => (
-                    <label key={type.value}
-                      className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-sm text-[#C4B0E0] transition hover:bg-white/5 hover:text-white">
-                      <input
-                        type="checkbox"
-                        checked={selectedPriceTypes.includes(type.value)}
-                        onChange={() => togglePriceType(type.value)}
-                        className="h-4 w-4 accent-[#F5A623]"
-                      />
-                      <span>{type.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </aside>
 
           {/* Main Content Area */}
           <div className="min-w-0 flex-1">
@@ -369,6 +292,6 @@ export default function MarketplacePage() {
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }
