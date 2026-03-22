@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     const { content, post_id, listing_id, lost_found_id } = body;
 
     // Validate inputs
-    const { validateComment, sanitizeText } = await import('@/lib/validate');
+    const { validateComment, sanitizeMultiline } = await import('@/lib/validate');
     const validation = validateComment(body);
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       .from('comments')
       .insert([{
         user_id: user.userId,
-        content: content.trim(),
+        content: sanitizeMultiline(content),
         post_id: post_id || null,
         listing_id: listing_id || null,
         lost_found_id: lost_found_id || null,
