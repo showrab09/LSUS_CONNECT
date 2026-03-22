@@ -2,12 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
+import { JWT_SECRET } from '@/lib/jwt';
 
 export const dynamic = 'force-dynamic';
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
-);
 
 // Verify JWT token and get user ID
 async function verifyToken(request: NextRequest) {
