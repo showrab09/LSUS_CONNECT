@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { jwtVerify } from 'jose';
 import { JWT_SECRET } from '@/lib/jwt';
+import { moderateFields } from '@/lib/moderation';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,6 +75,16 @@ export async function POST(request: NextRequest) {
     const validation = validatePost(body);
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
+    // Content moderation check
+    const modResult = moderateFields({ content: content || '', location: location || '' });
+    if (modResult.flagged && modResult.severity === 'critical') {
+      return NextResponse.json({
+        error: 'Your post contains content that violates our community guidelines and cannot be published.',
+        flagged: true,
+        categories: modResult.categories,
+      }, { status: 400 });
     }
 
     // Create the post

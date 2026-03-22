@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { moderateFields } from '@/lib/moderation';
 import { supabase } from '@/lib/supabase';
 import { jwtVerify } from 'jose';
 import { JWT_SECRET } from '@/lib/jwt';
@@ -127,6 +128,16 @@ export async function POST(request: NextRequest) {
     const validation = validateListing(body);
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
+    // Content moderation check
+    const modResult = moderateFields({ title: title || '', description: description || '', location: location || '' });
+    if (modResult.flagged && modResult.severity === 'critical') {
+      return NextResponse.json({
+        error: 'Your listing contains content that violates our community guidelines.',
+        flagged: true,
+        categories: modResult.categories,
+      }, { status: 400 });
     }
     // Sanitize text fields
     const cleanTitle = sanitizeText(title);

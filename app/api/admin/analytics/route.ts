@@ -1,73 +1,95 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { jwtVerify } from 'jose';
 
 export const dynamic = 'force-dynamic';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
-);
-
-async function verifyAdminToken(request: NextRequest) {
-  try {
-    const token = request.cookies.get('adminToken')?.value;
-    if (!token) return null;
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    if (!payload.isAdmin) return null;
-    return payload;
-  } catch {
-    return null;
-  }
-}
-
 export async function GET(request: NextRequest) {
   try {
-    // TODO: Re-enable before production
-    // const admin = await verifyAdminToken(request);
-    // if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Run all counts in parallel
     const [
       usersResult,
+      newUsersResult,
       listingsResult,
       postsResult,
       lostFoundResult,
       recentUsersResult,
       recentListingsResult,
+      recentPostsResult,
+      recentLostFoundResult,
+      flaggedListingsResult,
     ] = await Promise.all([
-      supabase.from('users').select('id, created_at', { count: 'exact' }),
-      supabase.from('listings').select('id, status', { count: 'exact' }).eq('status', 'ACTIVE'),
-      supabase.from('posts').select('id', { count: 'exact' }).eq('status', 'ACTIVE'),
-      supabase.from('lost_found').select('id, type', { count: 'exact' }).eq('status', 'ACTIVE'),
-      // Recent signups - last 7 days
+      // Total users
+      supabase.from('users').select('id', { count: 'exact', head: true }),
+      // New users last 7 days
+      supabase.from('users').select('id', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
+      // Active listings
+      supabase.from('listings').select('id', { count: 'exact', head: true }).eq('status', 'ACTIVE'),
+      // Active posts
+      supabase.from('posts').select('id', { count: 'exact', head: true }),
+      // Lost & found
+      supabase.from('lost_found').select('id', { count: 'exact', head: true }).eq('status', 'ACTIVE'),
+      // Recent users
       supabase.from('users')
-        .select('id, full_name, email, created_at, is_verified')
+        .select('id, full_name, email, is_verified, created_at')
         .order('created_at', { ascending: false })
         .limit(10),
       // Recent listings
       supabase.from('listings')
-        .select('id, title, category, status, created_at, user:users(full_name)')
+        .select('id, title, category, status, created_at, user:users(full_name, email)')
         .order('created_at', { ascending: false })
+        .limit(20),
+      // Recent posts
+      supabase.from('posts')
+        .select('id, content, created_at, user:users(full_name, email)')
+        .order('created_at', { ascending: false })
+        .limit(20),
+      // Recent lost & found
+      supabase.from('lost_found')
+        .select('id, title, type, status, created_at, user:users(full_name, email)')
+        .order('created_at', { ascending: false })
+        .limit(10),
+      // Flagged/reported listings (status = FLAGGED or REPORTED if exists, else just get all for moderation)
+      supabase.from('listings')
+        .select('id, title, category, status, created_at, user:users(full_name, email)')
+        .in('status', ['FLAGGED', 'REPORTED', 'PENDING'])
         .limit(10),
     ]);
 
-    // New signups in last 7 days
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { count: newSignups } = await supabase
-      .from('users')
-      .select('id', { count: 'exact', head: true })
-      .gte('created_at', sevenDaysAgo);
+    // Daily signups for last 7 days for traffic chart
+    const dailySignups = [];
+    for (let i = 6; i >= 0; i--) {
+      const start = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+      const end = new Date(Date.now() - (i - 1) * 24 * 60 * 60 * 1000);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      const { count } = await supabase
+        .from('users')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', start.toISOString())
+        .lt('created_at', end.toISOString());
+      dailySignups.push({
+        date: start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        count: count || 0,
+      });
+    }
 
     return NextResponse.json({
       stats: {
         totalUsers: usersResult.count || 0,
-        newSignups: newSignups || 0,
+        newSignups: newUsersResult.count || 0,
         activeListings: listingsResult.count || 0,
         activePosts: postsResult.count || 0,
         lostFoundItems: lostFoundResult.count || 0,
+        flaggedItems: flaggedListingsResult.data?.length || 0,
       },
       recentUsers: recentUsersResult.data || [],
       recentListings: recentListingsResult.data || [],
+      recentPosts: recentPostsResult.data || [],
+      recentLostFound: recentLostFoundResult.data || [],
+      flaggedItems: flaggedListingsResult.data || [],
+      dailySignups,
     }, { status: 200 });
 
   } catch (error) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { jwtVerify } from 'jose';
 import { JWT_SECRET } from '@/lib/jwt';
+import { moderateFields } from '@/lib/moderation';
 
 export const dynamic = 'force-dynamic';
 
@@ -94,6 +95,16 @@ export async function POST(request: NextRequest) {
     if (images) {
       const imgCheck = validateImages(images);
       if (!imgCheck.valid) return NextResponse.json({ error: imgCheck.error }, { status: 400 });
+    }
+
+    // Content moderation
+    const modResult = moderateFields({ title: title || '', description: description || '', location: location || '' });
+    if (modResult.flagged && modResult.severity === 'critical') {
+      return NextResponse.json({
+        error: 'Your content violates our community guidelines.',
+        flagged: true,
+        categories: modResult.categories,
+      }, { status: 400 });
     }
 
     // Create lost/found item
