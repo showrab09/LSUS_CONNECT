@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { jwtVerify } from 'jose';
+import { JWT_SECRET } from '@/lib/jwt';
+import { sanitizeText, sanitizeMultiline } from '@/lib/validate';
 
 export const dynamic = 'force-dynamic';
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
-);
 
 // Verify JWT token and get user ID
 async function verifyToken(request: NextRequest) {
@@ -99,13 +97,13 @@ export async function PATCH(
 
     // Prepare update data (only include fields that were provided)
     const updateData: any = {};
-    if (body.title !== undefined) updateData.title = body.title;
-    if (body.description !== undefined) updateData.description = body.description;
+    if (body.title !== undefined) updateData.title = sanitizeText(body.title);
+    if (body.description !== undefined) updateData.description = sanitizeMultiline(body.description);
     if (body.price !== undefined) updateData.price = body.price;
     if (body.price_type !== undefined) updateData.price_type = body.price_type;
     if (body.category !== undefined) updateData.category = body.category;
     if (body.condition !== undefined) updateData.condition = body.condition;
-    if (body.location !== undefined) updateData.location = body.location;
+    if (body.location !== undefined) updateData.location = sanitizeText(body.location);
     if (body.images !== undefined) updateData.images = body.images;
     if (body.tags !== undefined) updateData.tags = body.tags;
     if (body.status !== undefined) updateData.status = body.status;
@@ -120,7 +118,7 @@ export async function PATCH(
     if (body.bathrooms !== undefined) updateData.bathrooms = body.bathrooms;
     if (body.utilities_included !== undefined) updateData.utilities_included = body.utilities_included;
     if (body.pets_allowed !== undefined) updateData.pets_allowed = body.pets_allowed;
-    if (body.pet_details !== undefined) updateData.pet_details = body.pet_details;
+    if (body.pet_details !== undefined) updateData.pet_details = sanitizeMultiline(body.pet_details);
     if (body.gender_preference !== undefined) updateData.gender_preference = body.gender_preference;
     if (body.smoking_allowed !== undefined) updateData.smoking_allowed = body.smoking_allowed;
     if (body.quiet_hours !== undefined) updateData.quiet_hours = body.quiet_hours;

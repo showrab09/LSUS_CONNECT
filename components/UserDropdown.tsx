@@ -31,15 +31,7 @@ export default function UserDropdown() {
             profile_picture: data.user.profile_picture || undefined,
           });
         } else {
-          // Fallback to JWT decode for name only
-          try {
-            const token = localStorage.getItem("token");
-            if (token) {
-              const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-              const payload = JSON.parse(decodeURIComponent(atob(base64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")));
-              setUser({ full_name: payload.name || "User", email: payload.email || "" });
-            }
-          } catch { setUser({ full_name: "User", email: "" }); }
+          setUser({ full_name: "User", email: "" });
         }
       })
       .catch(() => { setUser({ full_name: "User", email: "" }); });

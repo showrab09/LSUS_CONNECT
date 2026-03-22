@@ -5,6 +5,7 @@ import AppLayout from "@/components/AppLayout";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import SaveButton from "@/components/SaveButton";
 import MessageSellerButton from "@/components/MessageSellerButton";
 
@@ -68,17 +69,8 @@ export default function HousingPage() {
   const [selectedPriceRange, setSelectedPriceRange] = useState(0);
   const [bedroomsFilter, setBedroomsFilter] = useState<number | null>(null);
 
-  const getCurrentUserId = (): string => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return "";
-      const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-      const payload = JSON.parse(decodeURIComponent(atob(base64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")));
-      return payload.userId || "";
-    } catch { return ""; }
-  };
-
-  const currentUserId = getCurrentUserId();
+  const { currentUser } = useCurrentUser();
+  const currentUserId = currentUser.id;
 
   useEffect(() => { fetchListings(); }, []);
 

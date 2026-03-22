@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { jwtVerify } from 'jose';
+import { JWT_SECRET } from '@/lib/jwt';
 
 export const dynamic = 'force-dynamic';
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
-);
 
 // Helper function to verify JWT token
 async function verifyToken(request: NextRequest) {
@@ -24,13 +21,20 @@ async function verifyToken(request: NextRequest) {
   }
 }
 
-// GET /api/listings - Fetch all listings
+const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = 20;
+
+// GET /api/listings - Fetch listings with pagination
 export async function GET(request: NextRequest) {
   try {
-    // Get query parameters for filtering (optional)
     const searchParams = request.nextUrl.searchParams;
     const category = searchParams.get('category');
     const status = searchParams.get('status') || 'ACTIVE';
+
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(searchParams.get('limit') || String(DEFAULT_LIMIT), 10)));
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
 
     // Build query
     let query = supabase
@@ -38,16 +42,16 @@ export async function GET(request: NextRequest) {
       .select(`
         *,
         user:users(id, full_name, email, profile_picture)
-      `)
+      `, { count: 'exact' })
       .eq('status', status)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(from, to);
 
-    // Add category filter if provided
     if (category && category !== 'All Categories') {
       query = query.eq('category', category);
     }
 
-    const { data: listings, error } = await query;
+    const { data: listings, count, error } = await query;
 
     if (error) {
       console.error('Error fetching listings:', error);
@@ -57,8 +61,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const total = count ?? 0;
     return NextResponse.json(
-      { listings },
+      {
+        listings,
+        total,
+        page,
+        limit,
+        hasMore: to < total - 1,
+      },
       { status: 200 }
     );
 

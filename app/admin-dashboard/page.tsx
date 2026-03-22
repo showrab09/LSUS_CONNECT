@@ -66,7 +66,6 @@ export default function AdminDashboardPage() {
 
   const handleLogout = () => {
     document.cookie = "token=; path=/; max-age=0";
-    localStorage.removeItem("token");
     router.push("/signin");
   };
 

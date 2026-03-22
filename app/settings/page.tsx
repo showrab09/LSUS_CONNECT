@@ -139,7 +139,6 @@ export default function SettingsPage() {
 
       if (response.ok) {
         alert("Your account has been deleted.");
-        localStorage.clear();
         sessionStorage.clear();
         router.push('/');
       } else {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import SaveButton from "@/components/SaveButton";
 import MessageSellerButton from "@/components/MessageSellerButton";
 
@@ -54,20 +55,8 @@ export default function MarketplacePage() {
     { value: "SWAP", label: "Trade/Swap" },
   ];
 
-  const getCurrentUserId = (): string => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return "";
-      const base64Url = token.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const jsonPayload = decodeURIComponent(
-        atob(base64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")
-      );
-      return JSON.parse(jsonPayload).userId || "";
-    } catch { return ""; }
-  };
-
-  const currentUserId = getCurrentUserId();
+  const { currentUser } = useCurrentUser();
+  const currentUserId = currentUser.id;
 
   useEffect(() => { fetchListings(); }, []);
 

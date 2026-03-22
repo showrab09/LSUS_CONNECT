@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
+import { JWT_SECRET } from '@/lib/jwt';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,9 +25,6 @@ function checkRateLimit(ip: string): { allowed: boolean; error?: string } {
   return { allowed: true };
 }
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
-);
 
 export async function POST(request: NextRequest) {
   try {

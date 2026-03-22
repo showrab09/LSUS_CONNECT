@@ -2,12 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
+import { JWT_SECRET } from '@/lib/jwt';
 
 export const dynamic = 'force-dynamic';
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
-);
 
 // Verify JWT token and get user ID
 async function verifyToken(request: NextRequest) {
@@ -52,7 +49,7 @@ export async function POST(request: NextRequest) {
     // Get user's current password hash
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('password')
+      .select('password_hash')
       .eq('id', user.userId)
       .single();
 
@@ -64,7 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify current password
-    const isValidPassword = await bcrypt.compare(current_password, userData.password);
+    const isValidPassword = await bcrypt.compare(current_password, userData.password_hash);
     if (!isValidPassword) {
       return NextResponse.json(
         { error: 'Current password is incorrect' },
@@ -78,7 +75,7 @@ export async function POST(request: NextRequest) {
     // Update password
     const { error: updateError } = await supabase
       .from('users')
-      .update({ password: hashedPassword })
+      .update({ password_hash: hashedPassword })
       .eq('id', user.userId);
 
     if (updateError) {
