@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     // Get user's current password hash
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('password')
+      .select('password_hash')
       .eq('id', user.userId)
       .single();
 
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify current password
-    const isValidPassword = await bcrypt.compare(current_password, userData.password);
+    const isValidPassword = await bcrypt.compare(current_password, userData.password_hash);
     if (!isValidPassword) {
       return NextResponse.json(
         { error: 'Current password is incorrect' },
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     // Update password
     const { error: updateError } = await supabase
       .from('users')
-      .update({ password: hashedPassword })
+      .update({ password_hash: hashedPassword })
       .eq('id', user.userId);
 
     if (updateError) {
