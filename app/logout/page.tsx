@@ -15,8 +15,7 @@ export default function LogoutPage() {
         console.error('Logout API error:', e);
       }
       
-      // Clear client-side storage
-      try { localStorage.clear(); } catch(e) {}
+      // Clear session storage
       try { sessionStorage.clear(); } catch(e) {}
       
       // Redirect to signin

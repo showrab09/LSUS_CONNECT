@@ -14,25 +14,17 @@ export default function MessageSellerButton({ listingId, sellerId, listingTitle 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const getCurrentUserId = (): string => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return "";
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
-      );
-      const decoded = JSON.parse(jsonPayload);
-      return decoded.userId || "";
-    } catch (e) {
-      return "";
-    }
-  };
-
   const handleMessageSeller = async () => {
     setError("");
-    const currentUserId = getCurrentUserId();
+
+    let currentUserId = "";
+    try {
+      const res = await fetch('/api/user/profile', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        currentUserId = data.user?.id || "";
+      }
+    } catch { /* handled below */ }
 
     if (!currentUserId) {
       router.push("/signin");

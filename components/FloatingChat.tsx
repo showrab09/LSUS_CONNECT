@@ -22,20 +22,10 @@ export default function FloatingChat() {
   // Get current user ID
   useEffect(() => {
     if (!isMounted) return;
-    
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
-      );
-      const decoded = JSON.parse(jsonPayload);
-      setCurrentUserId(decoded.userId || "");
-    } catch (e) {
-      console.error("Error decoding token:", e);
-    }
+    fetch('/api/user/profile', { credentials: 'include' })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data?.user?.id) setCurrentUserId(data.user.id); })
+      .catch(() => {});
   }, [isMounted]);
 
   // Fetch conversations

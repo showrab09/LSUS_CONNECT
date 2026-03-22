@@ -14,12 +14,11 @@ export default function HomePage() {
       return;
     }
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/signin');
-    } else {
-      router.push('/home'); // ← changed from /marketplace
-    }
+    fetch('/api/user/profile', { credentials: 'include' })
+      .then(res => {
+        router.push(res.ok ? '/home' : '/signin');
+      })
+      .catch(() => router.push('/signin'));
   }, [router]);
 
   return (

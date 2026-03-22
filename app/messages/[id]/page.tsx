@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import UserDropdown from "@/components/UserDropdown";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface Message {
   id: string;
@@ -33,27 +34,14 @@ interface Conversation {
   };
 }
 
-function getCurrentUserId(): string {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) return "";
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
-    );
-    const decoded = JSON.parse(jsonPayload);
-    return decoded.userId || "";
-  } catch (e) {
-    return "";
-  }
-}
-
 export default function ChatPage() {
   const params = useParams();
   const router = useRouter();
   const conversationId = params.id as string;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { currentUser } = useCurrentUser();
+  const currentUserId = currentUser.id;
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -61,10 +49,8 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
-  const [currentUserId, setCurrentUserId] = useState("");
 
   useEffect(() => {
-    setCurrentUserId(getCurrentUserId());
     fetchConversation();
   }, [conversationId]);
 

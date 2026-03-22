@@ -32,7 +32,7 @@ JWT-based auth stored in HTTP-only cookies. The middleware (`middleware.ts`) val
 
 Protected routes: `/home`, `/post-listing`, `/marketplace`, `/housing`, `/social`, `/lost-found`, `/user-profile`, `/messages`, `/admin-dashboard`, `/product-detail`, `/contact-team`, `/settings`, `/report-lost-found`.
 
-Client-side user state uses `hooks/useCurrentUser.ts`, which decodes JWT from localStorage for fast display then fetches full profile from `/api/user/profile`. The hook is SSR-safe (starts empty to avoid hydration mismatches).
+Client-side user state uses `hooks/useCurrentUser.ts`, which fetches the full profile from `/api/user/profile` via the httpOnly cookie. The hook is SSR-safe (starts empty to avoid hydration mismatches). The JWT is never stored in localStorage.
 
 ### Database
 

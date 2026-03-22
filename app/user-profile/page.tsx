@@ -136,12 +136,10 @@ export default function UserProfilePage() {
 
   const fetchUserPosts = async () => {
     try {
-      // Get user id from token
-      const token = localStorage.getItem("token");
-      if (!token) return;
-      const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-      const payload = JSON.parse(decodeURIComponent(atob(base64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")));
-      const userId = payload.userId;
+      const profileRes = await fetch("/api/user/profile", { credentials: "include" });
+      if (!profileRes.ok) return;
+      const profileData = await profileRes.json();
+      const userId = profileData.user?.id;
       if (!userId) return;
 
       const res = await fetch(`/api/posts?user_id=${userId}&limit=50`, { credentials: "include" });

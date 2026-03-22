@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import UserDropdown from "@/components/UserDropdown";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import MessageSellerButton from "@/components/MessageSellerButton";
 import SaveButton from "@/components/SaveButton";
 
@@ -36,34 +37,19 @@ export default function ProductDetailPage() {
   const searchParams = useSearchParams();
   const listingId = searchParams.get("id");
 
+  const { currentUser } = useCurrentUser();
+  const currentUserId = currentUser.id;
+
   const [listing, setListing] = useState<Listing | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currentUserId, setCurrentUserId] = useState("");
 
   useEffect(() => {
     if (listingId) {
       fetchListing();
     }
-    getCurrentUserId();
   }, [listingId]);
-
-  const getCurrentUserId = () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
-      );
-      const decoded = JSON.parse(jsonPayload);
-      setCurrentUserId(decoded.userId || "");
-    } catch (e) {
-      console.error("Error getting user ID:", e);
-    }
-  };
 
   const fetchListing = async () => {
     try {

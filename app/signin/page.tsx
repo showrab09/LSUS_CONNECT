@@ -109,9 +109,6 @@ export default function SigninPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Store token in localStorage for client-side access
-        localStorage.setItem("token", data.token);
-
         setMessage({
           type: "success",
           text: "Sign in successful! Redirecting...",

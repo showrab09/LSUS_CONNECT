@@ -93,7 +93,6 @@ export default function ContactPage() {
 
   const handleLogout = () => {
     document.cookie = "token=; path=/; max-age=0";
-    localStorage.removeItem("token");
     router.push("/signin");
   };
 
