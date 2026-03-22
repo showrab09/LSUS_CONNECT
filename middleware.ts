@@ -3,6 +3,10 @@ import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 import { JWT_SECRET } from '@/lib/jwt';
 
+// Admin routes — protected by adminToken cookie, not regular token
+const adminRoutes: string[] = []; // TODO: Re-enable before production: ['/admin-dashboard']
+const adminAuthRoutes = ['/admin/login'];
+
 // All pages that require authentication
 const protectedRoutes = [
   '/home',
@@ -36,6 +40,35 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = authRoutes.some(route =>
     pathname.startsWith(route)
   );
+
+  // Admin dashboard — check adminToken cookie
+  const isAdminRoute = adminRoutes.some(r => pathname.startsWith(r));
+  const isAdminAuthRoute = adminAuthRoutes.some(r => pathname.startsWith(r));
+  const adminToken = request.cookies.get('adminToken')?.value;
+
+  if (isAdminRoute && !adminToken) {
+    return NextResponse.redirect(new URL('/admin/login', request.url));
+  }
+
+  if (isAdminRoute && adminToken) {
+    try {
+      const { payload } = await jwtVerify(adminToken, JWT_SECRET);
+      if (!payload.isAdmin) {
+        return NextResponse.redirect(new URL('/admin/login', request.url));
+      }
+    } catch {
+      const response = NextResponse.redirect(new URL('/admin/login', request.url));
+      response.cookies.set('adminToken', '', { maxAge: 0, path: '/admin' });
+      return response;
+    }
+  }
+
+  if (isAdminAuthRoute && adminToken) {
+    try {
+      await jwtVerify(adminToken, JWT_SECRET);
+      return NextResponse.redirect(new URL('/admin-dashboard', request.url));
+    } catch { }
+  }
 
   // Protected route with no token — redirect to signin
   if (isProtectedRoute && !token) {
