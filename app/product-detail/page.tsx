@@ -26,6 +26,16 @@ interface Listing {
   status: string;
   created_at: string;
   user_id: string;
+  // Housing-specific fields
+  listing_type?: string;
+  monthly_rent?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  utilities_included?: boolean;
+  pets_allowed?: boolean;
+  move_in_date?: string;
+  lease_length?: string;
+  gender_preference?: string;
   user?: {
     id: string;
     full_name: string;
@@ -264,10 +274,23 @@ export default function ProductDetailPage() {
                   <p className="text-[#8B72BE] text-sm mb-1">Category</p>
                   <p className="text-white font-semibold">{listing.category}</p>
                 </div>
-                <div>
-                  <p className="text-[#8B72BE] text-sm mb-1">Condition</p>
-                  <p className="text-white font-semibold">{listing.condition}</p>
-                </div>
+                {listing.category === "Housing" ? (
+                  <>
+                    {listing.listing_type && <div><p className="text-[#8B72BE] text-sm mb-1">Type</p><p className="text-white font-semibold">{listing.listing_type}</p></div>}
+                    {listing.bedrooms && <div><p className="text-[#8B72BE] text-sm mb-1">Bedrooms</p><p className="text-white font-semibold">{listing.bedrooms} bed{listing.bedrooms > 1 ? "s" : ""}</p></div>}
+                    {listing.bathrooms && <div><p className="text-[#8B72BE] text-sm mb-1">Bathrooms</p><p className="text-white font-semibold">{listing.bathrooms} bath{listing.bathrooms > 1 ? "s" : ""}</p></div>}
+                    {listing.move_in_date && <div><p className="text-[#8B72BE] text-sm mb-1">Available</p><p className="text-white font-semibold">{new Date(listing.move_in_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p></div>}
+                    {listing.lease_length && <div><p className="text-[#8B72BE] text-sm mb-1">Lease</p><p className="text-white font-semibold">{listing.lease_length}</p></div>}
+                    {listing.utilities_included !== undefined && <div><p className="text-[#8B72BE] text-sm mb-1">Utilities</p><p className="text-white font-semibold">{listing.utilities_included ? "Included" : "Not included"}</p></div>}
+                    {listing.pets_allowed !== undefined && <div><p className="text-[#8B72BE] text-sm mb-1">Pets</p><p className="text-white font-semibold">{listing.pets_allowed ? "Allowed" : "Not allowed"}</p></div>}
+                    {listing.gender_preference && <div><p className="text-[#8B72BE] text-sm mb-1">Preference</p><p className="text-white font-semibold">{listing.gender_preference}</p></div>}
+                  </>
+                ) : (
+                  <div>
+                    <p className="text-[#8B72BE] text-sm mb-1">Condition</p>
+                    <p className="text-white font-semibold">{listing.condition || "—"}</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-[#8B72BE] text-sm mb-1">Location</p>
                   <p className="text-white font-semibold">{listing.location}</p>
