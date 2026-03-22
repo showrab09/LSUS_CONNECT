@@ -1,7 +1,5 @@
 "use client";
 
-import AppLayout from "@/components/AppLayout";
-
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
@@ -78,6 +76,7 @@ export default function UserProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   // Edit form state
   const [editFormData, setEditFormData] = useState({ full_name: "", bio: "", location: "" });
@@ -160,6 +159,21 @@ export default function UserProfilePage() {
     }
   };
 
+  const handleDeletePost = async (postId: string) => {
+    if (!confirm("Are you sure you want to delete this post? This cannot be undone.")) return;
+    try {
+      const res = await fetch(`/api/posts?id=${postId}`, { method: "DELETE", credentials: "include" });
+      if (res.ok) {
+        setUserPosts(prev => prev.filter(p => p.id !== postId));
+      } else {
+        const data = await res.json();
+        setDeleteError(data.error || "Failed to delete post.");
+      }
+    } catch {
+      setDeleteError("Failed to delete post. Please try again.");
+    }
+  };
+
   const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -232,12 +246,12 @@ export default function UserProfilePage() {
 
   if (!user) {
     return (
-      <AppLayout>
+      <div className="flex min-h-screen items-center justify-center bg-[#1E0A42]">
         <div className="text-center">
           <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
           <p className="text-lg text-white">Loading profile...</p>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
@@ -245,7 +259,17 @@ export default function UserProfilePage() {
   const displayPicture = user.profile_picture;
 
   return (
-    <AppLayout>
+    <div className="min-h-screen bg-[#1E0A42] text-white">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
+        <div className="mx-auto flex h-[60px] max-w-[1920px] items-center justify-between gap-4 px-4 sm:px-6">
+          <Link href="/home" className="text-xl font-extrabold tracking-tight">
+            <span className="text-white">LSUS</span>
+            <span className="text-[#F5A623]"> Connect</span>
+          </Link>
+          <UserDropdown />
+        </div>
+      </header>
 
       <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
         {/* Profile Header Card */}
@@ -320,6 +344,15 @@ export default function UserProfilePage() {
                   <p className="text-sm leading-relaxed text-[#E9DFFF] whitespace-pre-wrap">{post.content}</p>
                   {post.location && <p className="mt-2 text-xs text-[#8B72BE]">📍 {post.location}</p>}
                   <p className="mt-3 text-xs text-[#8B72BE]">{new Date(post.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                  <div className="mt-4 flex gap-3">
+                    <Link href="/social" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#F5A623] py-2.5 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
+                      ✏️ Edit on Social
+                    </Link>
+                    <button onClick={() => handleDeletePost(post.id)}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-500/80 py-2.5 text-sm font-bold text-white transition hover:bg-red-600">
+                      🗑️ Delete
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -501,6 +534,6 @@ export default function UserProfilePage() {
           onSuccess={() => { fetchUserListings(); }}
         />
       )}
-    </AppLayout>
+    </div>
   );
 }
