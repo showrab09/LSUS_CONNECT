@@ -48,8 +48,13 @@ export default function ChatPage() {
 
   const fetchConversation = async () => {
     try {
-      setIsLoading(true); setError("");
-      const response = await fetch(`/api/messages/conversations/${conversationId}`, { credentials: 'include' });
+      setIsLoading(true);
+      setError("");
+
+      const response = await fetch(`/api/messages/conversations/${conversationId}`, {
+        credentials: 'include',
+      });
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch conversation');
@@ -67,8 +72,13 @@ export default function ChatPage() {
 
   const markAsRead = async () => {
     try {
-      await fetch(`/api/messages/conversations/${conversationId}/read`, { method: 'PATCH', credentials: 'include' });
-    } catch { /* silent */ }
+      await fetch(`/api/messages/conversations/${conversationId}/read`, {
+        method: 'PATCH',
+        credentials: 'include',
+      });
+    } catch (err) {
+      console.error("Error marking as read:", err);
+    }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -87,14 +97,17 @@ export default function ChatPage() {
         throw new Error(errorData.error || 'Failed to send message');
       }
       const data = await response.json();
-      setMessages(prev => [...prev, {
+
+      const sentMessage: Message = {
         id: data.message.id,
         sender_id: currentUserId,
         sender_name: "You",
         message: newMessage.trim(),
         is_read: false,
         created_at: new Date().toISOString(),
-      }]);
+      };
+
+      setMessages(prev => [...prev, sentMessage]);
       setNewMessage("");
     } catch (err: any) {
       setError(err.message || "Failed to send message. Please try again.");
@@ -164,7 +177,9 @@ export default function ChatPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col max-w-[900px] w-full mx-auto">
+
+      {/* Chat Container */}
+      <div className="flex-1 flex flex-col max-w-[1200px] w-full mx-auto">
         {/* Listing Info Card */}
         <div className="bg-[#351470] border-b border-white/10 p-4 rounded-2xl mb-4">
           <Link href={`/product-detail?id=${conversation.listing.id}`} className="flex gap-4 hover:opacity-80 transition-opacity">
@@ -184,7 +199,9 @@ export default function ChatPage() {
         </div>
 
         {error && conversation && (
-          <div className="mb-4 bg-red-500/20 border border-red-500/30 text-red-300 rounded-xl p-3 text-sm">{error}</div>
+          <div className="mx-4 mt-2 bg-red-500/20 border border-red-500/30 text-red-300 rounded-lg p-3 text-sm">
+            {error}
+          </div>
         )}
 
         {/* Messages */}
@@ -195,10 +212,21 @@ export default function ChatPage() {
           {messages.map((message) => {
             const isCurrentUser = message.sender_id === currentUserId;
             return (
-              <div key={message.id} className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[70%]`}>
-                  {!isCurrentUser && <p className="text-[#8B72BE] text-xs mb-1">{message.sender_name}</p>}
-                  <div className={`rounded-2xl p-3 ${isCurrentUser ? 'bg-[#F5A623] text-black' : 'bg-[#351470] text-white border border-white/10'}`}>
+              <div
+                key={message.id}
+                className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`max-w-[70%] ${isCurrentUser ? 'order-2' : 'order-1'}`}>
+                  {!isCurrentUser && (
+                    <p className="text-[#8B72BE] text-xs mb-1">{message.sender_name}</p>
+                  )}
+                  <div
+                    className={`rounded-lg p-3 ${
+                      isCurrentUser
+                        ? 'bg-[#F5A623] text-black'
+                        : 'bg-[#351470] text-white border border-white/10'
+                    }`}
+                  >
                     <p className="text-sm whitespace-pre-wrap break-words">{message.message}</p>
                   </div>
                   <p className="text-[#8B72BE] text-xs mt-1">{formatTime(message.created_at)}</p>
@@ -223,7 +251,7 @@ export default function ChatPage() {
             <button
               type="submit"
               disabled={!newMessage.trim() || isSending}
-              className="px-6 h-12 bg-[#F5A623] text-black font-bold rounded-xl hover:bg-[#FFD166] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-6 h-12 bg-[#F5A623] text-black font-bold rounded-lg hover:bg-[#FFD166] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isSending ? (
                 <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
