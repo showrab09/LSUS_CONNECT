@@ -106,8 +106,9 @@ export default function ChatPage() {
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     const isToday = date.toDateString() === new Date().toDateString();
-    if (isToday) return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    if (isToday) return `Today at ${time}`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ` at ${time}`;
   };
 
   const formatPrice = () => {

@@ -45,7 +45,6 @@ export default function MessageSellerButton({ listingId, sellerId, listingTitle 
         credentials: 'include',
         body: JSON.stringify({
           listing_id: listingId,
-          message: `Hi! I'm interested in "${listingTitle}". Is it still available?`,
         }),
       });
 
