@@ -120,7 +120,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       let current = "top";
       for (const id of sections) {
         const el = main.querySelector(`[data-section="${id}"]`) as HTMLElement | null;
-        if (el && el.getBoundingClientRect().top <= 200) current = id;
+        if (el && el.getBoundingClientRect().top <= 150) current = id;
       }
       setActiveSection(current);
     };

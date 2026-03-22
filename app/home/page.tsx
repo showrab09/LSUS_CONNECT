@@ -785,21 +785,6 @@ export default function HomeFeedPage() {
             </div>
           )}
 
-          {/* ── Social Feed Section ── */}
-          <section data-section="social" className="mb-10">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">👥</span>
-                <h2 className="text-xl font-bold text-white">Social Feed</h2>
-              </div>
-              <Link href="/social" className="text-sm font-bold text-[#F5A623] transition hover:underline">See All →</Link>
-            </div>
-            {socialItems.length === 0
-              ? <p className="rounded-2xl border border-white/10 bg-[#351470] p-8 text-center text-[#C4B0E0]">No social posts yet. Be the first to share something!</p>
-              : <div className="space-y-4">{socialItems.slice(0, 4).map(item => <FeedCard key={`social-${item.id}`} item={item} />)}</div>
-            }
-          </section>
-
           {/* ── Marketplace Section ── */}
           <section data-section="marketplace" className="mb-10">
             <div className="mb-4 flex items-center justify-between">
@@ -827,6 +812,21 @@ export default function HomeFeedPage() {
             {housingItems.length === 0
               ? <p className="rounded-2xl border border-white/10 bg-[#351470] p-8 text-center text-[#C4B0E0]">No housing listings yet.</p>
               : <div className="space-y-4">{housingItems.slice(0, 3).map(item => <FeedCard key={`housing-${item.id}`} item={item} />)}</div>
+            }
+          </section>
+
+          {/* ── Social Feed Section ── */}
+          <section data-section="social" className="mb-10">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">👥</span>
+                <h2 className="text-xl font-bold text-white">Social Feed</h2>
+              </div>
+              <Link href="/social" className="text-sm font-bold text-[#F5A623] transition hover:underline">See All →</Link>
+            </div>
+            {socialItems.length === 0
+              ? <p className="rounded-2xl border border-white/10 bg-[#351470] p-8 text-center text-[#C4B0E0]">No social posts yet. Be the first to share something!</p>
+              : <div className="space-y-4">{socialItems.slice(0, 4).map(item => <FeedCard key={`social-${item.id}`} item={item} />)}</div>
             }
           </section>
 
