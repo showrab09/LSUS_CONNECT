@@ -1,4 +1,5 @@
 "use client";
+import AppLayout from "@/components/AppLayout";
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -436,88 +437,46 @@ export default function SocialPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1E0A42] text-white">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
-        <div className="mx-auto flex h-[60px] max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="rounded-lg p-2 transition hover:bg-white/5 lg:hidden">
-              {isMobileMenuOpen ? "✕" : "☰"}
-            </button>
-            <Link href="/home" className="text-xl font-extrabold tracking-tight">
-              <span className="text-white">LSUS</span>
-              <span className="text-[#F5A623]"> Connect</span>
-            </Link>
-          </div>
-
-          <nav className="hidden lg:flex items-center gap-5">
-            {NAV_LINKS.map(link => (
-              <Link key={link.href} href={link.href}
-                className={`text-sm transition ${link.active
-                  ? "font-semibold text-[#F5A623] border-b-2 border-[#F5A623] pb-0.5"
-                  : "text-[#C4B0E0] hover:text-white"}`}>
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          <UserDropdown />
+    <AppLayout>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Social Feed</h1>
+          <p className="text-sm text-[#C4B0E0]">Share what's on your mind with the LSUS community</p>
         </div>
-
-        {isMobileMenuOpen && (
-          <nav className="lg:hidden border-t border-white/10 bg-[#2E1065] px-4 pb-4 pt-3">
-            {NAV_LINKS.map(link => (
-              <Link key={link.href} href={link.href} onClick={() => setIsMobileMenuOpen(false)}
-                className={`block rounded-xl px-4 py-2.5 text-sm transition ${link.active
-                  ? "font-semibold text-[#F5A623]"
-                  : "text-[#C4B0E0] hover:bg-white/5 hover:text-white"}`}>
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        )}
-      </header>
-
-      <div className="mx-auto max-w-[680px] px-4 py-6 sm:px-6">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Social Feed</h1>
-            <p className="text-sm text-[#C4B0E0]">Share what's on your mind with the LSUS community</p>
-          </div>
-          <button onClick={fetchPosts}
-            className="rounded-full border border-[#F5A623] px-4 py-2 text-sm font-bold text-[#F5A623] transition hover:bg-[#F5A623] hover:text-[#1E0A42]">
-            Refresh
-          </button>
-        </div>
-
-        {currentUser.id && <ComposeBox currentUser={currentUser} onPost={post => setPosts(prev => [post, ...prev])} />}
-
-        {isLoading && (
-          <div className="py-20 text-center">
-            <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
-            <p className="mt-4 text-white">Loading posts...</p>
-          </div>
-        )}
-        {error && !isLoading && (
-          <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-300">
-            {error} <button onClick={fetchPosts} className="ml-3 underline">Retry</button>
-          </div>
-        )}
-        {!isLoading && !error && posts.length === 0 && (
-          <div className="py-20 text-center">
-            <div className="mb-4 text-6xl">💬</div>
-            <h3 className="mb-2 text-xl font-bold text-white">No posts yet</h3>
-            <p className="text-[#C4B0E0]">Be the first to share something with the LSUS community!</p>
-          </div>
-        )}
-
-        <div className="space-y-4">
-          {!isLoading && !error && posts.map(post => (
-            <PostCard key={post.id} post={post}
-              onDelete={id => setPosts(prev => prev.filter(p => p.id !== id))}
-              currentUserId={currentUserId} />
-          ))}
-        </div>
+        <button onClick={fetchPosts}
+          className="rounded-full border border-[#F5A623] px-4 py-2 text-sm font-bold text-[#F5A623] transition hover:bg-[#F5A623] hover:text-[#1E0A42]">
+          Refresh
+        </button>
       </div>
-    </div>
+
+      {currentUser.id && <ComposeBox currentUser={currentUser} onPost={post => setPosts(prev => [post, ...prev])} />}
+
+      {isLoading && (
+        <div className="py-20 text-center">
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
+          <p className="mt-4 text-white">Loading posts...</p>
+        </div>
+      )}
+      {error && !isLoading && (
+        <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-300">
+          {error} <button onClick={fetchPosts} className="ml-3 underline">Retry</button>
+        </div>
+      )}
+      {!isLoading && !error && posts.length === 0 && (
+        <div className="py-20 text-center">
+          <div className="mb-4 text-6xl">💬</div>
+          <h3 className="mb-2 text-xl font-bold text-white">No posts yet</h3>
+          <p className="text-[#C4B0E0]">Be the first to share something with the LSUS community!</p>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        {!isLoading && !error && posts.map(post => (
+          <PostCard key={post.id} post={post}
+            onDelete={id => setPosts(prev => prev.filter(p => p.id !== id))}
+            currentUserId={currentUserId} />
+        ))}
+      </div>
+    </AppLayout>
   );
 }
