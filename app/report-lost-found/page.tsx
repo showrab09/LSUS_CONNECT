@@ -68,7 +68,6 @@ export default function ReportLostFoundPage() {
   };
 
   const handleSubmit = async () => {
-    
     // Validation
     if (!title.trim()) {
       setError("Item name is required");
@@ -107,16 +106,15 @@ export default function ReportLostFoundPage() {
         status: "ACTIVE"
       };
 
-      // Try to post to lost-found endpoint
       const response = await fetch('/api/lost-found', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(itemData),
       });
-      const data = await response.json();
+
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : {};
 
       if (response.ok) {
         router.push('/lost-found');
