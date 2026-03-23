@@ -212,3 +212,43 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// DELETE /api/messages?conversation_id=xxx - Delete a conversation
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await verifyToken(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized. Please sign in.' }, { status: 401 });
+    }
+
+    const conversationId = request.nextUrl.searchParams.get('conversation_id');
+    if (!conversationId) {
+      return NextResponse.json({ error: 'conversation_id required' }, { status: 400 });
+    }
+
+    // Verify user is part of this conversation
+    const { data: conv } = await supabase
+      .from('conversations')
+      .select('id, buyer_id, seller_id')
+      .eq('id', conversationId)
+      .single();
+
+    if (!conv) return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
+
+    if (conv.buyer_id !== user.userId && conv.seller_id !== user.userId) {
+      return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+    }
+
+    // Delete messages first, then conversation
+    await supabase.from('messages').delete().eq('conversation_id', conversationId);
+    const { error } = await supabase.from('conversations').delete().eq('id', conversationId);
+
+    if (error) {
+      return NextResponse.json({ error: 'Failed to delete conversation: ' + error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: 'Conversation deleted' }, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err?.message || 'Internal server error' }, { status: 500 });
+  }
+}
