@@ -1,7 +1,5 @@
 "use client";
 
-import AppLayout from "@/components/AppLayout";
-
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import UserDropdown from "@/components/UserDropdown";
@@ -368,39 +366,40 @@ function PostCard({ post, onDelete, currentUserId }: { post: SocialPost; onDelet
 
   return (
     <article className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] shadow-[0_4px_24px_rgba(0,0,0,0.35)] transition hover:-translate-y-1">
+      {/* Image */}
       {post.images && post.images.length > 0 && (
-        <div className={`overflow-hidden bg-[#2A0F5A] ${post.images.length === 1 ? "max-h-[480px]" : "grid grid-cols-2 gap-px"}`}>
-          {post.images.slice(0, 4).map((img, i) => (
-            <div key={i} className={`overflow-hidden bg-[#2A0F5A] ${post.images.length === 1 ? "" : "aspect-square"}`}>
-              <img src={img} alt="" className={`w-full ${post.images.length === 1 ? "object-contain max-h-[480px]" : "h-full object-cover"}`}
-                onError={e => { e.currentTarget.parentElement!.style.display = "none"; }} />
-            </div>
+        <div className={`overflow-hidden bg-[#2A0F5A] ${post.images.length === 1 ? "h-56" : "grid grid-cols-2 gap-0.5 h-56"}`}>
+          {post.images.slice(0, post.images.length === 1 ? 1 : 4).map((img, i) => (
+            <img key={i} src={img} alt=""
+              className={`w-full h-full ${post.images.length === 1 ? "object-contain" : "object-cover"}`}
+              onError={e => { e.currentTarget.parentElement!.style.display = "none"; }} />
           ))}
         </div>
       )}
 
-      <div className="p-5">
-        <div className="mb-4 flex items-start gap-3">
+      <div className="p-4">
+        {/* User row */}
+        <div className="mb-3 flex items-center gap-3">
           <Avatar user={post.user} size="md" />
           <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-white">{post.user.full_name}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-[#8B72BE]">{timeAgo(post.created_at)}</span>
-                {post.user.id === currentUserId && (
-                  <button onClick={handleDelete} disabled={isDeleting}
-                    className="text-xs text-[#8B72BE] transition hover:text-red-400">
-                    {isDeleting ? "..." : "✕"}
-                  </button>
-                )}
-              </div>
+            <span className="text-sm font-semibold text-white">{post.user.full_name}</span>
+            <div className="flex items-center gap-2">
+              {post.location && <p className="text-xs text-[#8B72BE]">📍 {post.location}</p>}
+              <span className="text-xs text-[#8B72BE]">{timeAgo(post.created_at)}</span>
             </div>
-            {post.location && <p className="mt-0.5 text-xs text-[#C4B0E0]">📍 {post.location}</p>}
-            <p className="mt-2 text-sm leading-relaxed text-[#E9DFFF] whitespace-pre-wrap">{post.content}</p>
           </div>
+          {post.user.id === currentUserId && (
+            <button onClick={handleDelete} disabled={isDeleting}
+              className="text-xs text-[#8B72BE] transition hover:text-red-400 ml-auto">
+              {isDeleting ? "..." : "✕ Delete"}
+            </button>
+          )}
         </div>
 
-        {/* Message Author button - only show if not your own post */}
+        {/* Content */}
+        <p className="text-sm leading-relaxed text-[#E9DFFF] whitespace-pre-wrap mb-3">{post.content}</p>
+
+        {/* Message Author */}
         {post.user.id !== currentUserId && (
           <MessageAuthorButton authorId={post.user.id} authorName={post.user.full_name} />
         )}
@@ -437,7 +436,47 @@ export default function SocialPage() {
   };
 
   return (
-    <AppLayout>
+    <div className="min-h-screen bg-[#1E0A42] text-white">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
+        <div className="mx-auto flex h-[60px] max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="rounded-lg p-2 transition hover:bg-white/5 lg:hidden">
+              {isMobileMenuOpen ? "✕" : "☰"}
+            </button>
+            <Link href="/home" className="text-xl font-extrabold tracking-tight">
+              <span className="text-white">LSUS</span>
+              <span className="text-[#F5A623]"> Connect</span>
+            </Link>
+          </div>
+
+          <nav className="hidden lg:flex items-center gap-5">
+            {NAV_LINKS.map(link => (
+              <Link key={link.href} href={link.href}
+                className={`text-sm transition ${link.active
+                  ? "font-semibold text-[#F5A623] border-b-2 border-[#F5A623] pb-0.5"
+                  : "text-[#C4B0E0] hover:text-white"}`}>
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <UserDropdown />
+        </div>
+
+        {isMobileMenuOpen && (
+          <nav className="lg:hidden border-t border-white/10 bg-[#2E1065] px-4 pb-4 pt-3">
+            {NAV_LINKS.map(link => (
+              <Link key={link.href} href={link.href} onClick={() => setIsMobileMenuOpen(false)}
+                className={`block rounded-xl px-4 py-2.5 text-sm transition ${link.active
+                  ? "font-semibold text-[#F5A623]"
+                  : "text-[#C4B0E0] hover:bg-white/5 hover:text-white"}`}>
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        )}
+      </header>
+
       <div className="mx-auto max-w-[680px] px-4 py-6 sm:px-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -479,6 +518,6 @@ export default function SocialPage() {
           ))}
         </div>
       </div>
-    </AppLayout>
+    </div>
   );
 }

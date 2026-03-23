@@ -121,6 +121,7 @@ export async function POST(request: NextRequest) {
           images: images || [],
           contact_info,
           status: 'ACTIVE',
+          date_occurred: new Date().toISOString(),
         },
       ])
       .select(`
