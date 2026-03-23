@@ -1,5 +1,4 @@
 "use client";
-
 import AppLayout from "@/components/AppLayout";
 
 import { useState } from "react";
@@ -300,10 +299,7 @@ export default function PostListingPage() {
 
   return (
     <AppLayout>
-
-      {/* Main Content - Responsive Grid */}
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto">
           {/* Form Section */}
           <div className="space-y-3">
             <h1 className="text-white text-xl font-bold mb-3">
@@ -536,7 +532,6 @@ export default function PostListingPage() {
               {isSubmitting ? "Publishing..." : isUploadingImages ? "Processing Images..." : "Publish Listing"}
             </button>
           </div>
-        </div>
       </div>
     </AppLayout>
   );
