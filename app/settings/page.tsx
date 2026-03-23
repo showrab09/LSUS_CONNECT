@@ -1,5 +1,4 @@
 "use client";
-
 import AppLayout from "@/components/AppLayout";
 
 import { useState, useEffect } from "react";
@@ -154,12 +153,12 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <AppLayout>
+      <div className="min-h-screen bg-[#1E0A42] flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block w-16 h-16 border-4 border-[#F5A623] border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="text-white text-lg">Loading settings...</p>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
@@ -169,9 +168,7 @@ export default function SettingsPage() {
 
   return (
     <AppLayout>
-
-      {/* Main Content */}
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div>
         {/* Page Header */}
         <div className="mb-6">
           <h1 className="text-white text-3xl font-bold mb-2">Settings</h1>
@@ -180,6 +177,42 @@ export default function SettingsPage() {
 
         <div className="flex gap-6">
           {/* Left Sidebar - Navigation */}
+          <aside className="w-64 flex-shrink-0">
+            <div className="rounded-2xl border border-white/10 bg-[#351470] p-4 sticky top-24">
+              <nav className="space-y-2">
+                <button
+                  onClick={() => setActiveTab("account")}
+                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                    activeTab === "account"
+                      ? "bg-[#F5A623] text-[#1E0A42] font-bold"
+                      : "text-white hover:bg-[#1E0A42]"
+                  }`}
+                >
+                  🔒 Account & Security
+                </button>
+                <button
+                  onClick={() => setActiveTab("notifications")}
+                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                    activeTab === "notifications"
+                      ? "bg-[#F5A623] text-[#1E0A42] font-bold"
+                      : "text-white hover:bg-[#1E0A42]"
+                  }`}
+                >
+                  🔔 Notifications
+                </button>
+                <button
+                  onClick={() => setActiveTab("privacy")}
+                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                    activeTab === "privacy"
+                      ? "bg-[#F5A623] text-[#1E0A42] font-bold"
+                      : "text-white hover:bg-[#1E0A42]"
+                  }`}
+                >
+                  🛡️ Privacy & Data
+                </button>
+              </nav>
+            </div>
+          </aside>
 
           {/* Main Content Area */}
           <div className="flex-1">
@@ -428,5 +461,5 @@ export default function SettingsPage() {
         </div>
       </div>
     </AppLayout>
-  );
+      );
 }
