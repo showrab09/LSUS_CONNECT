@@ -1,4 +1,5 @@
 "use client";
+import { HorizontalCard, SocialCard, CardItem } from "@/components/ItemCard";
 
 import AppLayout from "@/components/AppLayout";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -796,7 +797,7 @@ export default function HomeFeedPage() {
             </div>
             {listingItems.length === 0
               ? <p className="rounded-2xl border border-white/10 bg-[#351470] p-8 text-center text-[#C4B0E0]">No listings yet.</p>
-              : <div className="space-y-4">{listingItems.slice(0, 4).map(item => <FeedCard key={`listing-${item.id}`} item={item} />)}</div>
+              : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{listingItems.slice(0, 4).map(item => <HorizontalCard key={`listing-${item.id}`} item={{ ...item, type: "listing" } as CardItem} />)}</div>
             }
           </section>
 
@@ -811,7 +812,7 @@ export default function HomeFeedPage() {
             </div>
             {housingItems.length === 0
               ? <p className="rounded-2xl border border-white/10 bg-[#351470] p-8 text-center text-[#C4B0E0]">No housing listings yet.</p>
-              : <div className="space-y-4">{housingItems.slice(0, 3).map(item => <FeedCard key={`housing-${item.id}`} item={item} />)}</div>
+              : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{housingItems.slice(0, 3).map(item => <HorizontalCard key={`housing-${item.id}`} item={{ ...item, type: "housing" } as CardItem} />)}</div>
             }
           </section>
 
@@ -826,7 +827,7 @@ export default function HomeFeedPage() {
             </div>
             {socialItems.length === 0
               ? <p className="rounded-2xl border border-white/10 bg-[#351470] p-8 text-center text-[#C4B0E0]">No social posts yet. Be the first to share something!</p>
-              : <div className="space-y-4">{socialItems.slice(0, 4).map(item => <FeedCard key={`social-${item.id}`} item={item} />)}</div>
+              : <div className="space-y-4">{socialItems.slice(0, 4).map(item => <SocialCard key={`social-${item.id}`} item={{ ...item, type: "social" } as CardItem} />)}</div>
             }
           </section>
 
@@ -841,7 +842,7 @@ export default function HomeFeedPage() {
             </div>
             {lostFoundItems.length === 0
               ? <p className="rounded-2xl border border-white/10 bg-[#351470] p-8 text-center text-[#C4B0E0]">No lost &amp; found items.</p>
-              : <div className="space-y-4">{lostFoundItems.slice(0, 3).map(item => <FeedCard key={`lf-${item.id}`} item={item} />)}</div>
+              : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{lostFoundItems.slice(0, 3).map(item => <HorizontalCard key={`lf-${item.id}`} item={{ ...item, type: "lost_found", lost_found_type: item.lost_found_type } as CardItem} />)}</div>
             }
           </section>
         </>

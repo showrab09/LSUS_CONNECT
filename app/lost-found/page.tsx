@@ -1,4 +1,5 @@
 "use client";
+import { HorizontalCard, CardItem } from "@/components/ItemCard";
 
 import AppLayout from "@/components/AppLayout";
 import { useState, useEffect } from "react";
@@ -142,55 +143,19 @@ export default function LostFoundPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map(item => {
             const owner = Array.isArray(item.user) ? item.user[0] : item.user;
-            return (
-              <div key={item.id}
-                className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] shadow-[0_4px_24px_rgba(0,0,0,0.35)] transition hover:-translate-y-1">
-                {/* Image */}
-                <div className="relative h-48 bg-[#2A0F5A]">
-                  {item.images?.[0] ? (
-                    <img src={item.images[0]} alt={item.title} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-5xl">
-                      {item.type === "LOST" ? "😢" : "🎉"}
-                    </div>
-                  )}
-                  {/* Type badge */}
-                  <div className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold ${
-                    item.type === "LOST"
-                      ? "bg-red-500 text-white"
-                      : "bg-green-500 text-white"
-                  }`}>
-                    {item.type}
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-4">
-                  <h3 className="mb-1 text-lg font-bold text-white">{item.title}</h3>
-                  {item.description && (
-                    <p className="mb-3 line-clamp-2 text-sm text-[#C4B0E0]">{item.description}</p>
-                  )}
-                  <div className="mb-3 space-y-1 text-xs text-[#8B72BE]">
-                    {item.location && <p>📍 {item.location}</p>}
-                    {item.category && <p>🏷️ {item.category}</p>}
-                    <p>🕐 {timeAgo(item.created_at)}</p>
-                  </div>
-
-                  {/* Reporter */}
-                  {owner && (
-                    <div className="flex items-center gap-2 border-t border-white/10 pt-3">
-                      <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#FFD166] to-[#F5A623] text-xs font-bold text-[#1E0A42]">
-                        {owner.profile_picture
-                          ? <img src={owner.profile_picture} alt="" className="h-full w-full object-cover" />
-                          : getInitials(owner.full_name)
-                        }
-                      </div>
-                      <span className="text-xs text-[#C4B0E0]">Reported by {owner.full_name}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
+            const cardItem: CardItem = {
+              id: item.id,
+              type: "lost_found",
+              title: item.title,
+              description: item.description,
+              location: item.location,
+              images: item.images,
+              lost_found_type: item.type as "LOST" | "FOUND",
+              category: item.category,
+              created_at: item.created_at,
+              user: owner,
+            };
+            return <HorizontalCard key={item.id} item={cardItem} />;
           })}
         </div>
       )}

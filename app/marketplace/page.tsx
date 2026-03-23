@@ -1,4 +1,5 @@
 "use client";
+import { HorizontalCard, CardItem } from "@/components/ItemCard";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -266,90 +267,24 @@ export default function MarketplacePage() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {filteredListings.map((listing) => {
                       const owner = Array.isArray(listing.user) ? listing.user[0] : listing.user;
-                      const ownerName = owner?.full_name || "Unknown User";
-                      const ownerProfilePic = owner?.profile_picture;
-                      const isOwnListing = owner?.id === currentUserId;
-
-                      return (
-                        <div key={listing.id}
-                          className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] shadow-[0_4px_24px_rgba(0,0,0,0.35)] transition hover:-translate-y-1 hover:border-[#F5A623]/40">
-                          {/* Image */}
-                          <Link href={`/product-detail?id=${listing.id}`} className="block">
-                            <div className="relative h-52 bg-[#2A0F5A]">
-                              {listing.images && listing.images.length > 0 ? (
-                                <img
-                                  src={listing.images[0]}
-                                  alt={listing.title}
-                                  className="h-full w-full object-cover"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = "none";
-                                    e.currentTarget.parentElement!.innerHTML =
-                                      '<div class="flex h-full w-full items-center justify-center text-[#8B72BE]">Image unavailable</div>';
-                                  }}
-                                />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center text-[#8B72BE]">No image</div>
-                              )}
-                              {/* Condition Badge */}
-                              <div className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-1 text-xs text-white">
-                                {listing.condition}
-                              </div>
-                              {/* Save Button */}
-                              <div className="absolute left-2 top-2">
-                                <SaveButton listingId={listing.id} size="md" />
-                              </div>
-                            </div>
-                          </Link>
-
-                          {/* Content */}
-                          <div className="p-4">
-                            <Link href={`/product-detail?id=${listing.id}`}>
-                              <h3 className="mb-2 line-clamp-2 text-lg font-bold text-white hover:text-[#F5A623]">
-                                {listing.title}
-                              </h3>
-                            </Link>
-                            <p className="mb-2 text-xl font-bold text-[#F5A623]">{formatPrice(listing)}</p>
-                            <p className="mb-4 line-clamp-2 text-sm text-[#C4B0E0]">{listing.description}</p>
-
-                            {/* Owner Info */}
-                            <div className="mb-4 flex items-center gap-2 border-b border-white/10 pb-4">
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#F5A623] bg-gradient-to-br from-[#FFD166] to-[#F5A623]">
-                                {ownerProfilePic ? (
-                                  <img src={ownerProfilePic} alt={ownerName} className="h-full w-full rounded-full object-cover" />
-                                ) : (
-                                  <span className="text-xs font-bold text-[#1E0A42]">{getInitials(ownerName)}</span>
-                                )}
-                              </div>
-                              <span className="text-sm text-[#C4B0E0]">{ownerName}</span>
-                            </div>
-
-                            {/* Message Button */}
-                            {!isOwnListing && owner?.id && (
-                              <MessageSellerButton
-                                listingId={listing.id}
-                                sellerId={owner.id}
-                                listingTitle={listing.title}
-                              />
-                            )}
-
-                            {/* Own Listing */}
-                            {isOwnListing && (
-                              <div className="rounded-xl bg-[#2A0F5A] py-2 text-center">
-                                <span className="text-sm text-[#8B72BE]">Your listing</span>
-                              </div>
-                            )}
-
-                            {/* Metadata */}
-                            <div className="mt-3 flex items-center justify-between text-xs text-[#8B72BE]">
-                              <span>📍 {listing.location}</span>
-                              <span>{listing.category}</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
+                      const cardItem: CardItem = {
+                        id: listing.id,
+                        type: "listing",
+                        title: listing.title,
+                        description: listing.description,
+                        price: listing.price,
+                        price_type: listing.price_type,
+                        category: listing.category,
+                        condition: listing.condition,
+                        location: listing.location,
+                        images: listing.images,
+                        created_at: listing.created_at,
+                        user: owner,
+                      };
+                      return <HorizontalCard key={listing.id} item={cardItem} />;
                     })}
                   </div>
                 )}
