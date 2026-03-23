@@ -102,7 +102,7 @@ export default function AdminDashboardPage() {
   const handleDeleteListing = async (id: string, title: string) => {
     if (!confirm(`Delete listing "${title}"?`)) return;
     try {
-      const res = await fetch(`/api/listings?id=${id}`, { method: "DELETE", credentials: "include" });
+      const res = await fetch(`/api/admin/listings?id=${id}`, { method: "DELETE", credentials: "include" });
       if (res.ok) { setListings(p => p.filter(l => l.id !== id)); flash(`Deleted "${title}"`); }
     } catch { }
   };
