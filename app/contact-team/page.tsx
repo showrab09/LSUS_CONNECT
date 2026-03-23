@@ -1,7 +1,5 @@
 "use client";
 
-import AppLayout from "@/components/AppLayout";
-
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,17 +13,20 @@ import { useRouter } from "next/navigation";
 const teamMembers = [
   {
     name: "Robert Lovelace",
-    role: "Operations Head",
+    role: "Front End Developer",
+    email: "robert.lovelace@lsus.edu",
     avatar: "/api/placeholder/60/60",
   },
   {
     name: "Showrab Bin Habib",
-    role: "Project Manager",
+    role: "Back End Developer & Project Manager",
+    email: "showrab.habib@lsus.edu",
     avatar: "/api/placeholder/60/60",
   },
   {
     name: "Abid Talukder",
-    role: "Lead Developer",
+    role: "Quality Assurance & Testing",
+    email: "abid.talukder@lsus.edu",
     avatar: "/api/placeholder/60/60",
   },
 ];
@@ -99,7 +100,61 @@ export default function ContactPage() {
   };
 
   return (
-    <AppLayout>
+    <div className="min-h-screen bg-[#1E0A42] text-white">
+      {/* Header - Responsive */}
+      <header className="bg-[#1E0A42] border-b border-white/10 py-3 sm:py-4 sticky top-0 z-50">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between">
+            <Link href="/home" className="text-2xl sm:text-3xl font-bold text-white">
+              <span className="text-[#F5A623]">LSUS</span> CONNECT
+            </Link>
+
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center gap-4 text-white text-sm">
+              <Link href="/marketplace" className="hover:text-[#F5A623] transition-colors">
+                Marketplace
+              </Link>
+              <Link href="/user-profile" className="hover:text-[#F5A623] transition-colors">
+                Profile
+              </Link>
+              <button onClick={handleLogout} className="hover:text-[#F5A623] transition-colors">
+                Logout
+              </button>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 text-white hover:text-[#F5A623] transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
+
+          {/* Mobile Menu */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden mt-4 pb-4 border-t border-white/10 pt-4">
+              <nav className="flex flex-col gap-3">
+                <Link href="/marketplace" className="text-white hover:text-[#F5A623] transition-colors py-2 px-3 rounded hover:bg-[#351470]">
+                  Marketplace
+                </Link>
+                <Link href="/user-profile" className="text-white hover:text-[#F5A623] transition-colors py-2 px-3 rounded hover:bg-[#351470]">
+                  Profile
+                </Link>
+                <button onClick={handleLogout} className="text-left text-white hover:text-[#F5A623] transition-colors py-2 px-3 rounded hover:bg-[#351470]">
+                  Logout
+                </button>
+              </nav>
+            </div>
+          )}
+        </div>
+      </header>
 
       {/* Main Content */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8 sm:py-12">
@@ -234,6 +289,7 @@ export default function ContactPage() {
                         {member.name}
                       </p>
                       <p className="text-[#8B72BE] text-sm">{member.role}</p>
+                      <a href={`mailto:${member.email}`} className="text-[#F5A623] text-xs hover:underline">{member.email}</a>
                     </div>
                   </div>
                 ))}
@@ -271,6 +327,6 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
-    </AppLayout>
+    </div>
   );
 }

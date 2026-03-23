@@ -137,7 +137,7 @@ export function HorizontalCard({ item, onContact }: { item: CardItem; onContact?
               <Avatar user={item.user} size="sm" />
               <span className="truncate text-xs text-[#C4B0E0]">{item.user?.full_name || "LSUS Student"}</span>
             </div>
-            {(isHousing || isLostFound) && item.user?.id ? (
+            {isHousing && item.user?.id ? (
               <div className="ml-2 shrink-0 [&>div]:!min-h-0 [&_button]:!rounded-full [&_button]:!py-1.5 [&_button]:!px-4 [&_button]:!text-xs [&_button]:!min-h-0 [&_button]:!w-auto">
                 <MessageSellerButton
                   listingId={item.id}
@@ -145,6 +145,13 @@ export function HorizontalCard({ item, onContact }: { item: CardItem; onContact?
                   listingTitle={item.title || ""}
                 />
               </div>
+            ) : isLostFound && item.user?.id ? (
+              <Link
+                href={`/messages?user=${item.user.id}&name=${encodeURIComponent(item.user.full_name || "")}`}
+                className="ml-2 shrink-0 rounded-full bg-[#F5A623] px-4 py-1.5 text-xs font-bold text-[#1E0A42] transition hover:bg-[#FFD166]"
+              >
+                Contact
+              </Link>
             ) : (
               <Link
                 href={href}
