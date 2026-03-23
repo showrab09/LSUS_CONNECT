@@ -1,7 +1,5 @@
 "use client";
 
-import AppLayout from "@/components/AppLayout";
-
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -35,6 +33,21 @@ export default function MessagesPage() {
   useEffect(() => {
     fetchConversations();
   }, []);
+
+  const handleDeleteConversation = async (e: React.MouseEvent, conversationId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm('Delete this conversation? This cannot be undone.')) return;
+    try {
+      const res = await fetch(`/api/messages?conversation_id=${conversationId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setConversations(prev => prev.filter(c => c.id !== conversationId));
+      }
+    } catch { }
+  };
 
   const fetchConversations = async () => {
     try {
@@ -85,7 +98,21 @@ export default function MessagesPage() {
   };
 
   return (
-    <AppLayout>
+    <div className="min-h-screen bg-[#1E0A42] text-white">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/home" className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+              <span className="text-white">LSUS</span>
+              <span className="text-[#F5A623]"> Connect</span>
+            </Link>
+            <div className="flex items-center gap-4">
+              <UserDropdown />
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* Main Content */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -135,11 +162,20 @@ export default function MessagesPage() {
             ) : (
               <div className="space-y-3">
                 {conversations.map((conversation) => (
-                  <Link
+                  <div
                     key={conversation.id}
-                    href={`/messages/${conversation.id}`}
-                    className="block rounded-2xl bg-[#351470] p-4 border border-white/10 hover:border-[#F5A623] transition-all"
+                    className="relative block rounded-2xl bg-[#351470] p-4 border border-white/10 hover:border-[#F5A623] transition-all group"
                   >
+                    <Link href={`/messages/${conversation.id}`} className="absolute inset-0 z-0 rounded-2xl" />
+                    <button
+                      onClick={(e) => handleDeleteConversation(e, conversation.id)}
+                      className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-red-500/20 p-1.5 text-red-400 hover:bg-red-500/40"
+                      title="Delete conversation"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                     <div className="flex gap-4">
                       {/* Listing Image */}
                       <div className="w-20 h-20 rounded-lg bg-[#2A0F5A] overflow-hidden flex-shrink-0">
@@ -203,13 +239,13 @@ export default function MessagesPage() {
                         </p>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}
           </>
         )}
       </div>
-    </AppLayout>
+    </div>
   );
 }
