@@ -49,7 +49,7 @@ export default function MarketplacePage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('search') || '' : '');
   const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     searchParams?.get('category') ? [searchParams.get('category')!] : []

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import UserDropdown from "@/components/UserDropdown";
@@ -122,6 +123,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [activeSection, setActiveSection] = useState("top");
   const mainRef = useRef<HTMLElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    router.push(`/marketplace?search=${encodeURIComponent(searchQuery.trim())}`);
+    setSearchQuery("");
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleSearch(e as any);
+  };
   const [trending, setTrending] = useState<{ label: string; meta: string; href: string }[]>([]);
 
   useEffect(() => {
@@ -177,12 +191,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Link href="/home" className="text-xl font-extrabold tracking-tight">
             <span className="text-white">LSUS</span><span className="text-[#F5A623]"> Connect</span>
           </Link>
-          <div className="flex max-w-xl flex-1 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2">
+          <form onSubmit={handleSearch} className="flex max-w-xl flex-1 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2">
             <span className="text-[#C4B0E0]">🔍</span>
-            <input type="text" placeholder="Search LSUS Connect..." className="w-full bg-transparent text-sm text-white outline-none placeholder:text-[#8B72BE]" />
-          </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              placeholder="Search listings..."
+              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-[#8B72BE]"
+            />
+          </form>
           <div className="ml-auto flex items-center gap-2">
-            <button className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#C4B0E0] transition hover:bg-[#4A1E8A] hover:text-white">🔔</button>
+            <Link href="/messages" className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#C4B0E0] transition hover:bg-[#4A1E8A] hover:text-white">
+              🔔
+              {unreadMessages > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                  {unreadMessages > 9 ? "9+" : unreadMessages}
+                </span>
+              )}
+            </Link>
             <Link href="/messages" className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#C4B0E0] transition hover:bg-[#4A1E8A] hover:text-white">
               ✉️
               {unreadMessages > 0 && (
