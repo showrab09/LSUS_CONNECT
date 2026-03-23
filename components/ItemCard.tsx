@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import MessageSellerButton from "@/components/MessageSellerButton";
 import { useState } from "react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -8,6 +9,7 @@ import { useState } from "react";
 export interface CardItem {
   id: string;
   type: "listing" | "housing" | "lost_found" | "social";
+  sellerId?: string;
   title?: string;
   content?: string;
   description?: string;
@@ -135,12 +137,22 @@ export function HorizontalCard({ item, onContact }: { item: CardItem; onContact?
               <Avatar user={item.user} size="sm" />
               <span className="truncate text-xs text-[#C4B0E0]">{item.user?.full_name || "LSUS Student"}</span>
             </div>
-            <Link
-              href={href}
-              className="ml-2 shrink-0 rounded-full bg-[#F5A623] px-4 py-1.5 text-xs font-bold text-[#1E0A42] transition hover:bg-[#FFD166]"
-            >
-              {isLostFound ? "Contact" : isHousing ? "Contact" : "View"}
-            </Link>
+            {(isHousing || isLostFound) && item.user?.id ? (
+              <div className="ml-2 shrink-0 [&>div]:!min-h-0 [&_button]:!rounded-full [&_button]:!py-1.5 [&_button]:!px-4 [&_button]:!text-xs [&_button]:!min-h-0 [&_button]:!w-auto">
+                <MessageSellerButton
+                  listingId={item.id}
+                  sellerId={item.user.id}
+                  listingTitle={item.title || ""}
+                />
+              </div>
+            ) : (
+              <Link
+                href={href}
+                className="ml-2 shrink-0 rounded-full bg-[#F5A623] px-4 py-1.5 text-xs font-bold text-[#1E0A42] transition hover:bg-[#FFD166]"
+              >
+                View
+              </Link>
+            )}
           </div>
         </div>
       </div>

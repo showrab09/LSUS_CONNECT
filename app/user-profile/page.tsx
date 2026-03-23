@@ -1,14 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import AppLayout from "@/components/AppLayout";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import UserDropdown from "@/components/UserDropdown";
-import SaveButton from "@/components/SaveButton";
 import EditListingModal from "@/components/EditListingModal";
-
-/**
- * LSUS Connect - User Profile Page
- */
 
 interface User {
   id: string;
@@ -43,487 +38,365 @@ interface SocialPost {
   created_at: string;
 }
 
-interface SavedListing {
+interface ContentItem {
   id: string;
-  created_at: string;
-  listing: Listing;
+  type: "listing" | "post";
+  title: string;
+  subtitle: string;
+  badge: string;
+  badgeColor: string;
+  image?: string;
+  href?: string;
+  raw: Listing | SocialPost;
 }
 
 function getInitials(name: string) {
-  return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  return name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "U";
 }
 
-function formatPrice(listing: Listing) {
-  if (listing.price_type === "FREE") return "Free";
-  if (listing.price_type === "SWAP") return "Trade/Swap";
-  return `$${listing.price.toFixed(2)}`;
+function timeAgo(d: string) {
+  const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+function getCategoryBadge(category: string): { label: string; color: string } {
+  const map: Record<string, { label: string; color: string }> = {
+    "Books":       { label: "Buy & Sell",    color: "text-[#F5A623] bg-[#F5A623]/10" },
+    "Electronics": { label: "Buy & Sell",    color: "text-[#F5A623] bg-[#F5A623]/10" },
+    "Clothing":    { label: "Buy & Sell",    color: "text-[#F5A623] bg-[#F5A623]/10" },
+    "Housing":     { label: "Housing",       color: "text-blue-400 bg-blue-500/10" },
+    "Free":        { label: "Donate",        color: "text-green-400 bg-green-500/10" },
+    "Services":    { label: "Services",      color: "text-purple-400 bg-purple-500/10" },
+    "Tutoring":    { label: "Query",         color: "text-cyan-400 bg-cyan-500/10" },
+    "Other":       { label: "Free/Swap",     color: "text-orange-400 bg-orange-500/10" },
+  };
+  return map[category] || { label: category || "Listing", color: "text-[#F5A623] bg-[#F5A623]/10" };
 }
 
 export default function UserProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [userListings, setUserListings] = useState<Listing[]>([]);
-  const [savedListings, setSavedListings] = useState<SavedListing[]>([]);
-  const [activeTab, setActiveTab] = useState<"listings" | "posts" | "saved">("listings");
   const [userPosts, setUserPosts] = useState<SocialPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditListingModalOpen, setIsEditListingModalOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [editFormData, setEditFormData] = useState({ full_name: "", bio: "", location: "" });
+  const [picturePreview, setPicturePreview] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-
-  // Edit form state
-  const [editFormData, setEditFormData] = useState({ full_name: "", bio: "", location: "" });
-  // profile_picture preview (base64 or existing URL)
-  const [picturePreview, setPicturePreview] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetchUserProfile();
-    fetchUserListings();
-    fetchSavedListings();
-    fetchUserPosts();
+    fetchAll();
   }, []);
 
-  const fetchUserProfile = async () => {
+  const fetchAll = async () => {
+    setIsLoading(true);
     try {
-      const res = await fetch("/api/user/profile", { credentials: "include" });
-      if (res.ok) {
-        const data = await res.json();
+      const [profileRes, listingsRes] = await Promise.all([
+        fetch("/api/user/profile", { credentials: "include" }),
+        fetch("/api/user/listings", { credentials: "include" }),
+      ]);
+      if (profileRes.ok) {
+        const data = await profileRes.json();
         setUser(data.user);
-        setEditFormData({
-          full_name: data.user.full_name || "",
-          bio: data.user.bio || "",
-          location: data.user.location || "",
-        });
-        // Seed preview from DB — no localStorage
+        setEditFormData({ full_name: data.user.full_name || "", bio: data.user.bio || "", location: data.user.location || "" });
         setPicturePreview(data.user.profile_picture || "");
+        // Fetch posts with user id
+        const postsRes = await fetch(`/api/posts?user_id=${data.user.id}&limit=50`, { credentials: "include" });
+        if (postsRes.ok) {
+          const postsData = await postsRes.json();
+          setUserPosts((postsData.posts || []).map((p: any) => ({ id: p.id, content: p.content, location: p.location, images: p.images || [], created_at: p.created_at })));
+        }
       }
-    } catch (err) {
-      console.error("Error fetching profile:", err);
-    }
-  };
-
-  const fetchUserListings = async () => {
-    try {
-      const res = await fetch("/api/user/listings", { credentials: "include" });
-      if (res.ok) {
-        const data = await res.json();
+      if (listingsRes.ok) {
+        const data = await listingsRes.json();
         setUserListings(data.listings || []);
       }
-    } catch (err) {
-      console.error("Error fetching listings:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchSavedListings = async () => {
-    try {
-      const res = await fetch("/api/saved-listings", { credentials: "include" });
-      if (res.ok) {
-        const data = await res.json();
-        setSavedListings(data.savedListings || []);
-      }
-    } catch (err) {
-      console.error("Error fetching saved listings:", err);
-    }
-  };
-
-  const fetchUserPosts = async () => {
-    try {
-      const profileRes = await fetch("/api/user/profile", { credentials: "include" });
-      if (!profileRes.ok) return;
-      const profileData = await profileRes.json();
-      const userId = profileData.user?.id;
-      if (!userId) return;
-
-      const res = await fetch(`/api/posts?user_id=${userId}&limit=50`, { credentials: "include" });
-      if (res.ok) {
-        const data = await res.json();
-        setUserPosts((data.posts || []).map((p: any) => ({
-          id: p.id,
-          content: p.content,
-          location: p.location,
-          images: p.images || [],
-          created_at: p.created_at,
-        })));
-      }
-    } catch (err) {
-      console.error("Error fetching posts:", err);
-    }
+    } catch { }
+    finally { setIsLoading(false); }
   };
 
   const handleDeletePost = async (postId: string) => {
-    if (!confirm("Are you sure you want to delete this post? This cannot be undone.")) return;
+    if (!confirm("Delete this post? This cannot be undone.")) return;
     try {
       const res = await fetch(`/api/posts?id=${postId}`, { method: "DELETE", credentials: "include" });
-      if (res.ok) {
-        setUserPosts(prev => prev.filter(p => p.id !== postId));
-      } else {
-        const data = await res.json();
-        setDeleteError(data.error || "Failed to delete post.");
-      }
-    } catch {
-      setDeleteError("Failed to delete post. Please try again.");
-    }
+      if (res.ok) setUserPosts(prev => prev.filter(p => p.id !== postId));
+      else { const d = await res.json(); setDeleteError(d.error || "Failed to delete post."); }
+    } catch { setDeleteError("Failed to delete post."); }
+  };
+
+  const handleDeleteListing = async (listingId: string) => {
+    if (!confirm("Delete this listing? This cannot be undone.")) return;
+    try {
+      const res = await fetch(`/api/listings?id=${listingId}`, { method: "DELETE", credentials: "include" });
+      if (res.ok) setUserListings(prev => prev.filter(l => l.id !== listingId));
+      else { const d = await res.json(); setDeleteError(d.error || "Failed to delete."); }
+    } catch { setDeleteError("Failed to delete listing."); }
   };
 
   const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Max 2MB guard (base64 inflates ~33%)
-    if (file.size > 2 * 1024 * 1024) {
-      setSaveError("Image must be under 2MB.");
-      return;
-    }
+    if (file.size > 2 * 1024 * 1024) { setSaveError("Image must be under 2MB."); return; }
     const reader = new FileReader();
     reader.onloadend = () => setPicturePreview(reader.result as string);
     reader.readAsDataURL(file);
   };
 
   const handleSaveProfile = async () => {
-    setIsSaving(true);
-    setSaveError("");
-    setSaveSuccess(false);
+    setIsSaving(true); setSaveError(""); setSaveSuccess(false);
     try {
       const res = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          ...editFormData,
-          location: editFormData.location.replace(/,\s*-/g, ", ").trim(),
-          // Only send profile_picture if it changed from what's in the DB
-          profile_picture: picturePreview !== (user?.profile_picture || "")
-            ? picturePreview
-            : undefined,
-        }),
+        body: JSON.stringify({ ...editFormData, profile_picture: picturePreview || undefined }),
       });
-
       if (res.ok) {
-        await fetchUserProfile();
+        const data = await res.json();
+        setUser(data.user);
         setSaveSuccess(true);
-        setTimeout(() => {
-          setIsEditModalOpen(false);
-          setSaveSuccess(false);
-        }, 800);
+        setIsEditingProfile(false);
+        setTimeout(() => setSaveSuccess(false), 3000);
       } else {
         const data = await res.json();
-        setSaveError(data.error || "Failed to save profile.");
+        setSaveError(data.error || "Failed to save.");
       }
-    } catch {
-      setSaveError("Something went wrong. Try again.");
-    } finally {
-      setIsSaving(false);
-    }
+    } catch { setSaveError("Something went wrong."); }
+    finally { setIsSaving(false); }
   };
 
-  const handleEditListing = (listing: Listing) => {
-    setSelectedListing(listing);
-    setIsEditListingModalOpen(true);
-  };
+  // Build combined content grid
+  const contentItems: ContentItem[] = [
+    ...userListings.map(l => {
+      const badge = getCategoryBadge(l.category);
+      return {
+        id: l.id,
+        type: "listing" as const,
+        title: l.title,
+        subtitle: l.price_type === "FREE" ? "Free" : l.price_type === "SWAP" ? "Trade/Swap" : `$${l.price?.toFixed(2)} — ${l.description?.slice(0, 60) || ""}`,
+        badge: badge.label,
+        badgeColor: badge.color,
+        image: l.images?.[0],
+        href: `/product-detail?id=${l.id}`,
+        raw: l,
+      };
+    }),
+    ...userPosts.map(p => ({
+      id: p.id,
+      type: "post" as const,
+      title: p.content?.slice(0, 80) || "",
+      subtitle: p.location || timeAgo(p.created_at),
+      badge: "Post",
+      badgeColor: "text-purple-400 bg-purple-500/10",
+      image: p.images?.[0],
+      href: "/social",
+      raw: p,
+    })),
+  ].sort((a, b) => new Date((b.raw as any).created_at).getTime() - new Date((a.raw as any).created_at).getTime());
 
-  const handleDeleteListing = async (listingId: string) => {
-    if (!confirm("Are you sure you want to delete this listing? This cannot be undone.")) return;
-    try {
-      const res = await fetch(`/api/listings/${listingId}`, { method: "DELETE", credentials: "include" });
-      if (res.ok) {
-        await fetchUserListings();
-      } else {
-        const data = await res.json();
-        alert(data.error || "Failed to delete listing");
-      }
-    } catch {
-      alert("Failed to delete listing");
-    }
-  };
-
-  if (!user) {
+  if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#1E0A42]">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
-          <p className="text-lg text-white">Loading profile...</p>
+      <AppLayout>
+        <div className="flex items-center justify-center py-20">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
-  const displayListings = activeTab === "saved" ? savedListings.map(s => s.listing) : userListings;
-  const displayPicture = user.profile_picture;
+  if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[#1E0A42] text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#2E1065]/95 backdrop-blur">
-        <div className="mx-auto flex h-[60px] max-w-[1920px] items-center justify-between gap-4 px-4 sm:px-6">
-          <Link href="/home" className="text-xl font-extrabold tracking-tight">
-            <span className="text-white">LSUS</span>
-            <span className="text-[#F5A623]"> Connect</span>
-          </Link>
-          <UserDropdown />
-        </div>
-      </header>
+    <AppLayout>
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
 
-      <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
-        {/* Profile Header Card */}
-        <div className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-[#351470] shadow-[0_4px_24px_rgba(0,0,0,0.35)]">
-          <div className="h-24 bg-[linear-gradient(135deg,#5B28A8_0%,#3D1A78_60%,#F5A623_100%)]" />
-          <div className="-mt-12 px-6 pb-6 sm:px-8 sm:pb-8">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div className="flex items-end gap-5">
-                {/* Avatar */}
-                <div className="h-24 w-24 flex shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-[#1E0A42] bg-gradient-to-br from-[#FFD166] to-[#F5A623] shadow-lg sm:h-28 sm:w-28">
-                  {displayPicture ? (
-                    <img src={displayPicture} alt={user.full_name} className="h-full w-full rounded-full object-cover" />
-                  ) : (
-                    <span className="text-4xl font-bold text-[#1E0A42] sm:text-5xl">{getInitials(user.full_name)}</span>
-                  )}
+        {/* ── Left: Profile Sidebar ── */}
+        <div className="w-full lg:w-[280px] lg:flex-shrink-0 space-y-4">
+
+          {/* Profile Card */}
+          <div className="rounded-2xl border border-white/10 bg-[#351470] overflow-hidden">
+            {/* Banner */}
+            <div className="h-20 bg-[linear-gradient(135deg,#5B28A8_0%,#3D1A78_60%,#F5A623_100%)]" />
+
+            {/* Avatar */}
+            <div className="-mt-10 flex justify-center">
+              <div className="relative">
+                <div className="h-20 w-20 overflow-hidden rounded-full border-4 border-[#351470] bg-gradient-to-br from-[#FFD166] to-[#F5A623]">
+                  {picturePreview
+                    ? <img src={picturePreview} alt={user.full_name} className="h-full w-full object-cover" />
+                    : <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[#1E0A42]">{getInitials(user.full_name)}</div>
+                  }
                 </div>
-                <div className="mb-1">
-                  <h1 className="text-2xl font-bold text-white sm:text-3xl">{user.full_name}</h1>
-                  <p className="text-sm text-[#C4B0E0]">{user.email}</p>
-                  {user.location && <p className="mt-0.5 text-sm text-[#C4B0E0]">📍 {user.location.replace(/,\s*-/g, ", ")}</p>}
-                  {user.bio && <p className="mt-2 max-w-2xl text-sm text-[#E9DFFF]">{user.bio}</p>}
-                  <p className="mt-1 text-xs text-[#8B72BE]">Member since {formatDate(user.created_at)}</p>
-                </div>
+                {isEditingProfile && (
+                  <button onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-[#F5A623] text-[10px] text-[#1E0A42] font-bold border-2 border-[#351470]">
+                    ✎
+                  </button>
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleProfilePictureChange} />
               </div>
-              <button
-                onClick={() => setIsEditModalOpen(true)}
-                className="self-end rounded-full bg-[#F5A623] px-6 py-2.5 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]"
-              >
-                Edit Profile
-              </button>
+            </div>
+
+            <div className="px-5 pb-5 pt-3 text-center">
+              {isEditingProfile ? (
+                <input value={editFormData.full_name} onChange={e => setEditFormData(p => ({ ...p, full_name: e.target.value }))}
+                  className="w-full rounded-xl border border-white/10 bg-[#2A0F5A] px-3 py-2 text-center text-sm text-white outline-none focus:border-[#F5A623] mb-2" />
+              ) : (
+                <h2 className="text-lg font-bold text-white">{user.full_name}</h2>
+              )}
+              <p className="text-sm text-[#C4B0E0]">{user.email}</p>
+              {user.location && !isEditingProfile && (
+                <p className="mt-1 text-xs text-[#8B72BE]">📍 {user.location}</p>
+              )}
+              <p className="mt-1 text-xs text-[#8B72BE]">
+                Member since {new Date(user.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+              </p>
+            </div>
+
+            {/* About section */}
+            <div className="mx-4 mb-4 rounded-xl border border-white/10 bg-[#2A0F5A] p-4">
+              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[#F5A623]">About</p>
+              {isEditingProfile ? (
+                <>
+                  <textarea value={editFormData.bio} onChange={e => setEditFormData(p => ({ ...p, bio: e.target.value }))}
+                    placeholder="Tell others about yourself..."
+                    rows={3}
+                    className="w-full rounded-xl border border-white/10 bg-[#1E0A42] px-3 py-2 text-sm text-white outline-none focus:border-[#F5A623] resize-none mb-2 placeholder:text-[#8B72BE]" />
+                  <input value={editFormData.location} onChange={e => setEditFormData(p => ({ ...p, location: e.target.value }))}
+                    placeholder="Your location..."
+                    className="w-full rounded-xl border border-white/10 bg-[#1E0A42] px-3 py-2 text-sm text-white outline-none focus:border-[#F5A623] placeholder:text-[#8B72BE]" />
+                </>
+              ) : (
+                <p className="text-sm text-[#C4B0E0]">{user.bio || "No bio yet."}</p>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            {saveError && <p className="mx-4 mb-2 text-xs text-red-400">{saveError}</p>}
+            {saveSuccess && <p className="mx-4 mb-2 text-xs text-green-400">Profile saved!</p>}
+            {deleteError && <p className="mx-4 mb-2 text-xs text-red-400">{deleteError}</p>}
+
+            <div className="px-4 pb-5 space-y-2">
+              {isEditingProfile ? (
+                <div className="flex gap-2">
+                  <button onClick={handleSaveProfile} disabled={isSaving}
+                    className="flex-1 rounded-xl bg-[#F5A623] py-2 text-sm font-bold text-[#1E0A42] hover:bg-[#FFD166] transition disabled:opacity-50">
+                    {isSaving ? "Saving..." : "Save"}
+                  </button>
+                  <button onClick={() => setIsEditingProfile(false)}
+                    className="flex-1 rounded-xl border border-white/10 bg-white/5 py-2 text-sm text-[#C4B0E0] hover:bg-white/10 transition">
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <button onClick={() => setIsEditingProfile(true)}
+                    className="w-full rounded-xl bg-[#F5A623] py-2.5 text-sm font-bold text-[#1E0A42] hover:bg-[#FFD166] transition">
+                    Edit Profile
+                  </button>
+                  <Link href="/settings"
+                    className="block w-full rounded-xl border border-white/10 bg-white/5 py-2.5 text-center text-sm text-[#C4B0E0] hover:bg-white/10 transition">
+                    Change Password
+                  </Link>
+                </>
+              )}
             </div>
           </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-white/10 bg-[#351470] p-3 text-center">
+              <p className="text-2xl font-bold text-[#F5A623]">{userListings.length}</p>
+              <p className="text-xs text-[#C4B0E0]">Listings</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-[#351470] p-3 text-center">
+              <p className="text-2xl font-bold text-[#F5A623]">{userPosts.length}</p>
+              <p className="text-xs text-[#C4B0E0]">Posts</p>
+            </div>
+          </div>
+
         </div>
 
-        {/* Tabs */}
-        <div className="mb-6 flex gap-1 border-b border-white/10">
-          <button onClick={() => setActiveTab("listings")}
-            className={`px-5 pb-3 pt-1 text-sm font-semibold transition ${activeTab === "listings" ? "border-b-2 border-[#F5A623] text-[#F5A623]" : "text-[#C4B0E0] hover:text-white"}`}>
-            My Listings ({userListings.length})
-          </button>
-          <button onClick={() => setActiveTab("posts")}
-            className={`px-5 pb-3 pt-1 text-sm font-semibold transition ${activeTab === "posts" ? "border-b-2 border-[#F5A623] text-[#F5A623]" : "text-[#C4B0E0] hover:text-white"}`}>
-            My Posts ({userPosts.length})
-          </button>
-          <button onClick={() => setActiveTab("saved")}
-            className={`px-5 pb-3 pt-1 text-sm font-semibold transition ${activeTab === "saved" ? "border-b-2 border-[#F5A623] text-[#F5A623]" : "text-[#C4B0E0] hover:text-white"}`}>
-            Saved Items ({savedListings.length})
-          </button>
-        </div>
+        {/* ── Right: Content Grid ── */}
+        <div className="flex-1 min-w-0">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-white">My Listings &amp; Posts</h2>
+            <span className="text-sm text-[#8B72BE]">{contentItems.length} items</span>
+          </div>
 
-        {/* Content */}
-        {/* Posts Tab */}
-        {activeTab === "posts" && (
-          userPosts.length === 0 ? (
-            <div className="py-20 text-center">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#351470] text-4xl">💬</div>
-              <h3 className="mb-2 text-xl font-bold text-white">No posts yet</h3>
-              <p className="mb-6 text-[#C4B0E0]">Share what&apos;s on your mind with the LSUS community!</p>
-              <Link href="/social" className="inline-block rounded-full bg-[#F5A623] px-8 py-3 font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
-                Go to Social Feed
-              </Link>
+          {contentItems.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-[#351470] p-12 text-center">
+              <p className="text-4xl mb-3">📭</p>
+              <p className="text-white font-semibold mb-2">Nothing here yet</p>
+              <p className="text-[#C4B0E0] text-sm mb-6">Post something to the social feed or create a marketplace listing</p>
+              <div className="flex gap-3 justify-center">
+                <Link href="/social" className="rounded-full bg-[#F5A623] px-5 py-2 text-sm font-bold text-[#1E0A42] hover:bg-[#FFD166] transition">Social Feed</Link>
+                <Link href="/post-listing" className="rounded-full border border-white/10 bg-white/5 px-5 py-2 text-sm text-[#C4B0E0] hover:bg-white/10 transition">Post Listing</Link>
+              </div>
             </div>
           ) : (
-            <div className="space-y-4">
-              {userPosts.map(post => (
-                <div key={post.id} className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.35)]">
-                  {post.images && post.images.length > 0 && (
-                    <div className="mb-4 h-48 overflow-hidden rounded-xl bg-[#2A0F5A]">
-                      <img src={post.images[0]} alt="" className="h-full w-full object-cover" />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {contentItems.map(item => (
+                <Link key={`${item.type}-${item.id}`} href={item.href || "#"}
+                  className="group block overflow-hidden rounded-2xl border border-white/10 bg-[#351470] transition hover:border-[#F5A623]/40 hover:-translate-y-0.5">
+                  <div className="flex">
+                    {/* Image */}
+                    <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden bg-[#2A0F5A]">
+                      {item.image ? (
+                        <img src={item.image} alt={item.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-2xl">
+                          {item.type === "post" ? "💬" : "📦"}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  <p className="text-sm leading-relaxed text-[#E9DFFF] whitespace-pre-wrap">{post.content}</p>
-                  {post.location && <p className="mt-2 text-xs text-[#8B72BE]">📍 {post.location}</p>}
-                  <p className="mt-3 text-xs text-[#8B72BE]">{new Date(post.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
-                  <div className="mt-4 flex gap-3">
-                    <Link href="/social" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#F5A623] py-2.5 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
-                      ✏️ Edit on Social
-                    </Link>
-                    <button onClick={() => handleDeletePost(post.id)}
-                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-500/80 py-2.5 text-sm font-bold text-white transition hover:bg-red-600">
-                      🗑️ Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
-        )}
 
-        {/* Listings & Saved Tabs */}
-        {activeTab !== "posts" && isLoading ? (
-          <div className="py-20 text-center">
-            <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent" />
-            <p className="mt-4 text-white">Loading...</p>
-          </div>
-        ) : activeTab !== "posts" && displayListings.length === 0 ? (
-          <div className="py-20 text-center">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#351470] text-4xl">
-              {activeTab === "listings" ? "📦" : "❤️"}
-            </div>
-            <h3 className="mb-2 text-xl font-bold text-white">
-              {activeTab === "listings" ? "No listings yet" : "No saved items yet"}
-            </h3>
-            <p className="mb-6 text-[#C4B0E0]">
-              {activeTab === "listings" ? "Start selling by creating your first listing!" : "Save items from the marketplace to view them here!"}
-            </p>
-            <Link href={activeTab === "listings" ? "/post-listing" : "/marketplace"}
-              className="inline-block rounded-full bg-[#F5A623] px-8 py-3 font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
-              {activeTab === "listings" ? "Create Listing" : "Browse Marketplace"}
-            </Link>
-          </div>
-        ) : activeTab !== "posts" && (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {displayListings.map((listing) => (
-              <div key={listing.id}
-                className="overflow-hidden rounded-2xl border border-white/10 bg-[#351470] transition hover:-translate-y-1 hover:border-[#F5A623]/40 shadow-[0_4px_24px_rgba(0,0,0,0.35)]">
-                <Link href={`/product-detail?id=${listing.id}`} className="block">
-                  <div className="relative h-48 bg-[#2A0F5A]">
-                    {listing.images && listing.images.length > 0 ? (
-                      <img src={listing.images[0]} alt={listing.title} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-[#8B72BE]">No image</div>
-                    )}
-                    <div className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-1 text-xs text-white">
-                      {listing.condition}
+                    {/* Content */}
+                    <div className="flex min-w-0 flex-1 flex-col justify-between p-3">
+                      <div>
+                        <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold mb-1 ${item.badgeColor}`}>
+                          {item.badge}
+                        </span>
+                        <p className="text-sm font-semibold text-white line-clamp-1">{item.title}</p>
+                        <p className="text-xs text-[#C4B0E0] line-clamp-1 mt-0.5">{item.subtitle}</p>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="mt-2 flex gap-1.5">
+                        {item.type === "listing" ? (
+                          <>
+
+                            <button onClick={(e) => { e.preventDefault(); setSelectedListing(item.raw as Listing); setIsEditListingModalOpen(true); }}
+                              className="rounded-lg bg-[#F5A623]/10 px-2.5 py-1 text-[11px] text-[#F5A623] hover:bg-[#F5A623]/20 transition">
+                              Edit
+                            </button>
+                            <button onClick={(e) => { e.preventDefault(); handleDeleteListing(item.id); }}
+                              className="rounded-lg bg-red-500/10 px-2.5 py-1 text-[11px] text-red-400 hover:bg-red-500/20 transition">
+                              Delete
+                            </button>
+                          </>
+                        ) : (
+                          <button onClick={(e) => { e.preventDefault(); handleDeletePost(item.id); }}
+                            className="rounded-lg bg-red-500/10 px-2.5 py-1 text-[11px] text-red-400 hover:bg-red-500/20 transition">
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    {activeTab === "saved" && (
-                      <div className="absolute left-2 top-2">
-                        <SaveButton listingId={listing.id} size="md" />
-                      </div>
-                    )}
-                    {listing.status !== "ACTIVE" && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                        <span className="text-lg font-bold text-white">{listing.status}</span>
-                      </div>
-                    )}
                   </div>
                 </Link>
-
-                <div className="p-4">
-                  <Link href={`/product-detail?id=${listing.id}`}>
-                    <h3 className="mb-2 line-clamp-2 text-lg font-bold text-white hover:text-[#F5A623]">{listing.title}</h3>
-                  </Link>
-                  <p className="mb-2 text-xl font-bold text-[#F5A623]">{formatPrice(listing)}</p>
-                  <p className="mb-3 line-clamp-2 text-sm text-[#C4B0E0]">{listing.description}</p>
-                  <div className="mb-3 flex items-center justify-between text-xs text-[#8B72BE]">
-                    <span>📍 {listing.location}</span>
-                    <span>{listing.category}</span>
-                  </div>
-
-                  {activeTab === "listings" && (
-                    <div className="flex gap-2 border-t border-white/10 pt-3">
-                      <button onClick={() => handleEditListing(listing)}
-                        className="flex-1 rounded-xl bg-[#F5A623] py-2 text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
-                        ✏️ Edit
-                      </button>
-                      <button onClick={() => handleDeleteListing(listing.id)}
-                        className="flex-1 rounded-xl bg-red-500/80 py-2 text-sm font-bold text-white transition hover:bg-red-500">
-                        🗑️ Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Edit Profile Modal */}
-      {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#2E1065] p-6 shadow-2xl">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-white">Edit Profile</h2>
-              <button onClick={() => { setIsEditModalOpen(false); setSaveError(""); }}
-                className="text-[#8B72BE] transition hover:text-white">✕</button>
+              ))}
             </div>
-
-            <div className="space-y-5">
-              {/* Profile Picture */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-white">Profile Picture</label>
-                <div className="flex items-center gap-4">
-                  <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border-2 border-[#F5A623] bg-gradient-to-br from-[#FFD166] to-[#F5A623]">
-                    {picturePreview ? (
-                      <img src={picturePreview} alt="Preview" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[#1E0A42]">
-                        {getInitials(editFormData.full_name || user.full_name)}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="cursor-pointer rounded-full bg-[#F5A623] px-4 py-2 text-center text-sm font-bold text-[#1E0A42] transition hover:bg-[#FFD166]">
-                      Upload Photo
-                      <input type="file" accept="image/jpeg,image/png,image/gif,image/webp"
-                        onChange={handleProfilePictureChange} className="hidden" />
-                    </label>
-                    {picturePreview && (
-                      <button onClick={() => setPicturePreview("")}
-                        className="rounded-full bg-red-500/80 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-500">
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <p className="mt-2 text-xs text-[#8B72BE]">JPG, PNG, GIF or WebP. Max 2MB.</p>
-              </div>
-
-              {/* Full Name */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-white">Full Name</label>
-                <input type="text" value={editFormData.full_name}
-                  onChange={e => setEditFormData({ ...editFormData, full_name: e.target.value })}
-                  className="h-12 w-full rounded-xl border border-white/10 bg-[#2A0F5A] px-4 text-white outline-none transition focus:border-[#F5A623]" />
-              </div>
-
-              {/* Location */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-white">Location</label>
-                <input type="text" value={editFormData.location}
-                  onChange={e => setEditFormData({ ...editFormData, location: e.target.value })}
-                  placeholder="e.g., Shreveport, LA"
-                  className="h-12 w-full rounded-xl border border-white/10 bg-[#2A0F5A] px-4 text-white outline-none transition focus:border-[#F5A623] placeholder:text-[#8B72BE]" />
-              </div>
-
-              {/* Bio */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-white">Bio</label>
-                <textarea value={editFormData.bio}
-                  onChange={e => setEditFormData({ ...editFormData, bio: e.target.value })}
-                  placeholder="Tell us about yourself..."
-                  rows={4}
-                  className="w-full resize-none rounded-xl border border-white/10 bg-[#2A0F5A] px-4 py-3 text-white outline-none transition focus:border-[#F5A623] placeholder:text-[#8B72BE]" />
-              </div>
-
-              {saveError && <p className="text-sm text-red-400">{saveError}</p>}
-              {saveSuccess && <p className="text-sm text-green-400">Profile saved!</p>}
-            </div>
-
-            <div className="mt-6 flex gap-3">
-              <button onClick={() => { setIsEditModalOpen(false); setSaveError(""); }}
-                className="flex-1 rounded-full border border-white/10 bg-white/5 py-3 font-bold text-white transition hover:bg-white/10">
-                Cancel
-              </button>
-              <button onClick={handleSaveProfile} disabled={isSaving}
-                className="flex-1 rounded-full bg-[#F5A623] py-3 font-bold text-[#1E0A42] transition hover:bg-[#FFD166] disabled:opacity-50">
-                {isSaving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Edit Listing Modal */}
       {selectedListing && (
@@ -531,9 +404,9 @@ export default function UserProfilePage() {
           listing={selectedListing}
           isOpen={isEditListingModalOpen}
           onClose={() => { setIsEditListingModalOpen(false); setSelectedListing(null); }}
-          onSuccess={() => { fetchUserListings(); }}
+          onSuccess={() => { fetchAll(); setIsEditListingModalOpen(false); setSelectedListing(null); }}
         />
       )}
-    </div>
+    </AppLayout>
   );
 }

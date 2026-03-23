@@ -33,7 +33,7 @@ const NAV_LINKS = [
   { href: "/post-listing", label: "Post a Listing",icon: "➕",  section: null },
 ];
 
-function RightPanel() {
+function RightPanel({ trending }: { trending: { label: string; meta: string; href: string }[] }) {
   const { currentUser } = useCurrentUser();
   return (
     <div className="flex flex-col gap-4 pb-6 pt-6">
@@ -74,15 +74,42 @@ function RightPanel() {
       <div className="rounded-2xl border border-white/10 bg-[#351470] p-4">
         <h4 className="mb-3 text-sm font-extrabold uppercase tracking-[0.15em] text-[#F5A623]">Trending</h4>
         <div className="space-y-3">
-          {[["Campus Marketplace","124 posts"],["Apartment Search","77 discussions"],["Book Swaps","54 updates"]].map(([title, meta], i) => (
-            <div key={title} className="flex items-center gap-3">
-              <div className="min-w-[24px] text-xl font-black text-white/20">{i + 1}</div>
-              <div>
-                <p className="text-sm font-semibold text-white">{title}</p>
-                <p className="text-xs text-[#C4B0E0]">{meta}</p>
-              </div>
-            </div>
-          ))}
+          {trending.length > 0
+            ? trending.map(({ label, meta, href }, i) => (
+              <Link key={label} href={href || '#'} className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition hover:bg-white/5">
+                <div className="min-w-[24px] text-xl font-black text-white/20">{i + 1}</div>
+                <div>
+                  <p className="text-sm font-semibold text-white">{label}</p>
+                  <p className="text-xs text-[#C4B0E0]">{meta}</p>
+                </div>
+              </Link>
+            ))
+            : <p className="text-xs text-[#8B72BE]">No activity yet</p>
+          }
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RightPanelSlim({ trending }: { trending: { label: string; meta: string; href: string }[] }) {
+  return (
+    <div className="flex flex-col gap-4 pb-6 pt-6">
+      <div className="rounded-2xl border border-white/10 bg-[#351470] p-4">
+        <h4 className="mb-3 text-sm font-extrabold uppercase tracking-[0.15em] text-[#F5A623]">Trending</h4>
+        <div className="space-y-3">
+          {trending.length > 0
+            ? trending.map(({ label, meta, href }, i) => (
+              <Link key={label} href={href || '#'} className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition hover:bg-white/5">
+                <div className="min-w-[24px] text-xl font-black text-white/20">{i + 1}</div>
+                <div>
+                  <p className="text-sm font-semibold text-white">{label}</p>
+                  <p className="text-xs text-[#C4B0E0]">{meta}</p>
+                </div>
+              </Link>
+            ))
+            : <p className="text-xs text-[#8B72BE]">No activity yet</p>
+          }
         </div>
       </div>
     </div>
@@ -95,6 +122,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [activeSection, setActiveSection] = useState("top");
   const mainRef = useRef<HTMLElement>(null);
+  const [trending, setTrending] = useState<{ label: string; meta: string; href: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/trending", { credentials: "include" })
+      .then(r => r.ok ? r.json() : { trending: [] })
+      .then(d => setTrending(d.trending || []))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const fetchUnread = async () => {
@@ -189,7 +224,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* RIGHT — scrolls on hover */}
         <div className="app-scrollable hidden xl:block xl:w-[300px] xl:flex-shrink-0 xl:px-4" style={{ overflowY: "auto" }}>
-          <RightPanel />
+          {pathname === "/user-profile" ? <RightPanelSlim trending={trending} /> : <RightPanel trending={trending} />}
         </div>
 
       </div>
